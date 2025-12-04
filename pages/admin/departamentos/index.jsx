@@ -61,9 +61,13 @@ export default function DepartamentosList() {
   
   const fetchDepartamentos = () => {
     api.get(`/departamentos?page=${pagination.page}&limit=${pagination.limit}`)
-      .then((response) => {
-        setTotalCount(response.data.count || response.data.departamentos?.length || 0);
-        setData(response.data.departamentos || response.data.request_list || []);
+      .then((response) => {        
+        const departamentos = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.departamentos || response.data.request_list || []);
+        
+        setData(departamentos);
+        setTotalCount(response.data.count || departamentos.length || 0);
       })
       .catch((error) => {
         if (error.response) {
@@ -79,20 +83,12 @@ export default function DepartamentosList() {
   }, [pagination]);
 
   const handleChangePage = (_, page) => {
+    // MUI Pagination usa páginas desde 1, pero nuestra API usa desde 0
+    const pageIndex = page - 1;
     setPagination((prevPagination) => ({
       ...prevPagination,
-      skip: page * prevPagination.limit,
-      page: page
-    }));
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    const newLimit = Number.parseInt(event.target.value, 10);
-    setPagination((prevPagination) => ({
-      ...prevPagination,
-      skip: 0,
-      page: 0,
-      limit: newLimit
+      skip: pageIndex * prevPagination.limit,
+      page: pageIndex
     }));
   };
 
@@ -121,13 +117,21 @@ export default function DepartamentosList() {
               />
 
               <TableBody>
-                {data.map((departamento) => (
-                  <DepartamentoRow 
-                    departamento={departamento} 
-                    key={departamento._id?.$oid || departamento._id} 
-                    fetchDepartamentos={fetchDepartamentos} 
-                  />
-                ))}
+                {data.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
+                      No hay departamentos para mostrar
+                    </td>
+                  </tr>
+                ) : (
+                  data.map((departamento) => (
+                    <DepartamentoRow 
+                      departamento={departamento} 
+                      key={departamento._id?.$oid || departamento._id} 
+                      fetchDepartamentos={fetchDepartamentos} 
+                    />
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -136,10 +140,8 @@ export default function DepartamentosList() {
         <Stack alignItems="center" my={4}>
           <TablePagination
             onChange={handleChangePage}
-            page={pagination.page}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPage={pagination.limit}
-            count={totalCount || 0}
+            page={pagination.page + 1}
+            count={Math.ceil(totalCount / pagination.limit) || 1}
           />
         </Stack>
       </Card>

@@ -27,7 +27,7 @@ const DepartamentoRow = ({ departamento, fetchDepartamentos }) => {
   const handleConfirmDelete = () => {
     const departamentoId = departamento._id?.$oid || departamento._id;
     
-    api.delete(`/departamento/${departamentoId}`)
+    api.delete(`/departamentos/${departamentoId}`)
       .then((response) => {
         enqueueSnackbar('Departamento eliminado exitosamente', { variant: 'success' });
         handleCancelDelete();
@@ -45,7 +45,9 @@ const DepartamentoRow = ({ departamento, fetchDepartamentos }) => {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     try {
-      const date = new Date(dateString);
+      // Si el backend devuelve el formato MongoDB {$date: '...'}
+      const dateValue = dateString.$date || dateString;
+      const date = new Date(dateValue);
       return date.toLocaleDateString('es-ES');
     } catch {
       return '-';

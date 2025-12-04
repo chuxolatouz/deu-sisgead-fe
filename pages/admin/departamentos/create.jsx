@@ -33,7 +33,7 @@ export default function CreateDepartamento() {
   const router = useRouter();
 
   const handleFormSubmit = (values) => {
-    api.post('/departamento', values)
+    api.post('/departamentos', values)
       .then((response) => {
         enqueueSnackbar('Departamento creado exitosamente', { variant: 'success' });
         router.push("/admin/departamentos");

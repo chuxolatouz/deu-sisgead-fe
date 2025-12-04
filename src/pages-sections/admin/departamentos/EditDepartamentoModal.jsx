@@ -50,7 +50,7 @@ const EditDepartamentoModal = ({ open, onClose, departamento, onSuccess }) => {
 
     const departamentoId = departamento._id?.$oid || departamento._id;
     
-    api.put(`/departamento/${departamentoId}`, formData)
+    api.put(`/departamentos/${departamentoId}`, formData)
       .then((response) => {
         enqueueSnackbar('Departamento actualizado exitosamente', { variant: 'success' });
         onSuccess();
