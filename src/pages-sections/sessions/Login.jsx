@@ -74,9 +74,18 @@ const Login = () => {
   const handleFormSubmit2 = (v) => {
     // If the request was successful, save the token and redirect to the home page.
     api.post('/send-notification', {
-      recipient: "margaritahveroes@gmail.com", 
+     /* recipient: "margaritahveroes@gmail.com", 
       subject:"Registro Exitoso",
-      body:"Bienvenido a la plataforma."
+      body:"Bienvenido a la plataforma."*/
+      recipient: "pebehv@gmail.com", // Usar el email del usuario que se loguea
+      subject:"Registro Exitoso",
+      template: "notificaciones.html", // Nombre de la plantilla
+      variables: {
+      nombre: 'Pebelin' || "Usuario",
+      mensaje: 'Ha iniciado sesión exitosamente en la plataforma ENII.',
+      fecha: new Date().toLocaleDateString('es-ES'),
+      plataforma: "ENII"
+      }
     }).then((response) => {
       //localStorage.setItem('token', response.data.token);
       //localStorage.setItem('user', JSON.stringify({nombre: response.data.nombre, role: response.data.role }))
