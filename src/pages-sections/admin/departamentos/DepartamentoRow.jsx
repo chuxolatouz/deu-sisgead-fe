@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Delete, Edit } from "@mui/icons-material";
+import { Delete, Edit, Visibility } from "@mui/icons-material";
 import { Box, Chip, Tooltip, Stack } from "@mui/material";
+import { useRouter } from "next/router";
 import { FlexBox } from "components/flex-box";
 import { Paragraph } from "components/Typography";
 import {
@@ -20,6 +21,12 @@ const DepartamentoRow = ({ departamento, fetchDepartamentos }) => {
 
   const { enqueueSnackbar } = useSnackbar();
   const { api } = useApi();
+  const router = useRouter();
+
+  const handleView = () => {
+    const departamentoId = departamento._id?.$oid || departamento._id;
+    router.push(`/admin/departamentos/${departamentoId}`);
+  };
 
   const handleDelete = () => setIsDeleteOpen(true);
   const handleCancelDelete = () => setIsDeleteOpen(false);
@@ -87,6 +94,12 @@ const DepartamentoRow = ({ departamento, fetchDepartamentos }) => {
 
       <StyledTableCell align="center">
         <Stack direction="row" spacing={1} justifyContent="center">
+          <Tooltip title="Ver departamento">
+            <StyledIconButton onClick={handleView}>
+              <Visibility color="info" />
+            </StyledIconButton>
+          </Tooltip>
+
           <Tooltip title="Editar departamento">
             <StyledIconButton onClick={() => setIsEditOpen(true)}>
               <Edit color="secondary" />
