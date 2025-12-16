@@ -9,6 +9,7 @@ import BazaarImage from "components/BazaarImage";
 import EyeToggleButton from "./EyeToggleButton";
 import { useApi } from "contexts/AxiosContext"
 
+
 const fbStyle = {
   background: "#3B5998",
   color: "white",
@@ -54,13 +55,13 @@ const Login = () => {
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const handleFormSubmit = (values) => {
-    handleFormSubmit2(values);
+    //handleFormSubmit2(values);
     
 // handleSendEmail('usuario@ejemplo.com', 'Registro Exitoso', 'Bienvenido a la plataforma.');
     // If the request was successful, save the token and redirect to the home page.
     api.post('/login', values).then((response) => {
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify({nombre: response.data.nombre, role: response.data.role }))
+      localStorage.setItem('user', JSON.stringify({nombre: response.data.nombre, role: response.data.role, email: response.data.email }))
       window.location.href = '/admin/products';
     }).catch((error) => {
       if (error.response) {
