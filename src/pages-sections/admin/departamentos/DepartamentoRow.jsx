@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Delete, Edit, Visibility } from "@mui/icons-material";
+import { Delete, Edit, Visibility, Login } from "@mui/icons-material";
 import { Box, Chip, Tooltip, Stack } from "@mui/material";
 import { useRouter } from "next/router";
 import { FlexBox } from "components/flex-box";
@@ -11,6 +11,7 @@ import {
 } from "../StyledComponents";
 import { useSnackbar } from 'notistack';
 import { useApi } from 'contexts/AxiosContext';
+import { useDepartment } from 'contexts/DepartmentContext';
 import DeleteDepartamentoModal from "./DeleteDepartamentoModal";
 import EditDepartamentoModal from "./EditDepartamentoModal";
 
@@ -18,9 +19,11 @@ const DepartamentoRow = ({ departamento, fetchDepartamentos }) => {
   const { nombre, descripcion, codigo, activo } = departamento;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isEntering, setIsEntering] = useState(false);
 
   const { enqueueSnackbar } = useSnackbar();
-  const { api } = useApi();
+  const { api, user } = useApi();
+  const { ingresarADepartamento } = useDepartment();
   const router = useRouter();
 
   const handleView = () => {
@@ -30,6 +33,31 @@ const DepartamentoRow = ({ departamento, fetchDepartamentos }) => {
 
   const handleDelete = () => setIsDeleteOpen(true);
   const handleCancelDelete = () => setIsDeleteOpen(false);
+
+  const handleEnterDepartment = async () => {
+    const departamentoId = departamento._id?.$oid || departamento._id;
+    setIsEntering(true);
+    
+    try {
+      await ingresarADepartamento(departamentoId, {
+        _id: departamentoId,
+        nombre: departamento.nombre,
+        codigo: departamento.codigo
+      });
+      
+      enqueueSnackbar(`Ingresaste al departamento: ${nombre}`, { variant: 'success' });
+      // Redirigir al dashboard del departamento
+      router.push('/admin/dashboard');
+    } catch (error) {
+      if (error.response) {
+        enqueueSnackbar(error.response.data.message || 'Error al ingresar al departamento', { variant: 'error' });
+      } else {
+        enqueueSnackbar(error.message || 'Error al ingresar al departamento', { variant: 'error' });
+      }
+    } finally {
+      setIsEntering(false);
+    }
+  };
 
   const handleConfirmDelete = () => {
     const departamentoId = departamento._id?.$oid || departamento._id;
@@ -111,6 +139,23 @@ const DepartamentoRow = ({ departamento, fetchDepartamentos }) => {
               <Delete color="error" />
             </StyledIconButton>
           </Tooltip>
+
+          {user?.role === 'super_admin' && (
+            <Tooltip title="Ingresar al departamento">
+              <StyledIconButton 
+                onClick={handleEnterDepartment} 
+                disabled={isEntering}
+                sx={{ 
+                  '&:hover': { 
+                    backgroundColor: 'success.light',
+                    '& .MuiSvgIcon-root': { color: 'success.main' }
+                  } 
+                }}
+              >
+                <Login color={isEntering ? "disabled" : "success"} />
+              </StyledIconButton>
+            </Tooltip>
+          )}
         </Stack>
       </StyledTableCell>
 

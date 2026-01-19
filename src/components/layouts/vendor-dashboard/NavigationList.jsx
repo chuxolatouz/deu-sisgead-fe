@@ -5,6 +5,10 @@ export const getNavigations = () => {
   const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
   const user = userStr ? JSON.parse(userStr) : null;
   const role = user?.role || '';
+  
+  // Check if there's an active department context
+  const departmentContext = typeof window !== 'undefined' ? localStorage.getItem('departmentContext') : null;
+  const usandoContexto = departmentContext !== null;
 
   const baseNavigations = [
     {
@@ -51,8 +55,9 @@ export const getNavigations = () => {
     },
   ];
 
-  // Add Departamentos section only for super_admin
-  if (role === 'super_admin') {
+  // Add Departamentos section only for super_admin when NOT in department context
+  // When in department context, hide this section since they're viewing as that department
+  if (role === 'super_admin' && !usandoContexto) {
     baseNavigations.push({
       name: "Departamentos",
       icon: duotone.AdminEcommerce,

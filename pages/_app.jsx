@@ -9,6 +9,7 @@ import OpenGraphTags from "utils/OpenGraphTags";
 import RouteGuard from "components/RouteGuard";
 import { AppProvider } from "contexts/AppContext";
 import { AxiosProvider } from "contexts/AxiosContext";
+import { DepartmentProvider } from "contexts/DepartmentContext";
 import SettingsProvider from "contexts/SettingContext";
 import SnackbarProvider from "components/SnackbarProvider";
 import createEmotionCache from "createEmotionCache";
@@ -48,11 +49,13 @@ const App = (props) => {
         <AppProvider>
           <RouteGuard>
             <AxiosProvider>
+              <DepartmentProvider>
               <MuiTheme>
                 <SnackbarProvider>
                   <RTL>{getLayout(<Component {...pageProps} />)}</RTL>
                 </SnackbarProvider>
               </MuiTheme>
+              </DepartmentProvider>
             </AxiosProvider>
           </RouteGuard>
         </AppProvider>
