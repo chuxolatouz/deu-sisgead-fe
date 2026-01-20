@@ -79,6 +79,44 @@ export default function ProductList() {
       page: page
     }));
   };
+  useEffect(() => {
+    const userString = window.localStorage.getItem("user");
+
+    if (!userString) return;
+
+    const user = JSON.parse(userString);
+
+    console.log("Solo una vez", user.email);
+    sendSMTPEmail(user);
+  }, []);
+
+
+  function sendSMTPEmail(user)  {
+      // If the request was successful, save the token and redirect to the home page.
+      api.post('/send-notification', {
+      /* recipient: "margaritahveroes@gmail.com", 
+        subject:"Registro Exitoso",
+        body:"Bienvenido a la plataforma."*/
+        recipient: user.email || "pebehv@gmail.com", // Usar el email del usuario que se loguea
+        subject:"Registro Exitoso",
+        template: "notificaciones.html", // Nombre de la plantilla
+        variables: {
+        nombre: user.nombre || "Usuario",
+        mensaje: 'Ha iniciado sesión exitosamente en la plataforma ENII.',
+        fecha: new Date().toLocaleDateString('es-ES'),
+        plataforma: "ENII"
+        }
+      }).then((response) => {
+        console.log("sendSMTPEmail",response.data);
+      }).catch((error) => {
+        if (error.response) {
+            enqueueSnackbar(error.response.data.message, { variant: 'error'})
+        } else {
+            enqueueSnackbar(error.message, { variant: 'error'})
+        }
+      })
+
+    };
 
   return (
     <Box py={4}>
