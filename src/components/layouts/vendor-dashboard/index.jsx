@@ -2,6 +2,7 @@ import { Box, styled } from "@mui/material";
 import { Fragment, useState } from "react";
 import DashboardNavbar from "./DashboardNavbar";
 import DashboardSidebar from "./DashboardSidebar";
+import DepartmentSelector from "./DepartmentSelector";
 
 // styled components
 const BodyWrapper = styled(Box)(({ theme, compact }) => ({
@@ -21,6 +22,18 @@ const InnerWrapper = styled(Box)(({ theme }) => ({
     paddingLeft: "2rem",
     paddingRight: "2rem",
   },
+}));
+
+const TopBar = styled(Box)(({ theme }) => ({
+  position: "sticky",
+  top: 0,
+  zIndex: 10,
+  backgroundColor: "#ffffff",
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  padding: theme.spacing(1.5, 2),
+  display: "flex",
+  justifyContent: "flex-end",
+  alignItems: "center",
 }));
 
 // ======================================================
@@ -48,6 +61,9 @@ const VendorDashboardLayout = ({ children }) => {
 
       <BodyWrapper compact={sidebarCompact ? 1 : 0}>
         {/* <DashboardNavbar handleDrawerToggle={handleMobileDrawerToggle} /> */}
+        <TopBar>
+          <DepartmentSelector />
+        </TopBar>
         <InnerWrapper>{children}</InnerWrapper>
       </BodyWrapper>
     </Fragment>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Grid, Card, Typography } from '@mui/material';
+import { Box, Grid, Card, Typography, Chip, Alert } from '@mui/material';
 import { H3 } from "components/Typography";
 import { 
     PieChart, 
@@ -18,6 +18,7 @@ import {
     Legend 
 } from 'recharts';
 import { useApi } from 'contexts/AxiosContext';
+import { useDepartment } from 'contexts/DepartmentContext';
 import VendorDashboardLayout from "components/layouts/vendor-dashboard";
 import DashboardFilter from "components/DashboardFilters";
 import { useSnackbar } from 'notistack';
@@ -25,6 +26,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import GroupWorkIcon from "@mui/icons-material/GroupWork";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import BusinessIcon from "@mui/icons-material/Business";
 import { set } from 'lodash';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -52,6 +54,7 @@ DashboardResumen.getLayout = function getLayout(page) {
     const [summary, setSummary] = useState({});
     const [usuarios, setUsuarios] = useState(0);
     const { api } = useApi();
+    const { departamentoData, usandoContexto } = useDepartment();
     const { enqueueSnackbar } = useSnackbar();
   
     useEffect(() => {
@@ -78,13 +81,36 @@ DashboardResumen.getLayout = function getLayout(page) {
   
     return (
     <Box py={4} >
+      {usandoContexto && departamentoData && (
+        <Alert 
+          severity="info" 
+          icon={<BusinessIcon />}
+          sx={{ mb: 3 }}
+        >
+          Estás viendo el dashboard del departamento: <strong>{departamentoData.nombre}</strong>
+        </Alert>
+      )}
       <Grid container spacing={3}>
       <Grid item xs={12}>
           <Card style={{ padding: 20 }}>
             
             <Grid container spacing={2} justifyContent="space-between" alignItems="center">
                 <Grid item>
-                    <H3>Dashboard Resumen</H3>
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <H3>
+                        {usandoContexto && departamentoData 
+                          ? `Dashboard - ${departamentoData.nombre}` 
+                          : 'Dashboard Resumen'}
+                      </H3>
+                      {usandoContexto && departamentoData && (
+                        <Chip 
+                          icon={<BusinessIcon />}
+                          label={departamentoData.codigo}
+                          color="primary"
+                          size="small"
+                        />
+                      )}
+                    </Box>
                 </Grid>
                 <Grid item>
                     <DashboardFilter onChange={setRange} />

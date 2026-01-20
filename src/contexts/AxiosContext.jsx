@@ -45,6 +45,30 @@ export function AxiosProvider({ children }) {
       }],
     });
 
+    // Request interceptor para agregar el header X-Department-Context
+    axiosInstance.interceptors.request.use(
+      (config) => {
+        // Solo agregar el header si el usuario es super_admin
+        if (user?.role === 'super_admin') {
+          const departmentContext = localStorage.getItem('departmentContext');
+          if (departmentContext) {
+            try {
+              const parsed = JSON.parse(departmentContext);
+              if (parsed.departamentoId) {
+                config.headers['X-Department-Context'] = parsed.departamentoId;
+              }
+            } catch (error) {
+              console.error('Error al parsear departmentContext:', error);
+            }
+          }
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
     axiosInstance.interceptors.response.use(
       response => response,
       error => {
@@ -52,6 +76,7 @@ export function AxiosProvider({ children }) {
           // Eliminar el token y redireccionar a la página de inicio de sesión
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          localStorage.removeItem('departmentContext');
           router.push('/login');
         }
         return Promise.reject(error);

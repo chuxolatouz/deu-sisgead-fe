@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { Avatar, Box, useMediaQuery } from "@mui/material";
 import LayoutDrawer from "../LayoutDrawer";
 import Scrollbar from "components/Scrollbar";
 import { FlexBetween } from "components/flex-box";
-import { navigations } from "./NavigationList";
+import { getNavigations } from "./NavigationList";
+import { useDepartment } from "contexts/DepartmentContext";
 import SidebarAccordion from "./SidebarAccordion";
 import {
   ListLabel,
@@ -34,7 +35,15 @@ const DashboardSidebar = (props) => {
   } = props;
   const router = useRouter();
   const [onHover, setOnHover] = useState(false);
+  const [navigations, setNavigations] = useState([]);
   const downLg = useMediaQuery((theme) => theme.breakpoints.down("lg"));
+  const { usandoContexto } = useDepartment();
+
+  // Load navigations based on user role and department context
+  // This will update when the department context changes
+  useEffect(() => {
+    setNavigations(getNavigations());
+  }, [usandoContexto, router.pathname]); // Update when context or route changes
 
   // side hover when side bar is compacted
   const COMPACT = sidebarCompact && !onHover ? 1 : 0;

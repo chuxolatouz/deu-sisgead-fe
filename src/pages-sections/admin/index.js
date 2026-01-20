@@ -15,6 +15,8 @@ import RequestForm from "./request/RequestForm";
 import RequestRow from "./request/RequestRow";
 import SellerRow from "./sellers/SellerRow";
 import SellerPackageCard from "./sellers/SellerPackageCard";
+import DepartamentoRow from "./departamentos/DepartamentoRow";
+import DepartamentoForm from "./departamentos/DepartamentoForm";
 import {
   StatusWrapper,
   StyledTableRow,
@@ -40,6 +42,8 @@ export {
   OrderDetails,
   RefundRequestRow,
   SellerPackageCard,
+  DepartamentoRow,
+  DepartamentoForm,
   // styled components
   StatusWrapper,
   StyledTableRow,
