@@ -6,11 +6,11 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Pagination,
   Stack,
   Box,
   Paper
 } from '@mui/material';
+import TablePagination from 'components/data-table/TablePagination';
 import AddBalance from './actions/add/AddBalance';
 import DescargarMovimientos from './actions/download/DownloadMovements';
 import { useApi } from 'contexts/AxiosContext';
@@ -34,10 +34,10 @@ function Movimientos({ id }) {
   };
 
   const fetchBalance = () => api
-  .get(`/proyecto/${id}/acciones?page=${pagination - 1}`)
+  .get(`/proyecto/${id}/acciones?page=${pagination - 1}&limit=10`)
   .then((response) => {
-    setActions(response.data.request_list);
-    setCount(response.data.count);
+    setActions(response.data.request_list || []);
+    setCount(response.data.count || 1);
   })
   .catch((error) => {
     if (error.response) {
@@ -93,12 +93,11 @@ function Movimientos({ id }) {
           )}
         </Table>
       </TableContainer>
-      <Stack spacing={2}>
-        <Pagination
-          count={count}
+      <Stack alignItems="center" my={4}>
+        <TablePagination
           onChange={handlePagination}
-          variant="outlined"
-          color="success"
+          page={pagination}
+          count={count || 1}
         />
       </Stack>
     </Box>

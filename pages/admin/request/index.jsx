@@ -58,37 +58,30 @@ export default function RequestList() {
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const fetchRequest = () => api.get(
-    `/mostrar_solicitudes?page=${pagination.page}`,
+    `/mostrar_solicitudes?page=${pagination.page}&limit=${pagination.limit}`,
   ).then((respon) => {
-    setTotalCount(pagination.total);
-    setRules(respon.data.request_list);
+    setTotalCount(respon.data.count || 0);
+    setRules(respon.data.request_list || []);
   }).catch((error) => {
     if (error.response) {
-        enqueueSnackbar(error.response.data.message, { variant: 'error'})
+      enqueueSnackbar(error.response.data.message, { variant: 'error'});
     } else {
-        enqueueSnackbar(error.message, { variant: 'error'})
+      enqueueSnackbar(error.message, { variant: 'error'});
     }
-  })
+  });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pagination es la única dependencia necesaria
   useEffect(() => {
     fetchRequest();
-  }, [pagination])
+  }, [pagination]);
 
   const handleChangePage = (_, page) => {
+    // MUI Pagination es 1-indexed, convertir a 0-indexed para el backend
+    const pageIndex = page - 1;
     setPagination((prevPagination) => ({
       ...prevPagination,
-      skip: page * prevPagination.limit,
-      page: page
-    }));
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    const newLimit = parseInt(event.target.value, 10);
-    setPagination((prevPagination) => ({
-      ...prevPagination,
-      skip: 0,
-      page: 0,
-      limit: newLimit
+      skip: pageIndex * prevPagination.limit,
+      page: pageIndex
     }));
   };
   return (
@@ -109,9 +102,12 @@ export default function RequestList() {
               />
 
               <TableBody>
-                {rules.map((rules, index) => (
-                  <RequestRow request={rules} key={index} fetchRequest={fetchRequest} />
-                ))}
+                {rules.map((rule) => {
+                  const ruleId = rule._id?.$oid || rule._id || (rule.nombre ? `${rule.nombre}-${rule.status}` : undefined);
+                  return ruleId ? (
+                    <RequestRow request={rule} key={ruleId} fetchRequest={fetchRequest} />
+                  ) : null;
+                })}
               </TableBody>
             </Table>
           </TableContainer>
@@ -119,12 +115,10 @@ export default function RequestList() {
 
         <Stack alignItems="center" my={4}>
           <TablePagination
-              onPageChange={handleChangePage}
-              page={pagination.page}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPage={pagination.limit}
-              count={totalCount || 0}
-            />
+            onChange={handleChangePage}
+            page={pagination.page + 1}  // MUI Pagination es 1-indexed
+            count={Math.ceil(totalCount / pagination.limit) || 1}  // Total de páginas, no items
+          />
         </Stack>
       </Card>
     </Box>

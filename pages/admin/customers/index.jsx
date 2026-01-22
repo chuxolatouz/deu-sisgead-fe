@@ -51,38 +51,30 @@ export default function CustomerList() {
 
   const { api } = useApi();
   const fetchUsers = () => api.get(
-    `/mostrar_usuarios?page=${pagination.page}`,
+    `/mostrar_usuarios?page=${pagination.page}&limit=${pagination.limit}`,
   ).then((respon) => {
-    setTotalCount(respon.data.count);
-    setData(respon.data.request_list);
+    setTotalCount(respon.data.count || 0);
+    setData(respon.data.request_list || []);
   }).catch((error) => {
     if (error.response) {
-        enqueueSnackbar(error.response.data.message, { variant: 'error'})
+      enqueueSnackbar(error.response.data.message, { variant: 'error'});
     } else {
-        enqueueSnackbar(error.message, { variant: 'error'})
+      enqueueSnackbar(error.message, { variant: 'error'});
     }
-});
+  });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pagination es la única dependencia necesaria
   useEffect(() => {
-    fetchUsers()
-  }, [pagination])
+    fetchUsers();
+  }, [pagination]);
 
   const handleChangePage = (_, page) => {
+    // MUI Pagination es 1-indexed, convertir a 0-indexed para el backend
+    const pageIndex = page - 1;
     setPagination((prevPagination) => ({
       ...prevPagination,
-      skip: page * prevPagination.limit,
-      page: page
-    }));
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    const newLimit = Number.parseInt(event.target.value, 10);
-    setPagination((prevPagination) => ({
-      ...prevPagination,
-      skip: 0,
-      page: 0,
-      limit: newLimit
+      skip: pageIndex * prevPagination.limit,
+      page: pageIndex
     }));
   };
 
@@ -115,12 +107,10 @@ export default function CustomerList() {
         </Scrollbar>
 
         <Stack alignItems="center" my={4}>
-        <TablePagination
-            onPageChange={handleChangePage}
-            page={pagination.page}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPage={pagination.limit}
-            count={totalCount || 0}
+          <TablePagination
+            onChange={handleChangePage}
+            page={pagination.page + 1}  // MUI Pagination es 1-indexed
+            count={Math.ceil(totalCount / pagination.limit) || 1}  // Total de páginas, no items
           />
         </Stack>
       </Card>
