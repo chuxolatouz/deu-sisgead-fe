@@ -23,6 +23,9 @@ const ProductForm = (props) => {
   useEffect(() => {
     api.get('/mostrar_categorias')
     .then((response) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/fe8cf17c-23a3-4a4e-96f1-bc6047dc12b8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProductForm.jsx:26',message:'Categories received from backend',data:{categoriesCount:response.data?.length,categoriesSample:response.data?.slice(0,2),firstCategoryKeys:response.data?.[0] ? Object.keys(response.data[0]) : []},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       setCategories(response.data);
     }).catch((error) => {    
       console.log(error)        
@@ -84,15 +87,25 @@ const ProductForm = (props) => {
                   name="categoria"
                   onBlur={handleBlur}
                   placeholder="Categoria"
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/fe8cf17c-23a3-4a4e-96f1-bc6047dc12b8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProductForm.jsx:87',message:'Category selected',data:{selectedValue:e.target.value,selectedType:typeof e.target.value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+                    // #endregion
+                    handleChange(e);
+                  }}
                   value={values.categoria ? values.categoria : " "}
                   label="Seleccionar Categoria"                  
                   error={!!touched.categoria && !!errors.categoria}
                   helperText={touched.categoria && errors.categoria}                  
                 >
-                  {categories.map((category) => (
-                    <MenuItem key={category.value} value={category.value}>{category.nombre}</MenuItem>
-                  ))}
+                  {categories.map((category) => {
+                    // #region agent log
+                    if (categories.indexOf(category) === 0) {
+                      fetch('http://127.0.0.1:7242/ingest/fe8cf17c-23a3-4a4e-96f1-bc6047dc12b8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProductForm.jsx:94',message:'Category structure in map',data:{category:category,categoryKeys:Object.keys(category),hasValue:!!category.value,hasId:!!category._id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                    }
+                    // #endregion
+                    return <MenuItem key={category.value || category._id} value={category.value || category._id}>{category.nombre}</MenuItem>
+                  })}
                 </TextField>
               </Grid>
 

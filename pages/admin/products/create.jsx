@@ -40,11 +40,20 @@ export default function CreateProduct() {
   
 
   const handleFormSubmit = (values) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fe8cf17c-23a3-4a4e-96f1-bc6047dc12b8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create.jsx:42',message:'Frontend sending proyecto data',data:{values:values,categoria:values.categoria,categoriaType:typeof values.categoria},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     api.post('/crear_proyecto', values)
       .then((response) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/fe8cf17c-23a3-4a4e-96f1-bc6047dc12b8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create.jsx:45',message:'Backend response received',data:{response:response.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         router.push("/admin/products/");
       })
       .catch((error) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/fe8cf17c-23a3-4a4e-96f1-bc6047dc12b8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create.jsx:48',message:'Error creating proyecto',data:{error:error.response?.data,status:error.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         if (error.response) {
             enqueueSnackbar(error.response.data.message, { variant: 'error'})
         } else {

@@ -8,6 +8,8 @@ import { H3 } from "components/Typography";
 import Scrollbar from "components/Scrollbar";
 import { ProductRow } from "pages-sections/admin";
 import { useApi } from 'contexts/AxiosContext';
+import { useSnackbar } from "notistack";
+
 // TABLE HEADING DATA LIST
 const tableHeading = [
   {
@@ -58,14 +60,21 @@ export default function ProductList() {
     page: 0,
     limit: 10
   });
+  const { enqueueSnackbar } = useSnackbar();
 
   const { api } = useApi();
   
   const fetchProducts = () => api.get(
-    `/mostrar_proyectos?page=${pagination.page}`,
+    `/mostrar_proyectos?page=${pagination.page}&limit=${pagination.limit}`,
   ).then((respon) => {
-    setTotalCount(pagination.total);
-    setProjects(respon.data.request_list);
+    setTotalCount(respon.data.count || 0);
+    setProjects(respon.data.request_list || []);
+  }).catch((error) => {
+    if (error.response) {
+      enqueueSnackbar(error.response.data.message, { variant: 'error'})
+    } else {
+      enqueueSnackbar(error.message, { variant: 'error'})
+    }
   });
 
   useEffect(() => {
@@ -73,50 +82,14 @@ export default function ProductList() {
   }, [pagination])
 
   const handleChangePage = (_, page) => {
+    // MUI Pagination es 1-indexed, convertir a 0-indexed para el backend
+    const pageIndex = page - 1;
     setPagination((prevPagination) => ({
       ...prevPagination,
-      skip: page * prevPagination.limit,
-      page: page
+      skip: pageIndex * prevPagination.limit,
+      page: pageIndex
     }));
   };
-  useEffect(() => {
-    const userString = window.localStorage.getItem("user");
-
-    if (!userString) return;
-
-    const user = JSON.parse(userString);
-
-    console.log("Solo una vez", user.email);
-    sendSMTPEmail(user);
-  }, []);
-
-
-  function sendSMTPEmail(user)  {
-      // If the request was successful, save the token and redirect to the home page.
-      api.post('/send-notification', {
-      /* recipient: "margaritahveroes@gmail.com", 
-        subject:"Registro Exitoso",
-        body:"Bienvenido a la plataforma."*/
-        recipient: user.email || "pebehv@gmail.com", // Usar el email del usuario que se loguea
-        subject:"Registro Exitoso",
-        template: "notificaciones.html", // Nombre de la plantilla
-        variables: {
-        nombre: user.nombre || "Usuario",
-        mensaje: 'Ha iniciado sesión exitosamente en la plataforma ENII.',
-        fecha: new Date().toLocaleDateString('es-ES'),
-        plataforma: "ENII"
-        }
-      }).then((response) => {
-        console.log("sendSMTPEmail",response.data);
-      }).catch((error) => {
-        if (error.response) {
-            enqueueSnackbar(error.response.data.message, { variant: 'error'})
-        } else {
-            enqueueSnackbar(error.message, { variant: 'error'})
-        }
-      })
-
-    };
 
   return (
     <Box py={4}>
@@ -147,8 +120,8 @@ export default function ProductList() {
         <Stack alignItems="center" my={4}>
           <TablePagination
               onChange={handleChangePage}
-              page={pagination.page}              
-              count={totalCount || 0}
+              page={pagination.page + 1}  // MUI Pagination es 1-indexed
+              count={Math.ceil(totalCount / pagination.limit) || 1}  // Total de páginas, no items
             />
         </Stack>
       </Card>

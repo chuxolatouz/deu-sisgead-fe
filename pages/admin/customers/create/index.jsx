@@ -6,6 +6,7 @@ import { useSnackbar } from "notistack";
 import { CustomerForm } from "pages-sections/admin";
 import VendorDashboardLayout from "components/layouts/vendor-dashboard";
 import { useApi } from "contexts/AxiosContext";
+import { sendWelcomeEmail } from "utils/emailService";
 
 
 // =============================================================================
@@ -33,19 +34,29 @@ export default function CreateProduct() {
   
 
   const handleFormSubmit = (values) => {
-    console.log(values)
     api.post('/registrar', values)
       .then((response) => {
+        // Enviar email de bienvenida al nuevo usuario
+        if (response.data && values.email) {
+          sendWelcomeEmail(api, {
+            email: values.email,
+            nombre: values.nombre
+          }, (error) => {
+            // Error silencioso, no afecta la creación del usuario
+            console.warn('No se pudo enviar email de bienvenida:', error);
+          });
+        }
+        
+        enqueueSnackbar('Usuario creado exitosamente', { variant: 'success' });
         router.push("/admin/customers/");
       })
       .catch((error) => {
         if (error.response) {
-            enqueueSnackbar(error.response.data.message, { variant: 'error'})
+          enqueueSnackbar(error.response.data.message, { variant: 'error' });
         } else {
-            enqueueSnackbar(error.message, { variant: 'error'})
+          enqueueSnackbar(error.message, { variant: 'error' });
         }
-    })
-
+      });
   };
   return (
     <Box py={4}>

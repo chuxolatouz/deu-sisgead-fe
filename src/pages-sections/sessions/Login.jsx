@@ -7,7 +7,8 @@ import { H1 } from "components/Typography";
 import BazaarTextField from "components/BazaarTextField";
 import BazaarImage from "components/BazaarImage";
 import EyeToggleButton from "./EyeToggleButton";
-import { useApi } from "contexts/AxiosContext"
+import { useApi } from "contexts/AxiosContext";
+import { sendLoginNotification } from "utils/emailService";
 
 
 const fbStyle = {
@@ -54,52 +55,31 @@ const Login = () => {
 
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
+  
   const handleFormSubmit = (values) => {
-    //handleFormSubmit2(values);
-    
-// handleSendEmail('usuario@ejemplo.com', 'Registro Exitoso', 'Bienvenido a la plataforma.');
-    // If the request was successful, save the token and redirect to the home page.
     api.post('/login', values).then((response) => {
+      const userData = {
+        nombre: response.data.nombre,
+        role: response.data.role,
+        email: response.data.email
+      };
+      
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify({nombre: response.data.nombre, role: response.data.role, email: response.data.email }))
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Enviar notificación de login (silencioso, no bloquea la navegación)
+      sendLoginNotification(api, userData, true).catch(() => {
+        // Error silencioso, no afecta el flujo de login
+      });
+      
       window.location.href = '/admin/products';
     }).catch((error) => {
       if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error'})
+        enqueueSnackbar(error.response.data.message, { variant: 'error'});
       } else {
-          enqueueSnackbar(error.message, { variant: 'error'})
+        enqueueSnackbar(error.message, { variant: 'error'});
       }
-    })
-
-  };
-  const handleFormSubmit2 = (v) => {
-    // If the request was successful, save the token and redirect to the home page.
-    api.post('/send-notification', {
-     /* recipient: "margaritahveroes@gmail.com", 
-      subject:"Registro Exitoso",
-      body:"Bienvenido a la plataforma."*/
-      recipient: "pebehv@gmail.com", // Usar el email del usuario que se loguea
-      subject:"Registro Exitoso",
-      template: "notificaciones.html", // Nombre de la plantilla
-      variables: {
-      nombre: 'Pebelin' || "Usuario",
-      mensaje: 'Ha iniciado sesión exitosamente en la plataforma ENII.',
-      fecha: new Date().toLocaleDateString('es-ES'),
-      plataforma: "ENII"
-      }
-    }).then((response) => {
-      //localStorage.setItem('token', response.data.token);
-      //localStorage.setItem('user', JSON.stringify({nombre: response.data.nombre, role: response.data.role }))
-      //window.location.href = '/admin/products';
-      console.log("***************",response.data);
-    }).catch((error) => {
-      if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error'})
-      } else {
-          enqueueSnackbar(error.message, { variant: 'error'})
-      }
-    })
-
+    });
   };
 
 
