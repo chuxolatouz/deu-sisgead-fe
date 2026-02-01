@@ -1,155 +1,289 @@
-## Requirements
+# DEU Sistema Administrativo - Frontend
 
-Make sure that you have the last stable [NodeJS](https://nodejs.org/en/download/) and `yarn` version.
+Aplicación web frontend desarrollada con Next.js y React para el sistema de gestión administrativa de proyectos, presupuestos, usuarios y departamentos.
 
-- Do not delete the `yarn.lock file`
+## 📋 Tabla de Contenidos
 
-## Install
+- [Requisitos Previos](#requisitos-previos)
+- [Instalación](#instalación)
+- [Configuración](#configuración)
+- [Ejecución](#ejecución)
+- [Build](#build)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Tecnologías](#tecnologías)
+- [Características Principales](#características-principales)
 
-Navigate to the project root folder using terminal and install the dependencies.
+## 🔧 Requisitos Previos
 
-```js
-yarn || npm install;
+- Node.js 18.x o superior
+- Yarn 1.22.x (recomendado) o npm
+
+## 📦 Instalación
+
+1. Clonar el repositorio (si aplica)
+
+2. Instalar dependencias:
+   ```bash
+   yarn install
+   # o
+   npm install
+   ```
+
+   **Importante:** No eliminar el archivo `yarn.lock` si usas Yarn.
+
+## ⚙️ Configuración
+
+### Variables de Entorno
+
+Crea un archivo `.env.local` en la raíz del proyecto:
+
+```bash
+# URL del backend API
+NEXT_PUBLIC_APP_BACKEND=http://localhost:5000/
 ```
 
-## Start
+Si no se configura, el sistema usará `http://localhost:5000/` por defecto.
 
-After the installation is complete, you can launch dev server by running.
+## 🚀 Ejecución
 
-```js
-yarn dev || npm run dev
+### Modo Desarrollo
+
+```bash
+yarn dev
+# o
+npm run dev
 ```
 
-This starts a local webserver at `http://localhost:3000` and auto detect file changes:
+La aplicación estará disponible en `http://localhost:3000` y detectará automáticamente los cambios en los archivos.
 
-## Build
+### Modo Producción
 
-```js
-yarn build || npm run build
+```bash
+yarn build
+yarn start
+# o
+npm run build
+npm start
 ```
 
-## Support
+## 🏗️ Build
 
-Need Support? Create a ticket [HERE](https://support.ui-lib.com/help-center/tickets/new) Or Send us an email at [support@ui-lib.com](mailto:support@ui-lib.com).
+Para crear una build de producción:
 
-### changelog
+```bash
+yarn build
+# o
+npm run build
+```
 
-## v3.5.0
+Para exportar como sitio estático:
 
-###### April 18, 2023
+```bash
+yarn export
+# o
+npm run export
+```
 
-- Update Next.js v13
-- Add lockOnWindowScroll and preventVerticalScrollOnTouch property in Carousel.tsx
-- Add [icon list page](https://bazaar.ui-lib.com/docs/icons)
+## 📁 Estructura del Proyecto
 
-## v3.4.0
+```
+deu-sisgead-fe/
+├── pages/                      # Páginas de Next.js (routing automático)
+│   ├── _app.jsx               # Configuración global de la app
+│   ├── _document.jsx          # Personalización del HTML
+│   ├── login.jsx              # Página de login
+│   ├── admin/                  # Páginas de administración
+│   │   ├── products/          # Gestión de proyectos
+│   │   │   ├── index.jsx      # Lista de proyectos
+│   │   │   ├── create.jsx     # Crear proyecto
+│   │   │   ├── [slug].jsx     # Detalles del proyecto
+│   │   │   └── edit/[slug].jsx # Editar proyecto
+│   │   ├── customers/         # Gestión de usuarios
+│   │   ├── departamentos/     # Gestión de departamentos
+│   │   ├── categories/        # Gestión de categorías
+│   │   ├── request/           # Gestión de solicitudes
+│   │   └── dashboard/         # Dashboard administrativo
+│   └── ...
+├── src/
+│   ├── components/            # Componentes reutilizables
+│   │   ├── data-table/        # Componentes de tablas
+│   │   │   └── TablePagination.jsx
+│   │   ├── layouts/           # Layouts de página
+│   │   │   └── vendor-dashboard/
+│   │   └── ...
+│   ├── pages-sections/        # Secciones de páginas específicas
+│   │   └── admin/
+│   │       ├── products/      # Componentes de proyectos
+│   │       │   ├── ProductForm.jsx
+│   │       │   ├── ProductDetails.jsx
+│   │       │   ├── ProductRow.jsx
+│   │       │   ├── ProductReport.jsx
+│   │       │   ├── ProductMovements.jsx
+│   │       │   ├── ProductLogs.jsx
+│   │       │   └── ProductBudget.jsx
+│   │       ├── customers/     # Componentes de usuarios
+│   │       ├── departamentos/ # Componentes de departamentos
+│   │       └── ...
+│   ├── contexts/              # Contextos de React
+│   │   └── AxiosContext.jsx   # Configuración de Axios y autenticación
+│   ├── utils/                 # Utilidades
+│   │   ├── __api__/           # Funciones de API mock (para desarrollo)
+│   │   └── emailService.js    # Servicio de envío de emails
+│   ├── hooks/                 # Custom hooks
+│   │   ├── useMuiTable.js
+│   │   ├── useScroller.js
+│   │   └── useSettings.js
+│   ├── theme/                 # Configuración de temas
+│   └── models/                # Modelos de datos
+├── public/                    # Archivos estáticos
+│   └── assets/               # Imágenes, iconos, etc.
+├── package.json
+└── README.md                  # Este archivo
+```
 
-###### Jan 6, 2023
+## 🛠️ Tecnologías
 
-- Add Language Translation Feature [Next-i18next](https://github.com/i18next/next-i18next)
-- Add Product Variants (Options and Type)
-- Fix All Dead Links
-- Improve & Rename Components/Folder Structure
+### Core
+- **Next.js 13.4.7** - Framework React con SSR
+- **React 18.2.0** - Biblioteca UI
+- **Material-UI (MUI) 5.11.16** - Componentes UI
+- **Axios 1.3.5** - Cliente HTTP
 
-## v3.3.0
+### Formularios y Validación
+- **Formik 2.2.9** - Manejo de formularios
+- **Yup 1.0.2** - Validación de esquemas
 
-###### Nov 12, 2022
+### Gráficos y Visualización
+- **Recharts 2.15.3** - Gráficos y visualizaciones
+- **ApexCharts 3.37.3** - Gráficos adicionales
 
-- Redesign Mock Api and Data with Model
-- Add Data Models for Product, Category, Shop Etc.
-- Add Product Preview Image Feature with Delete Button
-- Update User, Admin Dashboard all Pages With SSR
-- Add useScoller Hook
-- Add Currency function
-- Update Documentation
-- Update All Packages and Library
+### Utilidades
+- **date-fns 2.29.3** - Manipulación de fechas
+- **lodash 4.17.21** - Utilidades JavaScript
+- **notistack 3.0.1** - Notificaciones toast
+- **currency.js 2.0.4** - Formateo de moneda
 
-## v3.2.0
+### Desarrollo
+- **ESLint** - Linter
+- **Prettier** - Formateador de código
+- **TypeScript 5.0.3** - Tipado estático (parcial)
 
-###### Aug 28, 2022
+## ✨ Características Principales
 
-- Add one Market homepage
-- Add two Fashion homepages
-- Add SEO component
-- Update layout code structure
+### Autenticación
+- Login con JWT
+- Gestión de sesiones con localStorage
+- Protección de rutas basada en roles
 
-## v3.1.0
+### Gestión de Proyectos
+- Crear, editar, eliminar proyectos
+- Asignación de balance
+- Gestión de miembros del proyecto
+- Seguimiento de presupuestos
+- Generación de reportes y gráficos
+- Logs de actividad
 
-###### Jul 03, 2022
+### Gestión de Usuarios
+- CRUD completo de usuarios
+- Asignación de roles (usuario, admin_departamento, super_admin)
+- Gestión de departamentos
 
-- Add Mega menu and Fullscreen dropdown menu
+### Gestión de Presupuestos
+- Crear y gestionar presupuestos
+- Subida de archivos
+- Estados de presupuestos (new, in_progress, finished)
+- Aprobación y rechazo
 
-## v3.0.0
+### Sistema de Notificaciones
+- Envío de emails con templates HTML
+- Notificaciones de login
+- Emails de bienvenida
+- Servicio reutilizable de emails
 
-###### Jun 16, 2022
+### Reportes y Estadísticas
+- Reportes de proyectos con gráficos
+- Evolución del saldo (gráficos de línea)
+- Egresos por tipo (gráficos de pie)
+- Dashboard con métricas generales
 
-- Add Admin/Vendor dashboard (25+ pages)
-- Add RTL Support
-- Update npm packages
+### Paginación Unificada
+- Todos los componentes de lista usan el mismo patrón
+- Paginación consistente en toda la aplicación
+- Componente `TablePagination` reutilizable
 
-## v2.3.0
+## 📱 Páginas Principales
 
-###### Apr 18, 2022
+### Administración
+- `/admin/products` - Lista de proyectos
+- `/admin/products/create` - Crear proyecto
+- `/admin/products/[slug]` - Detalles del proyecto
+- `/admin/customers` - Gestión de usuarios
+- `/admin/departamentos` - Gestión de departamentos
+- `/admin/categories` - Gestión de categorías
+- `/admin/request` - Gestión de solicitudes de reglas
+- `/admin/dashboard` - Dashboard principal
 
-- Fix Build issue (added resolutions &amp; overrides in package.json)
+### Autenticación
+- `/login` - Inicio de sesión
+- `/signup` - Registro (si está habilitado)
 
-## v2.2.0
+## 🔌 Integración con Backend
 
-###### Mar 21, 2022
+El frontend se comunica con el backend a través de:
+- **Context API**: `AxiosContext` proporciona una instancia configurada de Axios
+- **Base URL**: Configurada mediante `NEXT_PUBLIC_APP_BACKEND`
+- **Autenticación**: Tokens JWT enviados en el header `Authorization: Bearer <token>`
 
-- Fix Eslint errors
+## 📝 Scripts Disponibles
 
-## v2.1.0
+```bash
+# Desarrollo
+yarn dev              # Iniciar servidor de desarrollo
 
-###### Dec 28, 2021
+# Build
+yarn build            # Crear build de producción
+yarn export          # Exportar como sitio estático
+yarn start           # Iniciar servidor de producción
 
-- Add 5 new storefront variations
-- Fix small UI issues
+# Calidad de código
+yarn lint            # Ejecutar ESLint
+yarn fix:prettier    # Formatear código con Prettier
+```
 
-## v2.0.0
+## 🎨 Estilos y Temas
 
-###### Oct 28, 2021
+- El proyecto utiliza Material-UI (MUI) para los componentes
+- Los temas se configuran en `src/theme/`
+- Soporte para RTL (Right-to-Left) mediante `stylis-plugin-rtl`
 
-- Add JavaScript version
-- Add REST API to Grocery shop
-- Update to Next.js v12 and MUI v5.
+## 📦 Gestión de Estado
 
-## v1.2.0
+- **Context API**: Para estado global (autenticación, configuración)
+- **Local Storage**: Para persistencia de tokens y datos de usuario
+- **Estado Local**: React hooks (`useState`, `useEffect`) para estado de componentes
 
-###### Aug 25, 2021
+## 🔄 Flujo de Datos
 
-- Migrate makeStyles API to v5
-- Fix next/image issues
-- Add a new page &quot;Shop v4&quot;
+1. Usuario interactúa con la UI
+2. Componente llama a función del servicio/API
+3. AxiosContext envía request al backend con autenticación
+4. Backend procesa y responde
+5. Componente actualiza estado y re-renderiza
 
-## v1.1.0
+## 📧 Sistema de Emails
 
-###### Aug 12, 2021
+El frontend incluye un servicio reutilizable (`src/utils/emailService.js`) que proporciona:
+- `sendEmailWithTemplate()` - Enviar email con template HTML
+- `sendEmailWithBody()` - Enviar email con contenido directo
+- `sendLoginNotification()` - Notificación de login
+- `sendWelcomeEmail()` - Email de bienvenida
 
-- Add a new page &quot;Shop v3&quot;
+## 🐛 Debugging
 
-## v1.0.1
+- Los logs de desarrollo se muestran en la consola del navegador
+- Next.js incluye hot-reload para desarrollo rápido
+- Errores se muestran mediante notificaciones toast (notistack)
 
-###### Aug 1, 2021
+## 📄 Licencia
 
-- Fix dashboard mobile navigation
-
-## v1.0.0
-
-###### Jul 1, 2021
-
-Initial release
-
-### Roadmap
-
-1. More funcional cart, cookie
-2. List of all APIs/Functions
-
-### Doc points
-
-. app entry poin
-. page props
-. component props
-. SEO
-. Cart
-. navigation component structure and data structure
+Este proyecto es privado y de uso interno.
