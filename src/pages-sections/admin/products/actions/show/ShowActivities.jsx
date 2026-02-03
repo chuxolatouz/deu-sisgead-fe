@@ -25,28 +25,28 @@ export default function ShowDocument({ budgets }) {
 
 
   const handleDownload = async (archivo) => {
-  if (archivo.download_url) {
-    window.open(archivo.download_url, '_blank');
-  } else if (archivo.url) {
-    window.open(archivo.url, '_blank');
-  } else if (archivo.public_id) {
-    window.open(`https://f005.backblazeb2.com/b2api/v1/b2_download_file_by_id?fileId=${archivo.public_id}`, '_blank');
-  } else {
-    alert("No se encontró una URL válida para este archivo");
-  }
-};
+    if (archivo.download_url) {
+      window.open(archivo.download_url, '_blank');
+    } else if (archivo.url) {
+      window.open(archivo.url, '_blank');
+    } else if (archivo.public_id) {
+      window.open(`https://f005.backblazeb2.com/b2api/v1/b2_download_file_by_id?fileId=${archivo.public_id}`, '_blank');
+    } else {
+      alert("No se encontró una URL válida para este archivo");
+    }
+  };
 
   return (
     <>
       <StyledIconButton onClick={() => setIsOpen(true)}>
-        <Tooltip title="Ver Presupuesto">
+        <Tooltip title="Ver Actividad">
           <RemoveRedEyeIcon />
 
         </Tooltip>
       </StyledIconButton>
       <Dialog open={isOpen} fullWidth>
         <DialogTitle>
-          <H3> Archivos del presupuesto {budgets.descripcion} </H3>
+          <H3> Archivos de la actividad {budgets.descripcion} </H3>
         </DialogTitle>
         <DialogContent>
           <Box mt={2} mb={3}>
@@ -115,32 +115,32 @@ export default function ShowDocument({ budgets }) {
                   <TableCell>{archivo.nombre}</TableCell>
                   <TableCell>
                     <Button variant="outlined" onClick={() => handleDownload(archivo)}>Descargar</Button>
-                  </TableCell>                  
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Divider />
-          { budgets.status === "finished" && <Box>
-            <H3>Justificantes:</H3>
-            <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Nombre</TableCell>
-                <TableCell>Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {budgets?.archivos_aprobado?.map((archivo) => (
-                <TableRow key={archivo.nombre}>
-                  <TableCell>{archivo.nombre}</TableCell>
-                  <TableCell>
-                    <Button variant="outlined" onClick={() => handleDownload(archivo)}>Descargar</Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          <Divider />
+          {budgets.status === "finished" && <Box>
+            <H3>Justificantes:</H3>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell>Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {budgets?.archivos_aprobado?.map((archivo) => (
+                  <TableRow key={archivo.nombre}>
+                    <TableCell>{archivo.nombre}</TableCell>
+                    <TableCell>
+                      <Button variant="outlined" onClick={() => handleDownload(archivo)}>Descargar</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </Box>}
         </DialogContent>
         <DialogActions>

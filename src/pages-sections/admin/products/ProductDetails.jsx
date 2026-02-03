@@ -30,250 +30,251 @@ import AddRules from "./actions/add/AddRules";
 import FinishProject from "./actions/complete/FinishProject";
 import DownloadStartPDF from './actions/complete/DownloadStartPDF';
 import DownloadEndPDF from './actions/complete/DownloadEndPDF';
+import { formatMonto } from 'lib';
 
 // ===================================================================
 
 const ProductDetails = ({ product }) => {
-    const router = useRouter();
-    const [tab, setTab] = useState("0");
-    const [categories, setCategories] = useState([]);
-    const { api } = useApi();
-    const { enqueueSnackbar } = useSnackbar();
+  const router = useRouter();
+  const [tab, setTab] = useState("0");
+  const [categories, setCategories] = useState([]);
+  const { api } = useApi();
+  const { enqueueSnackbar } = useSnackbar();
 
-    const handleChange = (_, newValue) => {
-      setTab(newValue);
-    };
-    
-    
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    useEffect(() => {
-      // Solo al montar el componente: si hay tab en query, lo usamos
-      if (router.query.tab) {
-        setTab(router.query.tab);
-      }
-    }, []);
-    
+  const handleChange = (_, newValue) => {
+    setTab(newValue);
+  };
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    useEffect(() => {
-      api.get('/mostrar_categorias')
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    // Solo al montar el componente: si hay tab en query, lo usamos
+    if (router.query.tab) {
+      setTab(router.query.tab);
+    }
+  }, []);
+
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    api.get('/mostrar_categorias')
       .then((response) => {
         setCategories(response.data);
-      }).catch((error) => {    
-        console.log(error)        
-          if (error.response) {
-              enqueueSnackbar(error.response.data.message, { variant: 'error'})
-          } else {
-              enqueueSnackbar(error.message, { variant: 'error'})
-          }
+      }).catch((error) => {
+        console.log(error)
+        if (error.response) {
+          enqueueSnackbar(error.response.data.message, { variant: 'error' })
+        } else {
+          enqueueSnackbar(error.message, { variant: 'error' })
+        }
       })
-    }, [])
+  }, [])
 
-    const findCategory = (catValue) => {
-      const category = categories.find((c) => c.value === catValue);
-      if (!category) {
-        return catValue; // Return the original value if not found
-      }
-      // Return the name of the category if found
-      return category.nombre
+  const findCategory = (catValue) => {
+    const category = categories.find((c) => c.value === catValue);
+    if (!category) {
+      return catValue; // Return the original value if not found
     }
+    // Return the name of the category if found
+    return category.nombre
+  }
 
-    
+
   return (
     <Grid container spacing={3}>
-        <Grid item md={3} xs={12}>
-            <Card 
-                sx={{
-                    p: 3,
-                }}
-            >
-                <FlexBox alignItems="center" gap={4}>
-                    <H5 mt={0} mb={2}>
-                        Detalles
-                    </H5>
-                </FlexBox>
-                <Divider
-                    sx={{
-                    my: 2,
-                    }}
-                />
-                <FlexBox alignItems="left" gap={4}>
-                    <Span gap={4} color="grey.600">Saldo actual:</Span>                    
-                </FlexBox>
-                <FlexBox alignItems="left" gap={4}>
-                    <H3 mt={0} mb={2}>
-                            $ {product.balance}
-                    </H3>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={4}>
-                    <Span gap={4} color="grey.600">Saldo inicial:</Span>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={4}>
+      <Grid item md={3} xs={12}>
+        <Card
+          sx={{
+            p: 3,
+          }}
+        >
+          <FlexBox alignItems="center" gap={4}>
+            <H5 mt={0} mb={2}>
+              Detalles
+            </H5>
+          </FlexBox>
+          <Divider
+            sx={{
+              my: 2,
+            }}
+          />
+          <FlexBox alignItems="left" gap={4}>
+            <Span gap={4} color="grey.600">Saldo actual:</Span>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={4}>
+            <H3 mt={0} mb={2}>
+              {formatMonto(product.balance)}
+            </H3>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={4}>
+            <Span gap={4} color="grey.600">Saldo inicial:</Span>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={4}>
 
-                    <H5 mt={0} mb={2}>
-                        $ {product.balance_inicial}
-                    </H5>
-                </FlexBox>
+            <H5 mt={0} mb={2}>
+              {formatMonto(product.balance_inicial)}
+            </H5>
+          </FlexBox>
 
-                <Divider
-                    sx={{
-                    my: 2,
-                    }}
-                />
-                <FlexBox alignItems="left" gap={4}>
-                    <Span gap={4} color="grey.600">Fecha de inicio:</Span>
-                </FlexBox>
-                {product.fecha_inicio && (<FlexBox alignItems="left" gap={4}>
-                    <H6 mt={0} mb={2}>
-                        {format(new Date(product?.fecha_inicio), "dd/MM/yyyy")}
-                    </H6>
-                </FlexBox>)}
+          <Divider
+            sx={{
+              my: 2,
+            }}
+          />
+          <FlexBox alignItems="left" gap={4}>
+            <Span gap={4} color="grey.600">Fecha de inicio:</Span>
+          </FlexBox>
+          {product.fecha_inicio && (<FlexBox alignItems="left" gap={4}>
+            <H6 mt={0} mb={2}>
+              {format(new Date(product?.fecha_inicio), "dd/MM/yyyy")}
+            </H6>
+          </FlexBox>)}
 
-                <FlexBox alignItems="left" gap={4}>
-                    <Span gap={4} color="grey.600">Fecha de fin:</Span>
-                </FlexBox>
-                {product.fecha_fin && (<FlexBox alignItems="left" gap={4}>
+          <FlexBox alignItems="left" gap={4}>
+            <Span gap={4} color="grey.600">Fecha de fin:</Span>
+          </FlexBox>
+          {product.fecha_fin && (<FlexBox alignItems="left" gap={4}>
 
-                    <H6 mt={0} mb={2}>
-                        {format(new Date(product?.fecha_fin), "dd/MM/yyyy")}
-                    </H6>
-                </FlexBox>)}
-                <FlexBox alignItems="left" gap={4}>
-                    <Span gap={4} color="grey.600">Descripción:</Span>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={4}>
-                    <H6 mt={0} mb={2}>
-                        {product.descripcion}
+            <H6 mt={0} mb={2}>
+              {format(new Date(product?.fecha_fin), "dd/MM/yyyy")}
+            </H6>
+          </FlexBox>)}
+          <FlexBox alignItems="left" gap={4}>
+            <Span gap={4} color="grey.600">Descripción:</Span>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={4}>
+            <H6 mt={0} mb={2}>
+              {product.descripcion}
 
-                    </H6>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={4}>
-                    <Span gap={4} color="grey.600">Categoría:</Span>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={4}>
-                    {product.categoria ? <Chip label={findCategory(product.categoria)} /> : null }
-                </FlexBox>
-                <Divider
-                    sx={{
-                    my: 2,
-                    }}
-                />
-                <FlexBox alignItems="left" gap={2} sx={{ height: '33px'}}>
-                    {product.status?.completado?.includes(1) ? <Verify /> : <TodoList />}
-                    <Span gap={4} color={product.status?.completado?.includes(1) ? 'green' : 'grey.600'}>Agregar Balance</Span>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={2} sx={{ height: '33px'}}>
-                    {product.status?.completado?.includes(2) ? <Verify /> : <TodoList />}
-                    <Span gap={4} color={product.status?.completado?.includes(2) ? 'green' : 'grey.600'}>Usuarios</Span>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={2} sx={{ height: '33px'}}>
-                    {product.status?.completado?.includes(3) ? <Verify /> : <TodoList />}
-                    <Span gap={4} color={product.status?.completado?.includes(3) ? 'green' : 'grey.600'}>Líder Proyecto</Span>
-                </FlexBox>
-                <FlexBox alignItems="left" gap={2} sx={{ height: '33px'}}>
-                    {product.status?.completado?.includes(4) ? 
-                    <>
-                      <Verify /> 
-                      <Span gap={4} color={'green'}>Reglas de Distribución</Span>
-                    </>
-                    :
-                    <AddRules id={product._id}/>
-                    }
-                </FlexBox>
-                <FlexBox alignItems="left" gap={2} sx={{ height: '33px'}}>
-                    {product.status?.completado?.includes(5) ? 
-                    <>
-                      <Verify /> 
-                      <Span gap={4} color={'green'}>Reglas Fijas</Span>
-                    </>
-                    :
-                    <AddFixedRules id={product._id} />
-                    }
-                </FlexBox>
-                <Divider
-                    sx={{
-                      my: 2,
-                    }}
-                    />
-                {product.status?.completado.length === 5 && (
-                  <FlexBox alignItems="center" gap={2}>
-                    {product?.acta_inicio?.documento_url ? (
-                  <Button
-                    variant="outlined"
-                    href={product.acta_inicio.documento_url}
-                    target="_blank"
-                    rel="noopener"
-                    startIcon={<PictureAsPdfOutlined />}
-                  >
-                    Descargar Acta de Inicio
-                  </Button>
-                ) : (
-                  <DownloadStartPDF project={product} />
-                )}
-                  </FlexBox>
-                )}
-                {product.status?.completado.length === 5 && (
-                <Divider
-                    sx={{
-                      my: 2,
-                    }}
-                    /> 
-                  )}
-                {!product.status?.finished && (<FlexBox alignItems="center" gap={2}><FinishProject project={product} /></FlexBox>)}
-                {product.status?.finished && (
-                  <>
-                    <FlexBox alignItems="center" gap={2}>
-                      <DownloadEndPDF project={product} />
-                    </FlexBox>
+            </H6>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={4}>
+            <Span gap={4} color="grey.600">Categoría:</Span>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={4}>
+            {product.categoria ? <Chip label={findCategory(product.categoria)} /> : null}
+          </FlexBox>
+          <Divider
+            sx={{
+              my: 2,
+            }}
+          />
+          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
+            {product.status?.completado?.includes(1) ? <Verify /> : <TodoList />}
+            <Span gap={4} color={product.status?.completado?.includes(1) ? 'green' : 'grey.600'}>Agregar Balance</Span>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
+            {product.status?.completado?.includes(2) ? <Verify /> : <TodoList />}
+            <Span gap={4} color={product.status?.completado?.includes(2) ? 'green' : 'grey.600'}>Usuarios</Span>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
+            {product.status?.completado?.includes(3) ? <Verify /> : <TodoList />}
+            <Span gap={4} color={product.status?.completado?.includes(3) ? 'green' : 'grey.600'}>Líder Proyecto</Span>
+          </FlexBox>
+          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
+            {product.status?.completado?.includes(4) ?
+              <>
+                <Verify />
+                <Span gap={4} color={'green'}>Reglas de Distribución</Span>
+              </>
+              :
+              <AddRules id={product._id} />
+            }
+          </FlexBox>
+          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
+            {product.status?.completado?.includes(5) ?
+              <>
+                <Verify />
+                <Span gap={4} color={'green'}>Reglas Fijas</Span>
+              </>
+              :
+              <AddFixedRules id={product._id} />
+            }
+          </FlexBox>
+          <Divider
+            sx={{
+              my: 2,
+            }}
+          />
+          {product.status?.completado.length === 5 && (
+            <FlexBox alignItems="center" gap={2}>
+              {product?.acta_inicio?.documento_url ? (
+                <Button
+                  variant="outlined"
+                  href={product.acta_inicio.documento_url}
+                  target="_blank"
+                  rel="noopener"
+                  startIcon={<PictureAsPdfOutlined />}
+                >
+                  Descargar Acta de Inicio
+                </Button>
+              ) : (
+                <DownloadStartPDF project={product} />
+              )}
+            </FlexBox>
+          )}
+          {product.status?.completado.length === 5 && (
+            <Divider
+              sx={{
+                my: 2,
+              }}
+            />
+          )}
+          {!product.status?.finished && (<FlexBox alignItems="center" gap={2}><FinishProject project={product} /></FlexBox>)}
+          {product.status?.finished && (
+            <>
+              <FlexBox alignItems="center" gap={2}>
+                <DownloadEndPDF project={product} />
+              </FlexBox>
 
-                    {product?.acta_finalizacion?.documento_url && (
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        sx={{ mt: 2 }}
-                        onClick={() => window.open(product.acta_finalizacion.documento_url, '_blank')}
-                      >
-                        Descargar versión oficial
-                      </Button>
-                    )}
-                  </>
-                )} 
-            </Card>
-        </Grid>
-        <Grid item md={9} xs={12}>
-            <Card 
-                sx={{
-                    p: 3,
-                }}
-            >
-            <TabContext value={tab}>
-              <TabList onChange={handleChange} centered>
-                <Tab value="0" label="Detalles" />
-                <Tab value="1" label="Usuarios" />
-                <Tab value="2" label="Movimientos" />
-                <Tab value="3" label="Presupuestos" />
-                <Tab value="4" label="Logs" />
-              </TabList>
-              <Box>
-                <TabPanel value="0">
-                  <ProductReport id={product._id}/>
-                </TabPanel>
-                <TabPanel value="1">
-                  <ProductUsers id={product._id} users={product.miembros}/>
-                </TabPanel>
-                <TabPanel value="2">
-                  <ProductMovements id={product._id} />
-                </TabPanel>
-                <TabPanel value="3">
-                  <ProductBudget project={product} />
-                </TabPanel>
-                <TabPanel value="4">
-                  <ProductLogs id={product._id} />
-                </TabPanel>
-              </Box>
-            </TabContext>   
-            </Card>
-        </Grid>
+              {product?.acta_finalizacion?.documento_url && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  sx={{ mt: 2 }}
+                  onClick={() => window.open(product.acta_finalizacion.documento_url, '_blank')}
+                >
+                  Descargar versión oficial
+                </Button>
+              )}
+            </>
+          )}
+        </Card>
+      </Grid>
+      <Grid item md={9} xs={12}>
+        <Card
+          sx={{
+            p: 3,
+          }}
+        >
+          <TabContext value={tab}>
+            <TabList onChange={handleChange} centered>
+              <Tab value="0" label="Detalles" />
+              <Tab value="1" label="Usuarios" />
+              <Tab value="2" label="Movimientos" />
+              <Tab value="3" label="Actividades" />
+              <Tab value="4" label="Logs" />
+            </TabList>
+            <Box>
+              <TabPanel value="0">
+                <ProductReport id={product._id} />
+              </TabPanel>
+              <TabPanel value="1">
+                <ProductUsers id={product._id} users={product.miembros} />
+              </TabPanel>
+              <TabPanel value="2">
+                <ProductMovements id={product._id} />
+              </TabPanel>
+              <TabPanel value="3">
+                <ProductBudget project={product} />
+              </TabPanel>
+              <TabPanel value="4">
+                <ProductLogs id={product._id} />
+              </TabPanel>
+            </Box>
+          </TabContext>
+        </Card>
+      </Grid>
       {/* <Grid item md={3} xs={12}>
         <Card
           sx={{

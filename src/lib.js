@@ -66,13 +66,36 @@ function currency(price) {
 
   // const { publicRuntimeConfig } = getConfig();
   const roundedPrice = Math.round(price);
-  const formatCurrency = new Intl.NumberFormat("US", {
-    style: "currency",
-    currency: "USD",
+  const formatCurrency = new Intl.NumberFormat("es-VE", {
+    style: "decimal",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 
-  return formatCurrency.format(roundedPrice/100);
+  return `Bs. ${formatCurrency.format(roundedPrice / 100)}`;
 }
 
-export { renderProductCount, calculateDiscount, currency, getDateDifference };
+/**
+ * FORMAT A NUMBER TO VENEZUELAN CURRENCY FORMAT
+ * @param  amount - AMOUNT TO FORMAT (can be number or string with comma)
+ * @returns - RETURN FORMATTED AMOUNT WITH Bs. PREFIX
+ */
+function formatMonto(amount) {
+  // Manejar strings con coma (formato venezolano del backend)
+  let num = amount;
+  if (typeof amount === 'string') {
+    // Reemplazar coma por punto para parseo correcto
+    num = parseFloat(amount.replace(',', '.'));
+  }
+  num = Number(num) || 0;
+
+  const formatCurrency = new Intl.NumberFormat("es-VE", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `Bs. ${formatCurrency.format(num)}`;
+}
+
+export { renderProductCount, calculateDiscount, currency, getDateDifference, formatMonto };
+

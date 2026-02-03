@@ -5,6 +5,17 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale'
 
+// Helper function for Venezuelan currency format
+const formatMontoVE = (amount) => {
+  // Manejar strings con coma (formato venezolano del backend)
+  let num = amount;
+  if (typeof amount === 'string') {
+    num = parseFloat(amount.replace(',', '.'));
+  }
+  num = Number(num) || 0;
+  return `Bs. ${num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 
 // Create styles
 // Registrar fuente
@@ -53,11 +64,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
     marginBottom: 10,
-    marginTop:10,
+    marginTop: 10,
   },
 });
 
-function Acta({ project, movements = [], logs = [], budgets= [] }) {
+function Acta({ project, movements = [], logs = [], budgets = [] }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -87,8 +98,8 @@ function Acta({ project, movements = [], logs = [], budgets= [] }) {
         </View>
         <View style={styles.section}>
           <Text style={styles.textHeader}>Balance inicial y final</Text>
-          <Text style={styles.textBody}>{`El proyecto inicia con un balance de: $${project.balance_inicial}`}</Text>
-          <Text style={styles.textBody}>{`Finalizando con un total de: $${project.balance}`}</Text>
+          <Text style={styles.textBody}>{`El proyecto inicia con un balance de: ${formatMontoVE(project.balance_inicial)}`}</Text>
+          <Text style={styles.textBody}>{`Finalizando con un total de: ${formatMontoVE(project.balance)}`}</Text>
         </View>
         <View style={styles.section}>
           <Text style={styles.textHeader}>Reglas de distribución</Text>
@@ -103,7 +114,7 @@ function Acta({ project, movements = [], logs = [], budgets= [] }) {
           <Text style={styles.textBody}>Las reglas fijas implicadas en este proyecto son las siguientes:</Text>
           {project.regla_fija.reglas.map((regla) => (
             <Text style={styles.textBody} key={`${regla.nombre_regla}+${regla.monto}`}>
-              {`- ${regla.nombre_regla} con un monto de: ${Number.parseFloat(regla.monto).toFixed(2)}`}
+              {`- ${regla.nombre_regla} con un monto de: ${formatMontoVE(regla.monto)}`}
             </Text>
           ))}
         </View>
@@ -130,7 +141,7 @@ function Acta({ project, movements = [], logs = [], budgets= [] }) {
           <Text style={styles.textHeader}>Movimientos monetarios asociados al proyecto</Text>
           <View>
             {movements.map((item) => (
-              <Text style={styles.textBody} key={item._id.$oid}>{`accion: ${item.type} monto ${Number.parseFloat(item.amount).toFixed(2)} usuario: ${item.user}`}</Text>
+              <Text style={styles.textBody} key={item._id.$oid}>{`accion: ${item.type} monto ${formatMontoVE(item.amount)} usuario: ${item.user}`}</Text>
             ))}
           </View>
         </View>

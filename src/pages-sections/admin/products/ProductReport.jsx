@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Card, Grid, Typography, Box } from '@mui/material';
-import { 
-    LineChart, 
-    Line, 
-    XAxis, 
-    YAxis, 
-    Tooltip, 
-    ResponsiveContainer, 
-    PieChart, 
-    Pie, 
-    Cell, 
-    Legend,
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts';
 import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from 'notistack';
 import { uniqueId } from 'lodash';
+import { formatMonto } from 'lib';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -34,33 +35,33 @@ export default function ProjectReport({ id }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: id es la única dependencia necesaria
   useEffect(() => {
     if (id) {
-        api.get(`/proyecto/${id}/reporte`)
+      api.get(`/proyecto/${id}/reporte`)
         .then((res) => {
-            // El backend devuelve balance_history y egresos_tipo (snake_case)
-            const balanceHistory = Array.isArray(res.data?.balance_history) 
-                ? res.data.balance_history 
-                : [];
-            const egresosPorTipo = Array.isArray(res.data?.egresos_tipo) 
-                ? res.data.egresos_tipo 
-                : [];
-            const resumen = res.data?.resumen || {};
-            
-            setBalanceHistory(balanceHistory);
-            setEgresosPorTipo(egresosPorTipo);
-            setSummary({
-                ingresos: resumen.ingresos || 0,
-                egresos: resumen.egresos || 0,
-                presupuestos: resumen.presupuestos || 0,
-                represupuestos: resumen.represupuestos || 0,
-                miembros: resumen.miembros || 0
-            });
+          // El backend devuelve balance_history y egresos_tipo (snake_case)
+          const balanceHistory = Array.isArray(res.data?.balance_history)
+            ? res.data.balance_history
+            : [];
+          const egresosPorTipo = Array.isArray(res.data?.egresos_tipo)
+            ? res.data.egresos_tipo
+            : [];
+          const resumen = res.data?.resumen || {};
+
+          setBalanceHistory(balanceHistory);
+          setEgresosPorTipo(egresosPorTipo);
+          setSummary({
+            ingresos: resumen.ingresos || 0,
+            egresos: resumen.egresos || 0,
+            presupuestos: resumen.presupuestos || 0,
+            represupuestos: resumen.represupuestos || 0,
+            miembros: resumen.miembros || 0
+          });
         })
         .catch((err) => {
-            console.error("Error al cargar el reporte:", err);
-            enqueueSnackbar("Error al cargar el reporte", { variant: 'error' });
-            // Asegurar que los estados sean arrays vacíos en caso de error
-            setBalanceHistory([]);
-            setEgresosPorTipo([]);
+          console.error("Error al cargar el reporte:", err);
+          enqueueSnackbar("Error al cargar el reporte", { variant: 'error' });
+          // Asegurar que los estados sean arrays vacíos en caso de error
+          setBalanceHistory([]);
+          setEgresosPorTipo([]);
         });
     }
   }, [id]);
@@ -119,28 +120,28 @@ export default function ProjectReport({ id }) {
           <Typography variant="h6" gutterBottom>Resumen del Proyecto</Typography>
           <Grid container spacing={2} justifyContent="center">
             {[
-                { label: "Ingresos", value: `$${(summary.ingresos || 0).toFixed(2)}`, color: 'text.primary' },
-                { label: "Egresos", value: `$${(summary.egresos || 0).toFixed(2)}`, color: 'error.main' },
-                { label: "Presupuestos Finalizados", value: summary.presupuestos },
-                { label: "Presupuestos Nuevos", value: summary.represupuestos },
-                { label: "Miembros", value: summary.miembros }
+              { label: "Ingresos", value: formatMonto(summary.ingresos || 0), color: 'text.primary' },
+              { label: "Egresos", value: formatMonto(summary.egresos || 0), color: 'error.main' },
+              { label: "Actividades Finalizadas", value: summary.presupuestos },
+              { label: "Actividades Nuevas", value: summary.represupuestos },
+              { label: "Miembros", value: summary.miembros }
             ].map((item) => (
-                <Grid item xs={6} md={2.4} key={item.label}>
+              <Grid item xs={6} md={2.4} key={item.label}>
                 <Box display="flex" flexDirection="column" alignItems="center">
-                    <Typography 
-                    variant="subtitle2" 
-                    align="center" 
+                  <Typography
+                    variant="subtitle2"
+                    align="center"
                     sx={{ minHeight: 40 }} // <- fuerza altura uniforme
-                    >
+                  >
                     {item.label}
-                    </Typography>
-                    <Typography variant="h6" color={item.color || 'text.primary'}>
+                  </Typography>
+                  <Typography variant="h6" color={item.color || 'text.primary'}>
                     {item.value}
-                    </Typography>
+                  </Typography>
                 </Box>
-                </Grid>
+              </Grid>
             ))}
-            </Grid>
+          </Grid>
         </Card>
       </Grid>
     </Grid>

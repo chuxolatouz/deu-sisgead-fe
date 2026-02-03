@@ -4,6 +4,17 @@ import {
 } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 
+// Helper function for Venezuelan currency format
+const formatMontoVE = (amount) => {
+  // Manejar strings con coma (formato venezolano del backend)
+  let num = amount;
+  if (typeof amount === 'string') {
+    num = parseFloat(amount.replace(',', '.'));
+  }
+  num = Number(num) || 0;
+  return `Bs. ${num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 
 // Create styles
 const styles = StyleSheet.create({
@@ -61,7 +72,7 @@ function Acta({ project }) {
         </View>
         <View style={styles.section}>
           <Text style={styles.textHeader}>Balance inicial</Text>
-          <Text style={`El proyecto inicia con un monto de $${styles.textHeader}`}>{project.balance_inicial}</Text>
+          <Text style={styles.textBody}>{`El proyecto inicia con un monto de: ${formatMontoVE(project.balance_inicial)}`}</Text>
         </View>
         <View style={styles.section}>
           <Text style={styles.textHeader}>Miembros involucrados</Text>

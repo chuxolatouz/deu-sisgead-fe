@@ -61,7 +61,7 @@ export const weeklyChartOptions = (theme) => ({
       show: false,
     },
     y: {
-      formatter: (val) => `$${val}`,
+      formatter: (val) => `Bs. ${Number(val).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     },
   },
   plotOptions: {
@@ -171,7 +171,7 @@ export const totalOrderChartOptions = (theme) => ({
       show: false,
     },
     y: {
-      formatter: (val) => `$${val}`,
+      formatter: (val) => `Bs. ${Number(val).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     },
   },
   plotOptions: {

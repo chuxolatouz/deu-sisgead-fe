@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Table,
   TableHead,
@@ -13,9 +13,9 @@ import {
 import TablePagination from 'components/data-table/TablePagination';
 import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from 'notistack';
-import BudgetStatus from './budget/BudgetStatus';
-import BudgetActions from './budget/BudgetActions';
-import AddBudget from './actions/add/AddBudget';
+import ActivityStatus from './activity/ActivityStatus';
+import ActivityActions from './activity/ActivityActions';
+import AddActivity from './actions/add/AddActivity';
 
 function Documentos({ project }) {
   const [count, setCount] = useState(0);
@@ -28,8 +28,7 @@ function Documentos({ project }) {
     setPagination(value);
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
+  const fetchActivities = useCallback(() => {
     api
       .get(`/proyecto/${project._id}/documentos?page=${pagination - 1}&limit=10`)
       .then((response) => {
@@ -37,16 +36,21 @@ function Documentos({ project }) {
         setCount(response.data.count || 1);
       }).catch((error) => {
         if (error.response) {
-            enqueueSnackbar(error.response.data.message, { variant: 'error'})
+          enqueueSnackbar(error.response.data.message, { variant: 'error' })
         } else {
-            enqueueSnackbar(error.message, { variant: 'error'})
+          enqueueSnackbar(error.message, { variant: 'error' })
         }
-    })
+      })
+  }, [api, project._id, pagination, enqueueSnackbar]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    fetchActivities();
   }, [pagination]);
 
   return (
     <Box>
-      <AddBudget project={project} />
+      <AddActivity project={project} />
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
           <TableHead>
@@ -59,7 +63,7 @@ function Documentos({ project }) {
           </TableHead>
           {documentos.length ? (
             <TableBody>
-              { documentos.map((action) => (
+              {documentos.map((action) => (
                 <TableRow
                   key={`${action._id.$oid}-row`}
                   sx={{ '&:last-child td, &:last-child th': { border: 0 }, height: '50px' }}
@@ -69,10 +73,10 @@ function Documentos({ project }) {
                   </TableCell>
                   <TableCell key={`${action._id.$oid}-archivos-length`}>{action.archivos?.length}</TableCell>
                   <TableCell key={`${action._id.$oid}-status`}>
-                    <BudgetStatus budget={action} />
+                    <ActivityStatus budget={action} onComplete={fetchActivities} />
                   </TableCell>
                   <TableCell key={`${action._id.$oid}-archivos-dialog`}>
-                    <BudgetActions budget={action}/>
+                    <ActivityActions budget={action} />
                   </TableCell>
                 </TableRow>
               ))}

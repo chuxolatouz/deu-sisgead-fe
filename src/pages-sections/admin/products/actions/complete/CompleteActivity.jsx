@@ -1,22 +1,22 @@
 import { useState } from "react";
 import {
-    Dialog,
-    DialogContent,
-    DialogActions,
-    DialogTitle,
-    Button,
-    Chip,
-    InputLabel,
-    OutlinedInput,
-    Box,
-    FormControl
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  Button,
+  Chip,
+  InputLabel,
+  OutlinedInput,
+  Box,
+  FormControl
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import DropZone from 'components/DropZone';
 import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from 'notistack';
 
-function CerrarDocumento({ budget }) {
+function CerrarActividad({ budget, onComplete }) {
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState('');
   const [amount, setAmount] = useState(0);
@@ -33,6 +33,18 @@ function CerrarDocumento({ budget }) {
     if (budget.status !== 'finished') {
       setIsOpen(true);
     }
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    // Limpiar campos del formulario
+    setText('');
+    setAmount(0);
+    setFiles([]);
+    setReferencia('');
+    setMontoTransferencia('');
+    setBanco('');
+    setCuentaContable('');
   };
   const handleCrearDoc = () => {
     setSubmitting(true);
@@ -53,13 +65,18 @@ function CerrarDocumento({ budget }) {
     formData.append('cuenta_contable', cuentaContable);
 
     api.post('/documento_cerrar', formData).then((response) => {
-      setIsOpen(false);
-      enqueueSnackbar(response.data.mensaje, {variant: 'success' });
+      handleClose();
+      enqueueSnackbar(response.data.mensaje, { variant: 'success' });
+
+      // Recargar la lista de actividades
+      if (onComplete) {
+        onComplete();
+      }
     }).catch((error) => {
       if (error.response) {
-          enqueueSnackbar(error.response.data.mensaje, { variant: 'error'})
+        enqueueSnackbar(error.response.data.error || error.response.data.mensaje, { variant: 'error' })
       } else {
-          enqueueSnackbar(error.mensaje, { variant: 'error'})
+        enqueueSnackbar(error.message || 'Error al completar la actividad', { variant: 'error' })
       }
     }).finally(() => {
       setSubmitting(false);
@@ -74,8 +91,8 @@ function CerrarDocumento({ budget }) {
 
   return (
     <Box>
-      <Chip color="primary" onClick={handleClickStatus} clickable variant="outlined" label="Asignar Monto"/>
-      <Dialog open={isOpen}>
+      <Chip color="primary" onClick={handleClickStatus} clickable variant="outlined" label="Asignar Monto" />
+      <Dialog open={isOpen} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>
           Agrega la factura de {budget.descripcion}
         </DialogTitle>
@@ -83,7 +100,7 @@ function CerrarDocumento({ budget }) {
           <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
             <InputLabel id="documentos">Descripcion</InputLabel>
             <OutlinedInput
-              
+
               label="Descripción"
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -92,7 +109,7 @@ function CerrarDocumento({ budget }) {
           <FormControl fullWidth type="number" variant="outlined" sx={{ mt: 2 }}>
             <InputLabel id="monto">Monto</InputLabel>
             <OutlinedInput
-              
+
               label="Monto"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -140,14 +157,14 @@ function CerrarDocumento({ budget }) {
               onChange={(e) => setCuentaContable(e.target.value)}
             />
           </FormControl>
-          <DropZone onChange={(file) => { setFiles(file)}} />
+          <DropZone onChange={(file) => { setFiles(file) }} />
           <aside>
             <h4>Files</h4>
             <ul>{fileList}</ul>
           </aside>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" color="error" onClick={() => setIsOpen(false)}>
+          <Button variant="outlined" color="error" onClick={handleClose}>
             Cancelar
           </Button>
           <LoadingButton
@@ -156,7 +173,7 @@ function CerrarDocumento({ budget }) {
             onClick={handleCrearDoc}
             loading={submitting}
           >
-            Subir Presupuesto
+            Subir Actividad
           </LoadingButton>
         </DialogActions>
       </Dialog>
@@ -164,4 +181,4 @@ function CerrarDocumento({ budget }) {
   );
 }
 
-export default CerrarDocumento;
+export default CerrarActividad;

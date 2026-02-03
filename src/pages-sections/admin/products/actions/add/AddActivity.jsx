@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import {
-    Dialog, 
-    DialogContent, 
-    DialogActions, 
-    DialogTitle,
-    Button,
-    OutlinedInput,
-    InputLabel,
-    Select,
-    MenuItem,
-    Box,
-    FormControl,
-    CircularProgress
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  Button,
+  OutlinedInput,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+  FormControl,
+  CircularProgress
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import DropZone from 'components/DropZone';
@@ -32,9 +32,9 @@ function AddBudget({ project }) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setLoadingObjectives(true);
       api.get(`/proyecto/${project._id}/objetivos`)
@@ -63,9 +63,9 @@ function AddBudget({ project }) {
       enqueueSnackbar(response.data.mensaje, { variant: 'success' });
     }).catch((error) => {
       if (error?.response?.data?.message) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error'})
+        enqueueSnackbar(error.response.data.message, { variant: 'error' })
       } else {
-          enqueueSnackbar(error.message, { variant: 'error'})
+        enqueueSnackbar(error.message, { variant: 'error' })
       }
     }).finally(() => {
       setSubmitting(false);
@@ -129,7 +129,7 @@ function AddBudget({ project }) {
             />
           </FormControl>
 
-          <DropZone onChange={(file) => { setFiles(file)}} />
+          <DropZone onChange={(file) => { setFiles(file) }} />
           <aside>
             <h4>Files</h4>
             <ul>{fileList}</ul>
@@ -145,7 +145,7 @@ function AddBudget({ project }) {
             onClick={handleCrearDoc}
             loading={submitting}
           >
-            Subir Presupuesto
+            Subir Actividad
           </LoadingButton>
         </DialogActions>
       </Dialog>

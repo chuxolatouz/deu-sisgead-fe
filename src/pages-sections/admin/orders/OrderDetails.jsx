@@ -191,7 +191,7 @@ const OrderDetails = ({ order }) => {
             <Paragraph color="grey.600">Shipping fee:</Paragraph>
 
             <FlexBox alignItems="center" gap={1} maxWidth={100}>
-              <Paragraph>$</Paragraph>
+              <Paragraph>Bs.</Paragraph>
               <TextField
                 color="info"
                 defaultValue={10}
@@ -205,7 +205,7 @@ const OrderDetails = ({ order }) => {
             <Paragraph color="grey.600">Discount(%):</Paragraph>
 
             <FlexBox alignItems="center" gap={1} maxWidth={100}>
-              <Paragraph>$</Paragraph>
+              <Paragraph>Bs.</Paragraph>
               <TextField
                 color="info"
                 defaultValue={order.discount}
