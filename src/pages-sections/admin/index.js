@@ -17,6 +17,7 @@ import SellerRow from "./sellers/SellerRow";
 import SellerPackageCard from "./sellers/SellerPackageCard";
 import DepartamentoRow from "./departamentos/DepartamentoRow";
 import DepartamentoForm from "./departamentos/DepartamentoForm";
+import AccountRow from "./accounts/AccountRow";
 import {
   StatusWrapper,
   StyledTableRow,
@@ -44,6 +45,7 @@ export {
   SellerPackageCard,
   DepartamentoRow,
   DepartamentoForm,
+  AccountRow,
   // styled components
   StatusWrapper,
   StyledTableRow,

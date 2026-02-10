@@ -53,6 +53,16 @@ export const getNavigations = () => {
       icon: duotone.Customers,
       path: "/admin/customers",
     },
+    {
+      name: "Configuración",
+      icon: duotone.AccountSetting,
+      children: [
+        {
+          name: "Cuentas Contables",
+          path: "/admin/accounts",
+        },
+      ],
+    },
   ];
 
   // Add Departamentos section only for super_admin when NOT in department context
