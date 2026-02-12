@@ -5,8 +5,10 @@ import {
   Grid,
   Divider,
   Chip,
+  Button,
   Tab
 } from "@mui/material";
+import { PictureAsPdfOutlined } from "@mui/icons-material";
 import {
   TabContext,
   TabList,
@@ -30,6 +32,7 @@ import AddRules from "./actions/add/AddRules";
 import FinishProject from "./actions/complete/FinishProject";
 import DownloadStartPDF from './actions/complete/DownloadStartPDF';
 import DownloadEndPDF from './actions/complete/DownloadEndPDF';
+import DownloadProjectDocuments from './actions/download/DownloadProjectDocuments';
 import { formatMonto } from 'lib';
 
 // ===================================================================
@@ -191,6 +194,12 @@ const ProductDetails = ({ product }) => {
               <AddFixedRules id={product._id} />
             }
           </FlexBox>
+          <Divider
+            sx={{
+              my: 2,
+            }}
+          />
+          <DownloadProjectDocuments project={product} />
           <Divider
             sx={{
               my: 2,
