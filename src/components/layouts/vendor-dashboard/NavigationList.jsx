@@ -72,6 +72,12 @@ export const getNavigations = () => {
         },
       ],
     });
+
+    baseNavigations.push({
+      name: "Cuentas Contables",
+      icon: duotone.Invoice,
+      path: "/admin/accounts",
+    });
   }
 
   // Add Logout at the end
