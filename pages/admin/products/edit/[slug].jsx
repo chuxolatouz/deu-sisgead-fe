@@ -8,7 +8,7 @@ import VendorDashboardLayout from "components/layouts/vendor-dashboard";
 import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
 import { parseISO } from "date-fns";
-import { ro } from "date-fns/locale";
+import ro from "date-fns/locale/ro/index.js";
 
 // =============================================================================
 EditProduct.getLayout = function getLayout(page) {

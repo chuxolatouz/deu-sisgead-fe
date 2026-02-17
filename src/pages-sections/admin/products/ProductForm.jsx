@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button, Card, Grid, MenuItem, TextField, Box } from "@mui/material";
-import addDays from "date-fns/addDays";
-import parseISO from "date-fns/parseISO";
+import { addDays, parseISO } from "date-fns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import enGB from 'date-fns/locale/en-GB';
+import enGB from 'date-fns/locale/en-GB/index.js';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { Formik, FieldArray } from "formik";
 import { useApi } from "contexts/AxiosContext";

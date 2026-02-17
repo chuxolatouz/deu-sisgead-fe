@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import format from "date-fns/format";
+import { format } from "date-fns";
 import { AccessTime, CommentOutlined } from "@mui/icons-material";
 import LazyImage from "components/LazyImage";
 import { FlexBox } from "components/flex-box";

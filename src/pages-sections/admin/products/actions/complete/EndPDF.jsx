@@ -3,7 +3,7 @@ import {
   Document, Text, Page, View, StyleSheet, Font,
 } from '@react-pdf/renderer';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale'
+import es from 'date-fns/locale/es/index.js'
 
 // Helper function for Venezuelan currency format
 const formatMontoVE = (amount) => {

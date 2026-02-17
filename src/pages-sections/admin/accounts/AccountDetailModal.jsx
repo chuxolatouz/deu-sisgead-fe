@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { Close, Edit, ToggleOff, ToggleOn } from "@mui/icons-material";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import es from "date-fns/locale/es/index.js";
 import { useApi } from "contexts/AxiosContext";
 
 const AccountDetailModal = ({ open, onClose, account, onEdit, onToggleStatus }) => {
