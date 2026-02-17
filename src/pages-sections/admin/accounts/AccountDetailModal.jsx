@@ -15,11 +15,15 @@ import {
 import { Close, Edit, ToggleOff, ToggleOn } from "@mui/icons-material";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useApi } from "contexts/AxiosContext";
 
 const AccountDetailModal = ({ open, onClose, account, onEdit, onToggleStatus }) => {
+  const { user } = useApi();
+  const isSuperAdmin = user?.role === 'super_admin';
+  
   if (!account) return null;
 
-  const { code, name, description, active, created_at, updated_at, created_by } =
+  const { code, name, description, departments = [], active, created_at, updated_at, created_by } =
     account;
 
   const formatDate = (dateString) => {
@@ -108,6 +112,31 @@ const AccountDetailModal = ({ open, onClose, account, onEdit, onToggleStatus }) 
                 {description || "Sin descripción"}
               </Typography>
             </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary" mb={1}>
+                Departamentos:
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {departments && departments.length > 0 ? (
+                  departments.map((dept, index) => (
+                    <Chip
+                      key={index}
+                      label={dept}
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                    />
+                  ))
+                ) : (
+                  <Chip
+                    label="Todos los departamentos"
+                    size="small"
+                    variant="outlined"
+                    color="default"
+                  />
+                )}
+              </Box>
+            </Grid>
           </Grid>
         </Box>
 
@@ -144,32 +173,39 @@ const AccountDetailModal = ({ open, onClose, account, onEdit, onToggleStatus }) 
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Box display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            color={active ? "error" : "success"}
-            startIcon={active ? <ToggleOff /> : <ToggleOn />}
-            onClick={handleToggle}
-          >
-            {active ? "Desactivar" : "Activar"}
+        {isSuperAdmin ? (
+          <Box display="flex" gap={1}>
+            <Button
+              variant="outlined"
+              color={active ? "error" : "success"}
+              startIcon={active ? <ToggleOff /> : <ToggleOn />}
+              onClick={handleToggle}
+            >
+              {active ? "Desactivar" : "Activar"}
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Edit />}
+              onClick={() => {
+                onEdit(account);
+                onClose();
+              }}
+            >
+              Editar Cuenta
+            </Button>
+          </Box>
+        ) : (
+          <Button onClick={onClose} color="primary" variant="contained">
+            Cerrar
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Edit />}
-            onClick={() => {
-              onEdit(account);
-              onClose();
-            }}
-          >
-            Editar Cuenta
-          </Button>
-        </Box>
+        )}
       </DialogActions>
     </Dialog>
   );
 };
 
 export default AccountDetailModal;
+
 
 

@@ -12,8 +12,9 @@ import {
   CircularProgress,
   Typography,
   Alert,
+  Chip,
 } from "@mui/material";
-import { Refresh } from "@mui/icons-material";
+import { Refresh, Info } from "@mui/icons-material";
 import VendorDashboardLayout from "components/layouts/vendor-dashboard";
 import Scrollbar from "components/Scrollbar";
 import { H3 } from "components/Typography";
@@ -27,6 +28,7 @@ import AccountDetailModal from "pages-sections/admin/accounts/AccountDetailModal
 import accountsService from "utils/__api__/accounts";
 import { useSnackbar } from "notistack";
 import { debounce } from "lodash";
+import { useApi } from "contexts/AxiosContext";
 
 // TABLE HEADING DATA LIST
 const tableHeading = [
@@ -43,6 +45,11 @@ const tableHeading = [
   {
     id: "description",
     label: "Descripción",
+    align: "left",
+  },
+  {
+    id: "departments",
+    label: "Departamentos",
     align: "left",
   },
   {
@@ -65,6 +72,7 @@ AccountsList.getLayout = function getLayout(page) {
 
 export default function AccountsList() {
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useApi();
 
   // Estados
   const [accounts, setAccounts] = useState([]);
@@ -208,12 +216,31 @@ export default function AccountsList() {
     <Box py={4}>
       <H3 mb={2}>Catálogo de Cuentas Contables</H3>
 
+      {/* Mensaje informativo según rol */}
+      <Alert 
+        severity="info" 
+        icon={<Info />}
+        sx={{ mb: 2 }}
+      >
+        {user?.role === 'super_admin' 
+          ? '🔓 Viendo todas las cuentas del sistema'
+          : '👁️ Solo lectura: Viendo cuentas de tu departamento'
+        }
+      </Alert>
+
       {/* Barra de búsqueda principal */}
-      <SearchArea
-        buttonText="Nueva Cuenta"
-        searchPlaceholder="Buscar cuentas..."
-        handleBtnClick={handleCreate}
-      />
+      {user?.role === 'super_admin' ? (
+        <SearchArea
+          buttonText="Nueva Cuenta"
+          searchPlaceholder="Buscar cuentas..."
+          handleBtnClick={handleCreate}
+        />
+      ) : (
+        <SearchArea
+          searchPlaceholder="Buscar cuentas..."
+          hideButton
+        />
+      )}
 
       {/* Filtros avanzados */}
       <Card sx={{ mb: 2, p: 2 }}>
@@ -293,27 +320,32 @@ export default function AccountsList() {
               <TableBody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: 40 }}>
+                    <td colSpan={6} style={{ textAlign: "center", padding: 40 }}>
                       <CircularProgress />
                     </td>
                   </tr>
                 ) : showEmptyState ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: 40 }}>
+                    <td colSpan={6} style={{ textAlign: "center", padding: 40 }}>
                       <Typography variant="h6" color="text.secondary" mb={1}>
                         No hay cuentas registradas
                       </Typography>
                       <Typography variant="body2" color="text.secondary" mb={2}>
-                        Comienza creando tu primera cuenta contable
+                        {user?.role === 'super_admin' 
+                          ? 'Comienza creando tu primera cuenta contable'
+                          : 'No hay cuentas disponibles para tu departamento'
+                        }
                       </Typography>
-                      <Button variant="contained" onClick={handleCreate}>
-                        + Crear Primera Cuenta
-                      </Button>
+                      {user?.role === 'super_admin' && (
+                        <Button variant="contained" onClick={handleCreate}>
+                          + Crear Primera Cuenta
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ) : showNoResults ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: 40 }}>
+                    <td colSpan={6} style={{ textAlign: "center", padding: 40 }}>
                       <Typography variant="h6" color="text.secondary" mb={1}>
                         No se encontraron cuentas
                       </Typography>

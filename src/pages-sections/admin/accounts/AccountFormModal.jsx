@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,12 +11,20 @@ import {
   Switch,
   CircularProgress,
   IconButton,
+  Chip,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  OutlinedInput,
+  Alert,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "notistack";
 import accountsService from "utils/__api__/accounts";
+import { useApi } from "contexts/AxiosContext";
 
 // Esquema de validación con Yup
 const validationSchema = Yup.object({
@@ -30,31 +38,69 @@ const validationSchema = Yup.object({
     .required("El nombre es requerido")
     .min(3, "El nombre debe tener al menos 3 caracteres"),
   description: Yup.string(),
+  departments: Yup.array(),
   active: Yup.boolean(),
 });
 
 const AccountFormModal = ({ open, onClose, account, onSuccess }) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { user, api } = useApi();
   const isEditing = Boolean(account);
+  const isSuperAdmin = user?.role === 'super_admin';
+
+  // Estado para departamentos
+  const [departamentos, setDepartamentos] = useState([]);
+  const [loadingDepartamentos, setLoadingDepartamentos] = useState(false);
+
+  // Cargar departamentos al abrir el modal (solo para super_admin)
+  useEffect(() => {
+    if (open && isSuperAdmin) {
+      loadDepartamentos();
+    }
+  }, [open, isSuperAdmin]);
+
+  const loadDepartamentos = async () => {
+    try {
+      setLoadingDepartamentos(true);
+      const response = await api.get('/departamentos?limit=100');
+      const departamentosList = Array.isArray(response.data)
+        ? response.data
+        : (response.data.departamentos || response.data.request_list || []);
+      setDepartamentos(departamentosList);
+    } catch (error) {
+      console.error('Error al cargar departamentos:', error);
+      enqueueSnackbar('Error al cargar departamentos', { variant: 'warning' });
+    } finally {
+      setLoadingDepartamentos(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
       code: account?.code || "",
       name: account?.name || "",
       description: account?.description || "",
+      departments: account?.departments || [],
       active: account?.active !== undefined ? account.active : true,
     },
     validationSchema,
     enableReinitialize: true,
     onSubmit: async (values, { setSubmitting }) => {
       try {
+        // Preparar datos según el rol
+        const dataToSend = { ...values };
+        if (!isSuperAdmin) {
+          // Los usuarios normales no envían departments, se asigna automáticamente en el backend
+          delete dataToSend.departments;
+        }
+
         if (isEditing) {
-          await accountsService.updateAccount(account._id, values);
+          await accountsService.updateAccount(account._id, dataToSend);
           enqueueSnackbar("✓ Cuenta actualizada con éxito", {
             variant: "success",
           });
         } else {
-          await accountsService.createAccount(values);
+          await accountsService.createAccount(dataToSend);
           enqueueSnackbar("✓ Cuenta creada con éxito", {
             variant: "success",
           });
@@ -164,6 +210,72 @@ const AccountFormModal = ({ open, onClose, account, onSuccess }) => {
             />
           </Box>
 
+          {/* Selector de Departamentos - Solo para Super Admin */}
+          {isSuperAdmin ? (
+            <Box mb={2}>
+              <FormControl fullWidth>
+                <InputLabel id="departments-label">Departamentos</InputLabel>
+                <Select
+                  labelId="departments-label"
+                  multiple
+                  name="departments"
+                  value={formik.values.departments}
+                  onChange={formik.handleChange}
+                  input={<OutlinedInput label="Departamentos" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.length === 0 ? (
+                        <Chip label="Todos los departamentos" size="small" />
+                      ) : (
+                        selected.map((value) => {
+                          const dept = departamentos.find(d => d._id === value);
+                          return (
+                            <Chip 
+                              key={value} 
+                              label={dept?.nombre || value} 
+                              size="small" 
+                            />
+                          );
+                        })
+                      )}
+                    </Box>
+                  )}
+                  disabled={loadingDepartamentos}
+                >
+                  {loadingDepartamentos ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} /> Cargando...
+                    </MenuItem>
+                  ) : departamentos.length > 0 ? (
+                    departamentos.map((dept) => (
+                      <MenuItem key={dept._id} value={dept._id}>
+                        {dept.nombre}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>No hay departamentos disponibles</MenuItem>
+                  )}
+                </Select>
+                <Box
+                  component="p"
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "text.secondary",
+                    mt: 0.5,
+                  }}
+                >
+                  Selecciona los departamentos que pueden usar esta cuenta. Si no seleccionas ninguno, estará disponible para todos.
+                </Box>
+              </FormControl>
+            </Box>
+          ) : (
+            <Box mb={2}>
+              <Alert severity="info" sx={{ fontSize: "0.85rem" }}>
+                Esta cuenta se asignará automáticamente a tu departamento.
+              </Alert>
+            </Box>
+          )}
+
           <Box>
             <FormControlLabel
               control={
@@ -212,5 +324,6 @@ const AccountFormModal = ({ open, onClose, account, onSuccess }) => {
 };
 
 export default AccountFormModal;
+
 
 
