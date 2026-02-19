@@ -5,10 +5,7 @@ import { useRouter } from 'next/router';
 export const AxiosContext = createContext();
 
 export function AxiosProvider({ children }) {
-  // const BASE_URL = "https://gpt-seven-blond.vercel.app/";
-  // const BASE_URL = "http://localhost:5000/"
-  
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_BACKEND || "http://localhost:5000/";
+  const BASE_URL = (process.env.NEXT_PUBLIC_APP_BACKEND || "").trim();
   const router = useRouter();
 
   const user = useMemo(() => {
@@ -31,7 +28,8 @@ export function AxiosProvider({ children }) {
     }
 
     const axiosInstance = axios.create({
-      baseURL: BASE_URL,
+      // Si no hay env explícita, usa rutas relativas al host actual (evita hardcode localhost/127).
+      baseURL: BASE_URL || undefined,
       headers: requestHeaders,
       transformRequest: [(data, headers) => {
         if (data instanceof FormData) {
