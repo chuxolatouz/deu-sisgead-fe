@@ -9,10 +9,12 @@ import {
   InputLabel,
   OutlinedInput,
   Box,
-  FormControl
+  FormControl,
+  TextField
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import DropZone from 'components/DropZone';
+import AccountSelector from 'components/accounting/AccountSelector';
 import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from 'notistack';
 
@@ -24,7 +26,8 @@ function CerrarActividad({ budget, onComplete }) {
   const [referencia, setReferencia] = useState('');
   const [montoTransferencia, setMontoTransferencia] = useState('');
   const [banco, setBanco] = useState('');
-  const [cuentaContable, setCuentaContable] = useState('');
+  const [cuentaContableCode, setCuentaContableCode] = useState(null);
+  const [cuentaContableManual, setCuentaContableManual] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const { api } = useApi();
@@ -44,7 +47,8 @@ function CerrarActividad({ budget, onComplete }) {
     setReferencia('');
     setMontoTransferencia('');
     setBanco('');
-    setCuentaContable('');
+    setCuentaContableCode(null);
+    setCuentaContableManual('');
   };
   const handleCrearDoc = () => {
     setSubmitting(true);
@@ -62,6 +66,7 @@ function CerrarActividad({ budget, onComplete }) {
     formData.append('referencia', referencia);
     formData.append('monto_transferencia', montoTransferencia);
     formData.append('banco', banco);
+    const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
     formData.append('cuenta_contable', cuentaContable);
 
     api.post('/documento_cerrar', formData).then((response) => {
@@ -148,15 +153,28 @@ function CerrarActividad({ budget, onComplete }) {
             />
           </FormControl>
 
-          <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
-            <InputLabel htmlFor="cuentaContable">Cuenta Contable</InputLabel>
-            <OutlinedInput
-              id="cuentaContable"
-              label="Cuenta Contable"
-              value={cuentaContable}
-              onChange={(e) => setCuentaContable(e.target.value)}
+          <Box sx={{ mt: 2, mb: 2 }}>
+            <AccountSelector
+              label="Cuenta Contable (opcional)"
+              value={cuentaContableCode}
+              group="EGRESO"
+              year={2025}
+              allowHeaders={false}
+              helperText="Búsqueda en catálogo EGRESO. Si no aplica, puedes usar texto libre abajo."
+              onChange={(accountCode) => {
+                setCuentaContableCode(accountCode);
+              }}
             />
-          </FormControl>
+            <TextField
+              sx={{ mt: 2 }}
+              fullWidth
+              label="Cuenta Contable (texto libre opcional)"
+              value={cuentaContableManual}
+              onChange={(event) => setCuentaContableManual(event.target.value)}
+              disabled={Boolean(cuentaContableCode)}
+              helperText={cuentaContableCode ? 'Hay una cuenta de catálogo seleccionada; limpia la selección para usar texto libre.' : ''}
+            />
+          </Box>
           <DropZone onChange={(file) => { setFiles(file) }} />
           <aside>
             <h4>Files</h4>
