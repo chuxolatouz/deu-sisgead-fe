@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Document, Text, Page, View, StyleSheet,
 } from '@react-pdf/renderer';
-import { format } from 'date-fns';
+import { formatSafeDate } from 'lib';
 
 // Helper function for Venezuelan currency format
 const formatMontoVE = (amount) => {
@@ -82,7 +82,7 @@ function Acta({ project }) {
           <Text>
             Caracas
             {' '}
-            {format(new Date(project.fecha_inicio), "dd MMM, yyyy")}
+            {formatSafeDate(project.fecha_inicio)}
           </Text>
         </View>
       </Page>

@@ -3,16 +3,13 @@ import { Edit, RemoveRedEye } from "@mui/icons-material";
 import { Box, Tooltip } from "@mui/material";
 import { FlexBox } from "components/flex-box";
 import { Paragraph } from "components/Typography";
-import { currency } from "lib";
-import { format } from "date-fns";
+import { currency, formatSafeDate } from "lib";
 import {
   StyledTableRow,
   StyledTableCell,
   StyledIconButton,
 } from "../StyledComponents";
-
 import DeleteProduct from 'pages-sections/admin/products/actions/delete/DeleteProduct';
-
 import CircularProgress from "components/circular-progress/CircularProgress";
 import { useApi } from "contexts/AxiosContext";
 
@@ -21,16 +18,14 @@ import { useApi } from "contexts/AxiosContext";
 // ========================================================================
 
 const ProductRow = ({ product, fetchProducts }) => {
-  
+
   const { nombre, balance, fecha_inicio, fecha_fin, _id, status } = product;
 
   const router = useRouter();
   const { user } = useApi();
-  const fechaInicio = fecha_inicio?.$date || fecha_inicio;
-  const fechaFin = fecha_fin?.$date || fecha_fin;
   return (
     // biome-ignore lint/a11y/useSemanticElements: <explanation>
-<StyledTableRow tabIndex={-1} role="checkbox">
+    <StyledTableRow tabIndex={-1} role="checkbox">
       <StyledTableCell align="left">
         <FlexBox alignItems="center" gap={1.5}>
           {/* <Avatar
@@ -46,10 +41,10 @@ const ProductRow = ({ product, fetchProducts }) => {
         </FlexBox>
       </StyledTableCell>
       <StyledTableCell>
-        <Paragraph>{format(new Date(fechaInicio), "dd/MM/yyyy")}</Paragraph>
+        <Paragraph>{formatSafeDate(fecha_inicio)}</Paragraph>
       </StyledTableCell>
       <StyledTableCell>
-        <Paragraph>{format(new Date(fechaFin), "dd/MM/yyyy")}</Paragraph>
+        <Paragraph>{formatSafeDate(fecha_fin)}</Paragraph>
       </StyledTableCell>
 
 
@@ -81,22 +76,22 @@ const ProductRow = ({ product, fetchProducts }) => {
       <StyledTableCell align="center">
         {(user.role === "admin" && !status?.finished) && <StyledIconButton
           onClick={() => router.push(`/admin/products/edit/${_id.$oid}`)}
-          >
+        >
           <Tooltip title="Editar info de Proyecto">
             <Edit />
           </Tooltip>
         </StyledIconButton>}
 
-        <StyledIconButton 
+        <StyledIconButton
           onClick={() => router.push(`/admin/products/${_id.$oid}`)}
         >
           <Tooltip title="Ver detalles de Proyecto">
             <RemoveRedEye />
           </Tooltip>
         </StyledIconButton>
-        {user.role ==="admin" && <DeleteProduct product={product} fetchProducts={fetchProducts} />}
+        {user.role === "admin" && <DeleteProduct product={product} fetchProducts={fetchProducts} />}
       </StyledTableCell>
-      
+
     </StyledTableRow>
   );
 };

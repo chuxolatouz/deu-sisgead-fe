@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Document, Text, Page, View, StyleSheet, Font,
 } from '@react-pdf/renderer';
-import { format } from 'date-fns';
+import { formatSafeDate } from 'lib';
 import { es } from 'date-fns/locale'
 
 // Helper function for Venezuelan currency format
@@ -86,7 +86,7 @@ function Acta({ project, movements = [], logs = [], budgets = [] }) {
         </View>
         <View style={styles.sectionDown}>
           <Text style={styles.textBody}>
-            Caracas {format(new Date(project.fecha_inicio), 'dd MMM, yyyy', { locale: es })}
+            Caracas {formatSafeDate(project.fecha_inicio, 'dd MMM, yyyy', 'N/A', { locale: es })}
           </Text>
         </View>
       </Page>
@@ -132,7 +132,7 @@ function Acta({ project, movements = [], logs = [], budgets = [] }) {
           <View>
             {logs.map((item) => (
               <Text style={styles.textBody} key={item._id.$oid}>
-                {`fecha: ${format(new Date(item.fecha_creacion.$date), 'dd MMM, yyyy HH:mm', { locale: es })} accion: ${item.mensaje}`}
+                {`fecha: ${formatSafeDate(item.fecha_creacion, 'dd MMM, yyyy HH:mm', 'N/A', { locale: es })} accion: ${item.mensaje}`}
               </Text>
             ))}
           </View>

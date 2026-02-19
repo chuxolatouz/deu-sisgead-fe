@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 // import moment from 'moment';
-import { format } from 'date-fns';
+import { formatSafeDate } from 'lib';
 import {
   Table,
   TableContainer,
@@ -18,7 +18,7 @@ import { useSnackbar } from 'notistack';
 
 
 function Logs({ id }) {
-  const fixDate = (date) => format(new Date(date.$date), "dd/MM/yyyy")  
+  const fixDate = (date) => formatSafeDate(date)
   const [pagination, setPagination] = useState(1);
   const [actions, setActions] = useState([]);
   const [count, setCount] = useState(0);
@@ -39,11 +39,11 @@ function Logs({ id }) {
       })
       .catch((error) => {
         if (error.response) {
-            enqueueSnackbar(error.response.data.message, { variant: 'error'})
+          enqueueSnackbar(error.response.data.message, { variant: 'error' })
         } else {
-            enqueueSnackbar(error.message, { variant: 'error'})
+          enqueueSnackbar(error.message, { variant: 'error' })
         }
-    })
+      })
   }, [pagination]);
 
   return (
@@ -58,7 +58,7 @@ function Logs({ id }) {
           </TableHead>
           {actions.length ? (
             <TableBody>
-              { actions.map((action) => (
+              {actions.map((action) => (
                 <TableRow
                   key={action._id.$oid}
                   sx={{ '&:last-child td, &:last-child th': { border: 0 }, height: '50px' }}

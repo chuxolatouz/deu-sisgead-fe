@@ -16,7 +16,7 @@ import {
 } from "@mui/lab";
 import Verify from "components/icons/Verify";
 import TodoList from 'components/icons/duotone/TodoList';
-import { format } from "date-fns";
+import { formatSafeDate, formatMonto } from 'lib';
 import { useRouter } from "next/router";
 import { FlexBox } from "components/flex-box";
 import { H3, H5, H6, Span } from "components/Typography";
@@ -33,7 +33,6 @@ import FinishProject from "./actions/complete/FinishProject";
 import DownloadStartPDF from './actions/complete/DownloadStartPDF';
 import DownloadEndPDF from './actions/complete/DownloadEndPDF';
 import DownloadProjectDocuments from './actions/download/DownloadProjectDocuments';
-import { formatMonto } from 'lib';
 
 // ===================================================================
 
@@ -129,7 +128,7 @@ const ProductDetails = ({ product }) => {
           </FlexBox>
           {product.fecha_inicio && (<FlexBox alignItems="left" gap={4}>
             <H6 mt={0} mb={2}>
-              {format(new Date(product?.fecha_inicio), "dd/MM/yyyy")}
+              {formatSafeDate(product?.fecha_inicio)}
             </H6>
           </FlexBox>)}
 
@@ -139,7 +138,7 @@ const ProductDetails = ({ product }) => {
           {product.fecha_fin && (<FlexBox alignItems="left" gap={4}>
 
             <H6 mt={0} mb={2}>
-              {format(new Date(product?.fecha_fin), "dd/MM/yyyy")}
+              {formatSafeDate(product?.fecha_fin)}
             </H6>
           </FlexBox>)}
           <FlexBox alignItems="left" gap={4}>

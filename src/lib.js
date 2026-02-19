@@ -1,6 +1,6 @@
 // import getConfig from "next/config";
 import ceil from "lodash/ceil";
-import { differenceInMinutes } from "date-fns";
+import { differenceInMinutes, isValid, format } from "date-fns";
 // import currencyJs from "currency.js";
 
 /**
@@ -9,8 +9,42 @@ import { differenceInMinutes } from "date-fns";
  * @returns string - formatted from now
  */
 
+/**
+ * SAFELY PARSE A DATE (handles strings, Date objects, and MongoDB $date objects)
+ * @param  date - incoming date data
+ * @returns Date | null
+ */
+function parseSafeDate(date) {
+  if (!date) return null;
+
+  let parsedDate;
+  if (date.$date) {
+    // Handle MongoDB extended JSON format
+    parsedDate = new Date(date.$date);
+  } else {
+    parsedDate = new Date(date);
+  }
+
+  return isValid(parsedDate) ? parsedDate : null;
+}
+
+/**
+ * SAFELY FORMAT A DATE
+ * @param  date - incoming date data
+ * @param  formatStr - date-fns format string
+ * @param  fallback - string to return if date is invalid
+ * @returns string
+ */
+function formatSafeDate(date, formatStr = "dd/MM/yyyy", fallback = "N/A", options = {}) {
+  const parsedDate = parseSafeDate(date);
+  if (!parsedDate) return fallback;
+  return format(parsedDate, formatStr, options);
+}
+
 function getDateDifference(date) {
-  let diff = differenceInMinutes(new Date(), new Date(date));
+  const parsedDate = parseSafeDate(date);
+  if (!parsedDate) return "N/A";
+  let diff = differenceInMinutes(new Date(), parsedDate);
   if (diff < 60) return diff + " minutes ago";
   diff = ceil(diff / 60);
   if (diff < 24) return `${diff} hour${diff === 0 ? "" : "s"} ago`;
@@ -97,5 +131,13 @@ function formatMonto(amount) {
   return `Bs. ${formatCurrency.format(num)}`;
 }
 
-export { renderProductCount, calculateDiscount, currency, getDateDifference, formatMonto };
+export {
+  renderProductCount,
+  calculateDiscount,
+  currency,
+  getDateDifference,
+  formatMonto,
+  parseSafeDate,
+  formatSafeDate
+};
 
