@@ -36,7 +36,7 @@ const tableHeading = [
 
 const GROUPS = ['', 'PASIVO', 'INGRESO', 'EGRESO'];
 const FILTER_SCOPE_TYPES = ['department', 'project', 'global'];
-const TRANSFER_SCOPE_TYPES = ['department', 'project'];
+const TRANSFER_SCOPE_TYPES = ['department', 'project', 'global'];
 const MOVEMENT_SCOPE_TYPES = ['department', 'project', 'global'];
 const SCOPE_TYPE_LABELS = {
   department: 'Departamento',
@@ -77,8 +77,10 @@ export default function AccountsPage() {
   });
   const [transferForm, setTransferForm] = useState({
     year: 2025,
-    scopeType: 'department',
-    scopeId: '',
+    fromScopeType: 'department',
+    fromScopeId: '',
+    toScopeType: 'department',
+    toScopeId: '',
     fromAccountCode: '',
     fromAccountDescription: '',
     toAccountCode: '',
@@ -100,7 +102,8 @@ export default function AccountsPage() {
   const { enqueueSnackbar } = useSnackbar();
 
   const scopeOptions = scope.scopeType === 'project' ? projects : departments;
-  const transferScopeOptions = transferForm.scopeType === 'project' ? projects : departments;
+  const transferFromScopeOptions = transferForm.fromScopeType === 'project' ? projects : departments;
+  const transferToScopeOptions = transferForm.toScopeType === 'project' ? projects : departments;
   const movementScopeOptions = movementForm.scopeType === 'project' ? projects : departments;
 
   const fetchAccounts = () => {
@@ -214,8 +217,12 @@ export default function AccountsPage() {
   };
 
   const handleTransfer = () => {
-    if (!transferForm.scopeId.trim()) {
-      enqueueSnackbar('scopeId es obligatorio para transferir', { variant: 'error' });
+    if (transferForm.fromScopeType !== 'global' && !transferForm.fromScopeId.trim()) {
+      enqueueSnackbar('fromScopeId es obligatorio para transferir', { variant: 'error' });
+      return;
+    }
+    if (transferForm.toScopeType !== 'global' && !transferForm.toScopeId.trim()) {
+      enqueueSnackbar('toScopeId es obligatorio para transferir', { variant: 'error' });
       return;
     }
     if (!transferForm.fromAccountCode || !transferForm.toAccountCode || !transferForm.amount) {
@@ -225,8 +232,10 @@ export default function AccountsPage() {
 
     const payload = {
       year: Number(transferForm.year),
-      scopeType: transferForm.scopeType,
-      scopeId: transferForm.scopeId.trim(),
+      fromScopeType: transferForm.fromScopeType,
+      fromScopeId: transferForm.fromScopeType === 'global' ? 'global' : transferForm.fromScopeId.trim(),
+      toScopeType: transferForm.toScopeType,
+      toScopeId: transferForm.toScopeType === 'global' ? 'global' : transferForm.toScopeId.trim(),
       fromAccountCode: transferForm.fromAccountCode.trim(),
       toAccountCode: transferForm.toAccountCode.trim(),
       fromAccountDescription: transferForm.fromAccountDescription || '',
@@ -241,6 +250,8 @@ export default function AccountsPage() {
         setOpenTransfer(false);
         setTransferForm((prev) => ({
           ...prev,
+          fromScopeId: '',
+          toScopeId: '',
           fromAccountCode: '',
           fromAccountDescription: '',
           toAccountCode: '',
@@ -425,7 +436,16 @@ export default function AccountsPage() {
               Cargar Saldo
             </Button>
             <Button variant="outlined" color="secondary" onClick={() => {
-              setTransferForm((prev) => ({ ...prev, year: filters.year, scopeType: scope.scopeType, scopeId: scope.scopeId }));
+              const defaultScopeType = scope.scopeType || 'department';
+              const defaultScopeId = defaultScopeType === 'global' ? 'global' : scope.scopeId;
+              setTransferForm((prev) => ({
+                ...prev,
+                year: filters.year,
+                fromScopeType: defaultScopeType,
+                toScopeType: defaultScopeType,
+                fromScopeId: defaultScopeId || '',
+                toScopeId: defaultScopeId || ''
+              }));
               setOpenTransfer(true);
             }}>Transferir</Button>
             <Button variant="contained" onClick={() => setOpenCreate(true)}>Nueva Cuenta</Button>
@@ -504,10 +524,17 @@ export default function AccountsPage() {
           <Box display="flex" flexDirection="column" gap={2} mt={1}>
             <TextField label="Año" type="number" value={transferForm.year} onChange={(event) => setTransferForm((prev) => ({ ...prev, year: Number(event.target.value || 2025) }))} />
             <TextField
-              label="Scope Type"
+              label="Scope Origen"
               select
-              value={transferForm.scopeType}
-              onChange={(event) => setTransferForm((prev) => ({ ...prev, scopeType: event.target.value, scopeId: '' }))}
+              value={transferForm.fromScopeType}
+              onChange={(event) => {
+                const nextType = event.target.value;
+                setTransferForm((prev) => ({
+                  ...prev,
+                  fromScopeType: nextType,
+                  fromScopeId: nextType === 'global' ? 'global' : ''
+                }));
+              }}
             >
               {TRANSFER_SCOPE_TYPES.map((scopeTypeValue) => (
                 <MenuItem key={scopeTypeValue} value={scopeTypeValue}>
@@ -515,24 +542,68 @@ export default function AccountsPage() {
                 </MenuItem>
               ))}
             </TextField>
-            {transferScopeOptions.length > 0 ? (
+            {transferForm.fromScopeType === 'global' ? (
+              <TextField label="Scope ID Origen" value="global" disabled required />
+            ) : transferFromScopeOptions.length > 0 ? (
               <TextField
-                label="Scope ID"
+                label="Scope ID Origen"
                 select
-                value={transferForm.scopeId}
-                onChange={(event) => setTransferForm((prev) => ({ ...prev, scopeId: event.target.value }))}
+                value={transferForm.fromScopeId}
+                onChange={(event) => setTransferForm((prev) => ({ ...prev, fromScopeId: event.target.value }))}
                 required
               >
                 <MenuItem value="">Selecciona...</MenuItem>
-                {transferScopeOptions.map((item) => (
+                {transferFromScopeOptions.map((item) => (
                   <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
                 ))}
               </TextField>
             ) : (
               <TextField
-                label="Scope ID"
-                value={transferForm.scopeId}
-                onChange={(event) => setTransferForm((prev) => ({ ...prev, scopeId: event.target.value }))}
+                label="Scope ID Origen"
+                value={transferForm.fromScopeId}
+                onChange={(event) => setTransferForm((prev) => ({ ...prev, fromScopeId: event.target.value }))}
+                required
+              />
+            )}
+            <TextField
+              label="Scope Destino"
+              select
+              value={transferForm.toScopeType}
+              onChange={(event) => {
+                const nextType = event.target.value;
+                setTransferForm((prev) => ({
+                  ...prev,
+                  toScopeType: nextType,
+                  toScopeId: nextType === 'global' ? 'global' : ''
+                }));
+              }}
+            >
+              {TRANSFER_SCOPE_TYPES.map((scopeTypeValue) => (
+                <MenuItem key={scopeTypeValue} value={scopeTypeValue}>
+                  {SCOPE_TYPE_LABELS[scopeTypeValue] || scopeTypeValue}
+                </MenuItem>
+              ))}
+            </TextField>
+            {transferForm.toScopeType === 'global' ? (
+              <TextField label="Scope ID Destino" value="global" disabled required />
+            ) : transferToScopeOptions.length > 0 ? (
+              <TextField
+                label="Scope ID Destino"
+                select
+                value={transferForm.toScopeId}
+                onChange={(event) => setTransferForm((prev) => ({ ...prev, toScopeId: event.target.value }))}
+                required
+              >
+                <MenuItem value="">Selecciona...</MenuItem>
+                {transferToScopeOptions.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
+                ))}
+              </TextField>
+            ) : (
+              <TextField
+                label="Scope ID Destino"
+                value={transferForm.toScopeId}
+                onChange={(event) => setTransferForm((prev) => ({ ...prev, toScopeId: event.target.value }))}
                 required
               />
             )}
