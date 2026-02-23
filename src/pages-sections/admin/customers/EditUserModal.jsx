@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -18,18 +18,22 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
   const [nombre, setNombre] = useState(user?.nombre || "");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    setNombre(user?.nombre || "");
+    setPassword("");
+  }, [user]);
+
   const handleUpdate = () => {
     const payload = {
-      id_usuario: user._id.$oid,
       nombre,
     };
 
-    if (user.is_admin && password.trim() !== "") {
+    if (password.trim() !== "") {
       payload.password = password;
     }
 
     api
-      .post("/editar_usuario", payload)
+      .put(`/editar_usuario/${user._id.$oid}`, payload)
       .then((response) => {
         enqueueSnackbar(response.data.message, { variant: "success" });
         onSuccess();
@@ -59,7 +63,7 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
           />
         </Box>
 
-        {user.is_admin && (
+        {Boolean(user?.rol === 'super_admin' || user?.is_admin) && (
           <Box mb={2}>
             <TextField
               label="Nueva Contraseña (opcional)"

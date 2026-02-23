@@ -22,13 +22,14 @@ export function DepartmentProvider({ children }) {
 
       const response = await api.get('/contexto_departamento', { headers });
       const data = response.data;
+      const responseDepartmentId = data.departmentId || data.departamento_id;
 
       if (data.usando_contexto && data.departamento) {
-        setDepartamentoContexto(data.departamento_id);
+        setDepartamentoContexto(responseDepartmentId);
         setDepartamentoData(data.departamento);
         // Guardar en localStorage
         localStorage.setItem('departmentContext', JSON.stringify({
-          departamentoId: data.departamento_id,
+          departamentoId: responseDepartmentId,
           departamentoData: data.departamento
         }));
       } else {
@@ -83,12 +84,13 @@ export function DepartmentProvider({ children }) {
       });
 
       const data = response.data;
+      const responseDepartmentId = data.departmentId || data.departamento_id;
       if (data.usando_contexto && data.departamento) {
-        setDepartamentoContexto(data.departamento_id);
+        setDepartamentoContexto(responseDepartmentId);
         setDepartamentoData(data.departamento);
         // Guardar en localStorage
         localStorage.setItem('departmentContext', JSON.stringify({
-          departamentoId: data.departamento_id,
+          departamentoId: responseDepartmentId,
           departamentoData: data.departamento
         }));
         return true;

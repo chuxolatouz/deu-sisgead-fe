@@ -34,15 +34,16 @@ function DownloadProjectDocuments({ project }) {
   const [loadingInforme, setLoadingInforme] = useState(false);
 
   const projectName = slugify(project?.nombre);
+  const projectDepartmentId = project?.departmentId || project?.departamento_id;
 
   const handleDownloadActa = async () => {
     setLoadingActa(true);
     try {
       // Fetch departamento name
       let departamentoNombre = 'N/A';
-      if (project?.departamento_id) {
+      if (projectDepartmentId) {
         try {
-          const deptResponse = await api.get(`/departamentos/mostrar_departamento/${project.departamento_id}`);
+          const deptResponse = await api.get(`/departamentos/${projectDepartmentId}`);
           departamentoNombre = deptResponse.data?.nombre || 'N/A';
         } catch (err) {
           console.warn('Could not fetch department name:', err);
@@ -60,7 +61,7 @@ function DownloadProjectDocuments({ project }) {
             monto = monto / 100;
           }
           return {
-            cuenta: doc.cuenta_contable || 'N/A',
+            cuenta: doc.accountCode || doc.cuenta_contable || 'N/A',
             descripcion: doc.descripcion || 'N/A',
             monto: monto,
           };

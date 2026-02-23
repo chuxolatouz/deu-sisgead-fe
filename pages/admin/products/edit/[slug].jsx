@@ -67,10 +67,19 @@ export default function EditProduct() {
   }, [slug]);
 
   const handleFormSubmit = (values) => {
+    const payload = {
+      nombre: values.nombre,
+      categoria: values.categoria,
+      descripcion: values.descripcion,
+      fechaInicio: values.fecha_inicio,
+      fechaFin: values.fecha_fin,
+      objetivoGeneral: values.objetivo_general,
+      objetivosEspecificos: values.objetivos_especificos,
+    };
 
     if(slug) {
         api.put(
-          `/actualizar_proyecto/${slug}`, values
+          `/actualizar_proyecto/${slug}`, payload
           ).then((response) => {
             enqueueSnackbar(response.data.message, { variant: 'success'})
             push("/admin/products/");

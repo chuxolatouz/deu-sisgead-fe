@@ -54,9 +54,9 @@ function AddBudget({ project }) {
     for (const file of files) {
       formData.append('files', file);
     }
-    formData.append('proyecto_id', project._id);
+    formData.append('projectId', project._id);
     formData.append('monto', amount);
-    formData.append('objetivo_especifico', selectedObjective);
+    formData.append('specificObjective', selectedObjective);
 
     api.post('/documento_crear', formData).then((response) => {
       setIsOpen(false);

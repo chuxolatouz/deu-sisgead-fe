@@ -35,8 +35,8 @@ function ProjectUsers({ users, id }) {
   const handleConfirmDelete = () => {
   // Elimina el usuario con el ID `userIdToDelete` y cierra el cuadro de diálogo.
     const data = {
-      proyecto_id: id,
-      usuario_id: userIdToDelete,
+      projectId: id,
+      userId: userIdToDelete,
     };
     api.patch('/eliminar_usuario_proyecto', data).then(() => {
       Router.reload();

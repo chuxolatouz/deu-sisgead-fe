@@ -37,12 +37,12 @@ function AsignarMiembro({ id }) {
     const collectedUser = users.find((user) => user._id.$oid === selectedUser);
     const collectedRole = roles.find((rol) => rol.value === selectedRole);
     const data = {
-      usuario: collectedUser,
+      user: collectedUser,
       role: collectedRole,
-      proyecto_id: id,
+      projectId: id,
     };
     // eslint-disable-next-line no-unused-vars
-    api.patch('asignar_usuario_proyecto', data).then(() => {
+    api.patch('/asignar_usuario_proyecto', data).then(() => {
       Router.reload();
     }).catch((error) => {
       if (error.response) {

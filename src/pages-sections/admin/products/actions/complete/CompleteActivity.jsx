@@ -32,6 +32,7 @@ function CerrarActividad({ budget, onComplete }) {
 
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
+  const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
   const handleClickStatus = () => {
     if (budget.status !== 'finished') {
       setIsOpen(true);
@@ -59,15 +60,15 @@ function CerrarActividad({ budget, onComplete }) {
     files.forEach((file) => {
       formData.append('files', file);
     });
-    formData.append('proyecto_id', budget.project_id.$oid);
+    formData.append('projectId', resolvedProjectId || '');
     formData.append('monto', amount);
-    formData.append('doc_id', budget._id.$oid);
+    formData.append('docId', budget._id.$oid);
     formData.append('description', budget.descripcion)
     formData.append('referencia', referencia);
-    formData.append('monto_transferencia', montoTransferencia);
+    formData.append('transferAmount', montoTransferencia);
     formData.append('banco', banco);
     const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
-    formData.append('cuenta_contable', cuentaContable);
+    formData.append('accountCode', cuentaContable);
 
     api.post('/documento_cerrar', formData).then((response) => {
       handleClose();

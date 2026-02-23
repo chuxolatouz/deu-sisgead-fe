@@ -28,7 +28,7 @@ function Acciones({ id }) {
 
   const handleAgregarBalance = ({ fetchBalance }) => {
     const balanceParsed = Number.parseFloat(value).toFixed(2);
-    const data = { project_id: id, balance: balanceParsed };
+    const data = { projectId: id, balance: balanceParsed };
     api.patch('/asignar_balance', data).then(() => {
       handleClose();
       Router.reload();

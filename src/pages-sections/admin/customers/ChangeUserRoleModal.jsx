@@ -9,20 +9,26 @@ import {
     Select,
     MenuItem,
   } from "@mui/material";
-  import { useState } from "react";
+  import { useEffect, useState } from "react";
   import { useApi } from "contexts/AxiosContext";
   import { useSnackbar } from "notistack";
   
   const ChangeRoleUserModal = ({ open, onClose, user, onSuccess }) => {
-    const [selectedRole, setSelectedRole] = useState(user?.is_admin ? "admin" : "user");
-    const { api } = useApi();
-    const { enqueueSnackbar } = useSnackbar();
+  const [selectedRole, setSelectedRole] = useState(
+    user?.rol || user?.role || (user?.is_admin ? "super_admin" : "usuario")
+  );
+  const { api } = useApi();
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    setSelectedRole(user?.rol || user?.role || (user?.is_admin ? "super_admin" : "usuario"));
+  }, [user]);
   
-    const handleChangeRole = () => {
-      const data = {
-        id: user._id.$oid,
-        nuevo_rol: selectedRole === "admin",
-      };
+  const handleChangeRole = () => {
+    const data = {
+      id: user._id.$oid,
+      rol: selectedRole,
+    };
   
       api.post("/cambiar_rol_usuario", data)
         .then((res) => {
@@ -51,8 +57,9 @@ import {
               label="Rol"
               onChange={(e) => setSelectedRole(e.target.value)}
             >
-              <MenuItem value="user">Usuario</MenuItem>
-              <MenuItem value="admin">Administrador</MenuItem>
+              <MenuItem value="usuario">Usuario</MenuItem>
+              <MenuItem value="admin_departamento">Admin Departamento</MenuItem>
+              <MenuItem value="super_admin">Super Admin</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>

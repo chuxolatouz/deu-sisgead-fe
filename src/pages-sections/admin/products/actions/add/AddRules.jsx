@@ -57,8 +57,8 @@ function AddRules({ id }) {
         }
         api.post(`/asignar_regla_distribucion`,
         { 
-            regla_distribucion: amounts,
-            proyecto_id: id
+            distributionRule: amounts,
+            projectId: id
          }
         ).then(() => {
             Router.reload();

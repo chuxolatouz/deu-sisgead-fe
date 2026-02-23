@@ -129,6 +129,18 @@ export const components = {
             },
           }),
       }),
+      containedPrimary: {
+        color: "#fff",
+        "&:hover": {
+          color: "#fff",
+        },
+      },
+      containedInfo: {
+        color: "#fff",
+        "&:hover": {
+          color: "#fff",
+        },
+      },
       sizeLarge: {
         padding: ".6rem 2.5rem",
       },

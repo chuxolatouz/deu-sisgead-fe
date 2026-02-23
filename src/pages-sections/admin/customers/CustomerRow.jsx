@@ -30,6 +30,7 @@ import EditUserModal from './EditUserModal';
 
 const CustomerRow = ({ customer, fetchUsers }) => {
   const { email, nombre, avatar } = customer;
+  const userRole = customer?.rol || customer?.role || (customer?.is_admin ? 'super_admin' : 'usuario');
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [openChangeRole, setOpenChangeRole] = useState(false);
   const [openEditUser, setOpenEditUser] = useState(false);
@@ -64,9 +65,9 @@ const CustomerRow = ({ customer, fetchUsers }) => {
           {/* <Avatar src={avatar} /> */}
           <Box>
             <Paragraph>{nombre}</Paragraph>
-            {customer.is_admin && (
+            {userRole !== 'usuario' && (
               <Chip
-                label="Admin"
+                label={userRole === 'super_admin' ? 'Super Admin' : 'Admin Departamento'}
                 size="small"
                 color="warning"
                 sx={{ mt: 0.5 }}

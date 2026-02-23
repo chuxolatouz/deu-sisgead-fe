@@ -13,6 +13,7 @@ import {
 
 const ShowUserModal = ({ open, onClose, user }) => {
   if (!user) return null;
+  const userRole = user?.rol || user?.role || (user?.is_admin ? 'super_admin' : 'usuario');
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
@@ -51,11 +52,9 @@ const ShowUserModal = ({ open, onClose, user }) => {
           <Typography variant="subtitle2" color="textSecondary">
             Tipo de cuenta:
           </Typography>
-          {user.is_admin ? (
-            <Chip label="Administrador" color="warning" />
-          ) : (
-            <Chip label="Usuario regular" variant="outlined" />
-          )}
+          {userRole === 'super_admin' && <Chip label="Super Admin" color="warning" />}
+          {userRole === 'admin_departamento' && <Chip label="Admin Departamento" color="info" />}
+          {userRole === 'usuario' && <Chip label="Usuario regular" variant="outlined" />}
         </Box>
       </DialogContent>
 

@@ -47,8 +47,8 @@ function AddFixedRules({ id }) {
     const handleAddRule = () => {
         api.post("/asignar_regla_fija/",
         { 
-            regla_id: selectedRule,
-            proyecto_id: id
+            ruleId: selectedRule,
+            projectId: id
          }
         ).then((response) => {
             Router.reload();

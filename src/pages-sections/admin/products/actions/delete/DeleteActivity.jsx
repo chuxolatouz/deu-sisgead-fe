@@ -14,6 +14,7 @@ import { StyledIconButton } from "pages-sections/admin";
 
 const DeleteBudget = ({ budget }) => {
     const [open, setOpen] = useState(false);
+    const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
     const { api } = useApi();
     const { enqueueSnackbar } = useSnackbar();
 
@@ -25,8 +26,8 @@ const DeleteBudget = ({ budget }) => {
     }
     const handleDelete = () => {
         const values = {
-            project_id: budget.project_id.$oid,
-            budget_id: budget._id.$oid
+            projectId: resolvedProjectId,
+            budgetId: budget._id.$oid
         }
         api.post('/documento_eliminar', values).then((response) => {
 

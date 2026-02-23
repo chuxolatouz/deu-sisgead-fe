@@ -17,7 +17,7 @@ const DeleteProduct = ({ product, fetchProducts }) => {
 
     const handleConfirmDelete = () => {
         const data = {
-            proyecto_id: product._id.$oid,
+            projectId: product._id.$oid,
         };
         api.post('/eliminar_proyecto', data).then((response) => {
           fetchProducts();

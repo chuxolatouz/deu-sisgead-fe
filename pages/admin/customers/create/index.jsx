@@ -34,7 +34,14 @@ export default function CreateProduct() {
   
 
   const handleFormSubmit = (values) => {
-    api.post('/registrar', values)
+    const payload = {
+      nombre: values.nombre,
+      email: values.email,
+      password: values.password,
+      rol: values.is_admin ? 'super_admin' : 'usuario'
+    };
+
+    api.post('/registrar', payload)
       .then((response) => {
         // Enviar email de bienvenida al nuevo usuario
         if (response.data && values.email) {

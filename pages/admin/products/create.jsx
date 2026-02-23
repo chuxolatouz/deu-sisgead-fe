@@ -40,7 +40,16 @@ export default function CreateProduct() {
   
 
   const handleFormSubmit = (values) => {
-    api.post('/crear_proyecto', values)
+    const payload = {
+      nombre: values.nombre,
+      categoria: values.categoria,
+      descripcion: values.descripcion,
+      fechaInicio: values.fecha_inicio,
+      fechaFin: values.fecha_fin,
+      objetivoGeneral: values.objetivo_general,
+      objetivosEspecificos: values.objetivos_especificos,
+    };
+    api.post('/crear_proyecto', payload)
       .then((response) => {
         router.push("/admin/products/");
       })

@@ -22,6 +22,9 @@ import { currency } from 'lib';
 
 export default function ShowDocument({ budgets }) {
   const [isOpen, setIsOpen] = useState(false);
+  const specificObjective = budgets?.specificObjective || budgets?.objetivo_especifico;
+  const transferAmount = budgets?.transferAmount || budgets?.monto_transferencia;
+  const accountCode = budgets?.accountCode || budgets?.cuenta_contable;
 
 
   const handleDownload = async (archivo) => {
@@ -50,13 +53,13 @@ export default function ShowDocument({ budgets }) {
         </DialogTitle>
         <DialogContent>
           <Box mt={2} mb={3}>
-            {budgets?.objetivo_especifico && (
+            {specificObjective && (
               <FlexBox alignItems="center" gap={1} mb={2}>
                 <Span color="grey.600" fontSize={14}>
                   Objetivo específico:
                 </Span>
                 <Span fontSize={14} fontWeight="bold">
-                  {budgets.objetivo_especifico}
+                  {specificObjective}
                 </Span>
               </FlexBox>
             )}
@@ -66,7 +69,7 @@ export default function ShowDocument({ budgets }) {
               <H3 mt={0} mb={0}>{currency(budgets.monto)}</H3>
             </FlexBox>
 
-            {budgets.status === "finished" && (budgets.referencia || budgets.monto_transferencia || budgets.banco || budgets.cuenta_contable) && (
+            {budgets.status === "finished" && (budgets.referencia || transferAmount || budgets.banco || accountCode) && (
               <Box mb={3}>
                 <Divider sx={{ mb: 2 }} />
                 <H3 mb={2}>Información de Transferencia</H3>
@@ -78,10 +81,10 @@ export default function ShowDocument({ budgets }) {
                   </FlexBox>
                 )}
 
-                {budgets.monto_transferencia && (
+                {transferAmount && (
                   <FlexBox alignItems="center" gap={1} mb={1}>
                     <Span color="grey.600">Monto Transferido:</Span>
-                    <Span fontWeight="bold">{currency(budgets.monto_transferencia)}</Span>
+                    <Span fontWeight="bold">{currency(transferAmount)}</Span>
                   </FlexBox>
                 )}
 
@@ -92,10 +95,10 @@ export default function ShowDocument({ budgets }) {
                   </FlexBox>
                 )}
 
-                {budgets.cuenta_contable && (
+                {accountCode && (
                   <FlexBox alignItems="center" gap={1}>
                     <Span color="grey.600">Cuenta Contable:</Span>
-                    <Span fontWeight="bold">{budgets.cuenta_contable}</Span>
+                    <Span fontWeight="bold">{accountCode}</Span>
                   </FlexBox>
                 )}
               </Box>

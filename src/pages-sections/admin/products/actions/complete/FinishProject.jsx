@@ -8,7 +8,7 @@ function FinishProject({ project }) {
     const { enqueueSnackbar } = useSnackbar();
     const handleFinish = () => {
         const values = {
-            proyecto_id: project._id
+            projectId: project._id
         }
         console.log(values);
         api.post('/finalizar_proyecto',values)
