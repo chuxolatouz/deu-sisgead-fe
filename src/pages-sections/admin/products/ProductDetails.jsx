@@ -25,6 +25,7 @@ import ProductMovements from "pages-sections/admin/products/ProductMovements";
 import ProductLogs from "pages-sections/admin/products/ProductLogs";
 import ProductBudget from "pages-sections/admin/products/ProductBudget";
 import ProductReport from "pages-sections/admin/products/ProductReport";
+import ProductAccounts from "pages-sections/admin/products/ProductAccounts";
 import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from 'notistack';
 import AddFixedRules from "./actions/add/AddFixedRules";
@@ -262,6 +263,7 @@ const ProductDetails = ({ product }) => {
               <Tab value="2" label="Movimientos" />
               <Tab value="3" label="Actividades" />
               <Tab value="4" label="Logs" />
+              <Tab value="5" label="Cuentas contables" />
             </TabList>
             <Box>
               <TabPanel value="0">
@@ -278,6 +280,9 @@ const ProductDetails = ({ product }) => {
               </TabPanel>
               <TabPanel value="4">
                 <ProductLogs id={product._id} />
+              </TabPanel>
+              <TabPanel value="5">
+                <ProductAccounts projectId={product._id} />
               </TabPanel>
             </Box>
           </TabContext>
