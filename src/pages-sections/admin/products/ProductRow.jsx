@@ -9,7 +9,7 @@ import {
   StyledTableCell,
   StyledIconButton,
 } from "../StyledComponents";
-import DeleteProduct from 'pages-sections/admin/products/actions/delete/DeleteProduct';
+import DeleteProduct from "pages-sections/admin/products/actions/delete/DeleteProduct";
 import CircularProgress from "components/circular-progress/CircularProgress";
 import { useApi } from "contexts/AxiosContext";
 
@@ -18,8 +18,15 @@ import { useApi } from "contexts/AxiosContext";
 // ========================================================================
 
 const ProductRow = ({ product, fetchProducts }) => {
-
-  const { nombre, balance, fecha_inicio, fecha_fin, _id, status } = product;
+  const {
+    nombre,
+    balance,
+    fecha_inicio,
+    fecha_fin,
+    _id,
+    status,
+    fundingModel,
+  } = product;
 
   const router = useRouter();
   const { user } = useApi();
@@ -47,7 +54,6 @@ const ProductRow = ({ product, fetchProducts }) => {
         <Paragraph>{formatSafeDate(fecha_fin)}</Paragraph>
       </StyledTableCell>
 
-
       {/* <StyledTableCell align="left">
         <Avatar
           src={brand}
@@ -59,7 +65,12 @@ const ProductRow = ({ product, fetchProducts }) => {
         />
       </StyledTableCell> */}
 
-      <StyledTableCell align="left">{currency(balance)}</StyledTableCell>
+      <StyledTableCell align="left">
+        <Paragraph>{currency(Number(balance || 0) * 100)}</Paragraph>
+        {fundingModel?.status === "legacy" && (
+          <Paragraph color="warning.main">Legacy por migrar</Paragraph>
+        )}
+      </StyledTableCell>
 
       {/* <StyledTableCell align="left">
         <BazaarSwitch
@@ -74,13 +85,15 @@ const ProductRow = ({ product, fetchProducts }) => {
       </StyledTableCell>
 
       <StyledTableCell align="center">
-        {(user.role === "admin" && !status?.finished) && <StyledIconButton
-          onClick={() => router.push(`/admin/products/edit/${_id.$oid}`)}
-        >
-          <Tooltip title="Editar info de Proyecto">
-            <Edit />
-          </Tooltip>
-        </StyledIconButton>}
+        {user.role === "admin" && !status?.finished && (
+          <StyledIconButton
+            onClick={() => router.push(`/admin/products/edit/${_id.$oid}`)}
+          >
+            <Tooltip title="Editar info de Proyecto">
+              <Edit />
+            </Tooltip>
+          </StyledIconButton>
+        )}
 
         <StyledIconButton
           onClick={() => router.push(`/admin/products/${_id.$oid}`)}
@@ -89,9 +102,10 @@ const ProductRow = ({ product, fetchProducts }) => {
             <RemoveRedEye />
           </Tooltip>
         </StyledIconButton>
-        {user.role === "admin" && <DeleteProduct product={product} fetchProducts={fetchProducts} />}
+        {user.role === "admin" && (
+          <DeleteProduct product={product} fetchProducts={fetchProducts} />
+        )}
       </StyledTableCell>
-
     </StyledTableRow>
   );
 };

@@ -10,31 +10,31 @@ import {
   OutlinedInput,
   Box,
   FormControl,
-  TextField
-} from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import DropZone from 'components/DropZone';
-import AccountSelector from 'components/accounting/AccountSelector';
-import { useApi } from 'contexts/AxiosContext';
-import { useSnackbar } from 'notistack';
+  TextField,
+} from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import DropZone from "components/DropZone";
+import AccountSelector from "components/accounting/AccountSelector";
+import { useApi } from "contexts/AxiosContext";
+import { useSnackbar } from "notistack";
 
 function CerrarActividad({ budget, onComplete }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [amount, setAmount] = useState(0);
   const [files, setFiles] = useState([]);
-  const [referencia, setReferencia] = useState('');
-  const [montoTransferencia, setMontoTransferencia] = useState('');
-  const [banco, setBanco] = useState('');
+  const [referencia, setReferencia] = useState("");
+  const [montoTransferencia, setMontoTransferencia] = useState("");
+  const [banco, setBanco] = useState("");
   const [cuentaContableCode, setCuentaContableCode] = useState(null);
-  const [cuentaContableManual, setCuentaContableManual] = useState('');
+  const [cuentaContableManual, setCuentaContableManual] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
   const handleClickStatus = () => {
-    if (budget.status !== 'finished') {
+    if (budget.status !== "finished") {
       setIsOpen(true);
     }
   };
@@ -42,80 +42,101 @@ function CerrarActividad({ budget, onComplete }) {
   const handleClose = () => {
     setIsOpen(false);
     // Limpiar campos del formulario
-    setText('');
+    setText("");
     setAmount(0);
     setFiles([]);
-    setReferencia('');
-    setMontoTransferencia('');
-    setBanco('');
+    setReferencia("");
+    setMontoTransferencia("");
+    setBanco("");
     setCuentaContableCode(null);
-    setCuentaContableManual('');
+    setCuentaContableManual("");
   };
   const handleCrearDoc = () => {
+    const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
+    if (!cuentaContable) {
+      enqueueSnackbar(
+        "Debes seleccionar una partida del proyecto para imputar el gasto",
+        { variant: "error" }
+      );
+      return;
+    }
     setSubmitting(true);
     const formData = new FormData();
-    formData.append('descripcion', text);
+    formData.append("descripcion", text);
 
     // biome-ignore lint/complexity/noForEach: <explanation>
     files.forEach((file) => {
-      formData.append('files', file);
+      formData.append("files", file);
     });
-    formData.append('projectId', resolvedProjectId || '');
-    formData.append('monto', amount);
-    formData.append('docId', budget._id.$oid);
-    formData.append('description', budget.descripcion)
-    formData.append('referencia', referencia);
-    formData.append('transferAmount', montoTransferencia);
-    formData.append('banco', banco);
-    const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
-    formData.append('accountCode', cuentaContable);
+    formData.append("projectId", resolvedProjectId || "");
+    formData.append("monto", amount);
+    formData.append("docId", budget._id.$oid);
+    formData.append("description", budget.descripcion);
+    formData.append("referencia", referencia);
+    formData.append("transferAmount", montoTransferencia);
+    formData.append("banco", banco);
+    formData.append("accountCode", cuentaContable);
 
-    api.post('/documento_cerrar', formData).then((response) => {
-      handleClose();
-      enqueueSnackbar(response.data.mensaje, { variant: 'success' });
+    api
+      .post("/documento_cerrar", formData)
+      .then((response) => {
+        handleClose();
+        enqueueSnackbar(response.data.mensaje, { variant: "success" });
 
-      // Recargar la lista de actividades
-      if (onComplete) {
-        onComplete();
-      }
-    }).catch((error) => {
-      if (error.response) {
-        enqueueSnackbar(error.response.data.error || error.response.data.mensaje, { variant: 'error' })
-      } else {
-        enqueueSnackbar(error.message || 'Error al completar la actividad', { variant: 'error' })
-      }
-    }).finally(() => {
-      setSubmitting(false);
-    })
+        // Recargar la lista de actividades
+        if (onComplete) {
+          onComplete();
+        }
+      })
+      .catch((error) => {
+        if (error.response) {
+          enqueueSnackbar(
+            error.response.data.error || error.response.data.mensaje,
+            { variant: "error" }
+          );
+        } else {
+          enqueueSnackbar(error.message || "Error al completar la actividad", {
+            variant: "error",
+          });
+        }
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
   };
 
   const fileList = files.map((file) => (
-    <Box key={file.path}>
-      {`${file.path}-${file.size}bytes`}
-    </Box>
+    <Box key={file.path}>{`${file.path}-${file.size}bytes`}</Box>
   ));
 
   return (
     <Box>
-      <Chip color="primary" onClick={handleClickStatus} clickable variant="outlined" label="Asignar Monto" />
+      <Chip
+        color="primary"
+        onClick={handleClickStatus}
+        clickable
+        variant="outlined"
+        label="Asignar Monto"
+      />
       <Dialog open={isOpen} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          Agrega la factura de {budget.descripcion}
-        </DialogTitle>
+        <DialogTitle>Agrega la factura de {budget.descripcion}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
             <InputLabel id="documentos">Descripcion</InputLabel>
             <OutlinedInput
-
               label="Descripción"
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
           </FormControl>
-          <FormControl fullWidth type="number" variant="outlined" sx={{ mt: 2 }}>
+          <FormControl
+            fullWidth
+            type="number"
+            variant="outlined"
+            sx={{ mt: 2 }}
+          >
             <InputLabel id="monto">Monto</InputLabel>
             <OutlinedInput
-
               label="Monto"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -132,8 +153,10 @@ function CerrarActividad({ budget, onComplete }) {
               />
             </FormControl>
 
-            <FormControl sx={{ minWidth: '150px' }}>
-              <InputLabel htmlFor="montoTransferencia">Monto Transferencia</InputLabel>
+            <FormControl sx={{ minWidth: "150px" }}>
+              <InputLabel htmlFor="montoTransferencia">
+                Monto Transferencia
+              </InputLabel>
               <OutlinedInput
                 id="montoTransferencia"
                 label="Monto Transferencia"
@@ -156,12 +179,17 @@ function CerrarActividad({ budget, onComplete }) {
 
           <Box sx={{ mt: 2, mb: 2 }}>
             <AccountSelector
-              label="Cuenta Contable (opcional)"
+              label="Partida del proyecto"
               value={cuentaContableCode}
               group="EGRESO"
               year={2025}
               allowHeaders={false}
-              helperText="Búsqueda en catálogo EGRESO. Si no aplica, puedes usar texto libre abajo."
+              helperText="Solo se muestran partidas del proyecto con saldo disponible."
+              scopeType="project"
+              scopeId={resolvedProjectId}
+              assignedOnly
+              includeZero={false}
+              optionBalanceLabel="Disponible"
               onChange={(accountCode) => {
                 setCuentaContableCode(accountCode);
               }}
@@ -169,14 +197,22 @@ function CerrarActividad({ budget, onComplete }) {
             <TextField
               sx={{ mt: 2 }}
               fullWidth
-              label="Cuenta Contable (texto libre opcional)"
+              label="Cuenta Contable manual"
               value={cuentaContableManual}
               onChange={(event) => setCuentaContableManual(event.target.value)}
               disabled={Boolean(cuentaContableCode)}
-              helperText={cuentaContableCode ? 'Hay una cuenta de catálogo seleccionada; limpia la selección para usar texto libre.' : ''}
+              helperText={
+                cuentaContableCode
+                  ? "Hay una partida seleccionada; limpia la selección para usar texto libre."
+                  : "Compatibilidad temporal para cuentas no catalogadas."
+              }
             />
           </Box>
-          <DropZone onChange={(file) => { setFiles(file) }} />
+          <DropZone
+            onChange={(file) => {
+              setFiles(file);
+            }}
+          />
           <aside>
             <h4>Files</h4>
             <ul>{fileList}</ul>

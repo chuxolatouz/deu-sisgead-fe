@@ -1,101 +1,140 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
+  Alert,
+  Box,
+  Chip,
+  Paper,
+  Stack,
   Table,
+  TableBody,
+  TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TableCell,
-  TableBody,
-  Stack,
-  Box,
-  Paper
-} from '@mui/material';
-import TablePagination from 'components/data-table/TablePagination';
-import AddBalance from './actions/add/AddBalance';
-import DescargarMovimientos from './actions/download/DownloadMovements';
-import { useApi } from 'contexts/AxiosContext';
-import { useSnackbar } from 'notistack';
+  Typography,
+} from "@mui/material";
+import TablePagination from "components/data-table/TablePagination";
+import { useApi } from "contexts/AxiosContext";
+import { useSnackbar } from "notistack";
+import { formatMonto, formatSafeDate } from "lib";
 
-function Movimientos({ id }) {
+const TYPE_LABELS = {
+  funding: "Fondeo",
+  expense: "Gasto",
+  rule: "Regla",
+  migration: "Migración",
+  adjustment: "Ajuste",
+};
+
+const TYPE_COLORS = {
+  funding: "success",
+  expense: "error",
+  rule: "warning",
+  migration: "info",
+  adjustment: "default",
+};
+
+function ProductMovements({ id }) {
   const [pagination, setPagination] = useState(1);
-  const [actions, setActions] = useState([]);
+  const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
 
-  const handlePagination = (_, value) => {
-    setPagination(value);
-  };
-  const fixMonto = (monto) => {
-    if (Number.parseFloat(monto) > 0) {
-      return <span style={{ color: '#11cb5f', fontStyle: 'bold' }}>{monto}</span>;
-    }
-    return <span style={{ color: '#d32f2f', fontStyle: 'bold' }}>{monto}</span>;
-  };
-
-  const fetchBalance = () => api
-  .get(`/proyecto/${id}/acciones?page=${pagination - 1}&limit=10`)
-  .then((response) => {
-    setActions(response.data.request_list || []);
-    setCount(response.data.count || 1);
-  })
-  .catch((error) => {
-    if (error.response) {
-        enqueueSnackbar(error.response.data.message, { variant: 'error'})
-    } else {
-        enqueueSnackbar(error.message, { variant: 'error'})
-    }
-})
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    fetchBalance();
-  }, [pagination]);
+    if (!id) return;
+    api
+      .get(
+        `/api/projects/${id}/funding-timeline?page=${pagination - 1}&limit=10`
+      )
+      .then((response) => {
+        setRows(response.data.request_list || []);
+        setCount(Math.max(1, Math.ceil((response.data.count || 0) / 10)));
+      })
+      .catch((error) => {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Error al cargar movimientos";
+        enqueueSnackbar(message, { variant: "error" });
+      });
+  }, [api, enqueueSnackbar, id, pagination]);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <AddBalance id={id} fetchBalance={fetchBalance} />
-        <DescargarMovimientos id={id} />
-      </Box>
+      <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+        Esta línea de tiempo consolida movimientos estructurados de partidas y,
+        cuando aplica, historial legacy.
+      </Alert>
       <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+        <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>-</TableCell>
-              <TableCell>Persona</TableCell>
-              <TableCell>Monto</TableCell>
-              <TableCell>Saldo</TableCell>
+              <TableCell>Fecha</TableCell>
+              <TableCell>Tipo</TableCell>
+              <TableCell>Título</TableCell>
+              <TableCell>Partida</TableCell>
+              <TableCell>Actor</TableCell>
+              <TableCell align="right">Monto</TableCell>
+              <TableCell align="right">Saldo proyecto</TableCell>
+              <TableCell>Fuente</TableCell>
             </TableRow>
           </TableHead>
-          {actions.length ? (
-            <TableBody>
-              { actions.map((action) => (
-                <TableRow
-                  key={action._id.$oid}
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 }, height: '50px' }}
-                >
-                  <TableCell component="th" scope="row">
-                    {action.type}
+          <TableBody>
+            {rows.length > 0 ? (
+              rows.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    {formatSafeDate(item.occurredAt, "dd/MM/yyyy HH:mm")}
                   </TableCell>
-                  <TableCell>{action.user}</TableCell>
-                  <TableCell>{fixMonto(action.amount)}</TableCell>
-                  <TableCell>{action.total_amount}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      color={TYPE_COLORS[item.type] || "default"}
+                      label={TYPE_LABELS[item.type] || item.type}
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Stack spacing={0.5}>
+                      <Typography variant="body2">{item.title}</Typography>
+                      {item.description && (
+                        <Typography variant="caption" color="text.secondary">
+                          {item.description}
+                        </Typography>
+                      )}
+                    </Stack>
+                  </TableCell>
+                  <TableCell>{item.accountCode || "-"}</TableCell>
+                  <TableCell>{item.actorName || "-"}</TableCell>
+                  <TableCell align="right">
+                    {formatMonto(item.amount || 0)}
+                  </TableCell>
+                  <TableCell align="right">
+                    {formatMonto(item.projectBalanceAfter || 0)}
+                  </TableCell>
+                  <TableCell>
+                    {item.source === "legacy_action"
+                      ? "Histórico legacy"
+                      : "Ledger"}
+                  </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          ) : (
-            <TableBody>
+              ))
+            ) : (
               <TableRow>
-                <TableCell> No hay movimientos</TableCell>
+                <TableCell colSpan={8}>
+                  <Typography color="text.secondary">
+                    No hay movimientos financieros para mostrar.
+                  </Typography>
+                </TableCell>
               </TableRow>
-            </TableBody>
-          )}
+            )}
+          </TableBody>
         </Table>
       </TableContainer>
       <Stack alignItems="center" my={4}>
         <TablePagination
-          onChange={handlePagination}
+          onChange={(_, value) => setPagination(value)}
           page={pagination}
           count={count || 1}
         />
@@ -104,4 +143,4 @@ function Movimientos({ id }) {
   );
 }
 
-export default Movimientos;
+export default ProductMovements;

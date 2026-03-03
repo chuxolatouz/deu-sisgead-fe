@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -6,17 +6,16 @@ import {
   Divider,
   Chip,
   Button,
-  Tab
+  Tab,
+  Alert,
+  Stack,
+  Typography,
 } from "@mui/material";
 import { PictureAsPdfOutlined } from "@mui/icons-material";
-import {
-  TabContext,
-  TabList,
-  TabPanel,
-} from "@mui/lab";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
 import Verify from "components/icons/Verify";
-import TodoList from 'components/icons/duotone/TodoList';
-import { formatSafeDate, formatMonto } from 'lib';
+import TodoList from "components/icons/duotone/TodoList";
+import { formatSafeDate, formatMonto } from "lib";
 import { useRouter } from "next/router";
 import { FlexBox } from "components/flex-box";
 import { H3, H5, H6, Span } from "components/Typography";
@@ -27,13 +26,15 @@ import ProductBudget from "pages-sections/admin/products/ProductBudget";
 import ProductReport from "pages-sections/admin/products/ProductReport";
 import ProductAccounts from "pages-sections/admin/products/ProductAccounts";
 import { useApi } from "contexts/AxiosContext";
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from "notistack";
 import AddFixedRules from "./actions/add/AddFixedRules";
 import AddRules from "./actions/add/AddRules";
 import FinishProject from "./actions/complete/FinishProject";
-import DownloadStartPDF from './actions/complete/DownloadStartPDF';
-import DownloadEndPDF from './actions/complete/DownloadEndPDF';
-import DownloadProjectDocuments from './actions/download/DownloadProjectDocuments';
+import DownloadStartPDF from "./actions/complete/DownloadStartPDF";
+import DownloadEndPDF from "./actions/complete/DownloadEndPDF";
+import DownloadProjectDocuments from "./actions/download/DownloadProjectDocuments";
+import ProjectFundingDrawer from "./actions/add/ProjectFundingDrawer";
+import ProjectFundingMigrationDrawer from "./actions/add/ProjectFundingMigrationDrawer";
 
 // ===================================================================
 
@@ -41,13 +42,16 @@ const ProductDetails = ({ product }) => {
   const router = useRouter();
   const [tab, setTab] = useState("0");
   const [categories, setCategories] = useState([]);
+  const [openFunding, setOpenFunding] = useState(false);
+  const [openMigration, setOpenMigration] = useState(false);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
+  const fundingSummary = product?.fundingSummary;
+  const fundingModel = product?.fundingModel;
 
   const handleChange = (_, newValue) => {
     setTab(newValue);
   };
-
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
@@ -57,21 +61,22 @@ const ProductDetails = ({ product }) => {
     }
   }, []);
 
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    api.get('/mostrar_categorias')
+    api
+      .get("/mostrar_categorias")
       .then((response) => {
         setCategories(response.data);
-      }).catch((error) => {
-        console.log(error)
-        if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error' })
-        } else {
-          enqueueSnackbar(error.message, { variant: 'error' })
-        }
       })
-  }, [])
+      .catch((error) => {
+        console.log(error);
+        if (error.response) {
+          enqueueSnackbar(error.response.data.message, { variant: "error" });
+        } else {
+          enqueueSnackbar(error.message, { variant: "error" });
+        }
+      });
+  }, []);
 
   const findCategory = (catValue) => {
     const category = categories.find((c) => c.value === catValue);
@@ -79,9 +84,12 @@ const ProductDetails = ({ product }) => {
       return catValue; // Return the original value if not found
     }
     // Return the name of the category if found
-    return category.nombre
-  }
+    return category.nombre;
+  };
 
+  const handleFundingSuccess = () => {
+    router.replace(router.asPath);
+  };
 
   return (
     <Grid container spacing={3}>
@@ -101,23 +109,91 @@ const ProductDetails = ({ product }) => {
               my: 2,
             }}
           />
-          <FlexBox alignItems="left" gap={4}>
-            <Span gap={4} color="grey.600">Saldo actual:</Span>
-          </FlexBox>
-          <FlexBox alignItems="left" gap={4}>
-            <H3 mt={0} mb={2}>
-              {formatMonto(product.balance)}
+          {fundingSummary?.model?.migrationRequired && (
+            <Alert
+              severity="warning"
+              sx={{ mb: 2 }}
+              action={
+                fundingSummary?.permissions?.canFund ? (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => setOpenMigration(true)}
+                  >
+                    Migrar saldo
+                  </Button>
+                ) : null
+              }
+            >
+              Saldo legacy por migrar a partidas.
+            </Alert>
+          )}
+          <Stack spacing={1}>
+            <FlexBox alignItems="left" gap={4}>
+              <Span gap={4} color="grey.600">
+                Disponible actual:
+              </Span>
+            </FlexBox>
+            <H3 mt={0} mb={0}>
+              {formatMonto(
+                fundingSummary?.totals?.currentAvailable ?? product.balance
+              )}
             </H3>
-          </FlexBox>
-          <FlexBox alignItems="left" gap={4}>
-            <Span gap={4} color="grey.600">Saldo inicial:</Span>
-          </FlexBox>
-          <FlexBox alignItems="left" gap={4}>
-
-            <H5 mt={0} mb={2}>
-              {formatMonto(product.balance_inicial)}
+            <FlexBox alignItems="left" gap={4}>
+              <Span gap={4} color="grey.600">
+                Saldo inicial asignado:
+              </Span>
+            </FlexBox>
+            <H5 mt={0} mb={0}>
+              {formatMonto(
+                fundingSummary?.totals?.initialAssigned ??
+                  product.balance_inicial
+              )}
             </H5>
-          </FlexBox>
+            <Typography variant="body2" color="text.secondary">
+              {`Partidas con saldo: ${
+                fundingSummary?.totals?.fundedAccountsCount || 0
+              }`}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {`Último movimiento: ${
+                fundingSummary?.totals?.lastMovementAt
+                  ? formatSafeDate(
+                      fundingSummary.totals.lastMovementAt,
+                      "dd/MM/yyyy HH:mm"
+                    )
+                  : "-"
+              }`}
+            </Typography>
+            <Chip
+              label={
+                fundingModel?.status === "legacy"
+                  ? "Legacy por migrar"
+                  : fundingModel?.status === "pending_migration"
+                  ? "Migración pendiente"
+                  : "Activo"
+              }
+              color={
+                fundingSummary?.model?.migrationRequired ? "warning" : "success"
+              }
+              variant="outlined"
+              sx={{ width: "fit-content", mt: 1 }}
+            />
+            {fundingSummary?.permissions?.canFund ? (
+              <Button
+                variant="contained"
+                sx={{ mt: 1 }}
+                onClick={() => setOpenFunding(true)}
+              >
+                Asignar fondos
+              </Button>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {fundingSummary?.permissions?.reason ||
+                  "Solo lectura de fondos."}
+              </Typography>
+            )}
+          </Stack>
 
           <Divider
             sx={{
@@ -125,74 +201,123 @@ const ProductDetails = ({ product }) => {
             }}
           />
           <FlexBox alignItems="left" gap={4}>
-            <Span gap={4} color="grey.600">Fecha de inicio:</Span>
+            <Span gap={4} color="grey.600">
+              Fecha de inicio:
+            </Span>
           </FlexBox>
-          {product.fecha_inicio && (<FlexBox alignItems="left" gap={4}>
-            <H6 mt={0} mb={2}>
-              {formatSafeDate(product?.fecha_inicio)}
-            </H6>
-          </FlexBox>)}
+          {product.fecha_inicio && (
+            <FlexBox alignItems="left" gap={4}>
+              <H6 mt={0} mb={2}>
+                {formatSafeDate(product?.fecha_inicio)}
+              </H6>
+            </FlexBox>
+          )}
 
           <FlexBox alignItems="left" gap={4}>
-            <Span gap={4} color="grey.600">Fecha de fin:</Span>
+            <Span gap={4} color="grey.600">
+              Fecha de fin:
+            </Span>
           </FlexBox>
-          {product.fecha_fin && (<FlexBox alignItems="left" gap={4}>
-
-            <H6 mt={0} mb={2}>
-              {formatSafeDate(product?.fecha_fin)}
-            </H6>
-          </FlexBox>)}
+          {product.fecha_fin && (
+            <FlexBox alignItems="left" gap={4}>
+              <H6 mt={0} mb={2}>
+                {formatSafeDate(product?.fecha_fin)}
+              </H6>
+            </FlexBox>
+          )}
           <FlexBox alignItems="left" gap={4}>
-            <Span gap={4} color="grey.600">Descripción:</Span>
+            <Span gap={4} color="grey.600">
+              Descripción:
+            </Span>
           </FlexBox>
           <FlexBox alignItems="left" gap={4}>
             <H6 mt={0} mb={2}>
               {product.descripcion}
-
             </H6>
           </FlexBox>
           <FlexBox alignItems="left" gap={4}>
-            <Span gap={4} color="grey.600">Categoría:</Span>
+            <Span gap={4} color="grey.600">
+              Categoría:
+            </Span>
           </FlexBox>
           <FlexBox alignItems="left" gap={4}>
-            {product.categoria ? <Chip label={findCategory(product.categoria)} /> : null}
+            {product.categoria ? (
+              <Chip label={findCategory(product.categoria)} />
+            ) : null}
           </FlexBox>
           <Divider
             sx={{
               my: 2,
             }}
           />
-          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
-            {product.status?.completado?.includes(1) ? <Verify /> : <TodoList />}
-            <Span gap={4} color={product.status?.completado?.includes(1) ? 'green' : 'grey.600'}>Agregar Balance</Span>
+          <FlexBox alignItems="left" gap={2} sx={{ height: "33px" }}>
+            {product.status?.completado?.includes(1) ? (
+              <Verify />
+            ) : (
+              <TodoList />
+            )}
+            <Span
+              gap={4}
+              color={
+                product.status?.completado?.includes(1) ? "green" : "grey.600"
+              }
+            >
+              Asignar fondos iniciales
+            </Span>
           </FlexBox>
-          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
-            {product.status?.completado?.includes(2) ? <Verify /> : <TodoList />}
-            <Span gap={4} color={product.status?.completado?.includes(2) ? 'green' : 'grey.600'}>Usuarios</Span>
+          <FlexBox alignItems="left" gap={2} sx={{ height: "33px" }}>
+            {product.status?.completado?.includes(2) ? (
+              <Verify />
+            ) : (
+              <TodoList />
+            )}
+            <Span
+              gap={4}
+              color={
+                product.status?.completado?.includes(2) ? "green" : "grey.600"
+              }
+            >
+              Usuarios
+            </Span>
           </FlexBox>
-          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
-            {product.status?.completado?.includes(3) ? <Verify /> : <TodoList />}
-            <Span gap={4} color={product.status?.completado?.includes(3) ? 'green' : 'grey.600'}>Líder Proyecto</Span>
+          <FlexBox alignItems="left" gap={2} sx={{ height: "33px" }}>
+            {product.status?.completado?.includes(3) ? (
+              <Verify />
+            ) : (
+              <TodoList />
+            )}
+            <Span
+              gap={4}
+              color={
+                product.status?.completado?.includes(3) ? "green" : "grey.600"
+              }
+            >
+              Líder Proyecto
+            </Span>
           </FlexBox>
-          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
-            {product.status?.completado?.includes(4) ?
+          <FlexBox alignItems="left" gap={2} sx={{ height: "33px" }}>
+            {product.status?.completado?.includes(4) ? (
               <>
                 <Verify />
-                <Span gap={4} color={'green'}>Reglas de Distribución</Span>
+                <Span gap={4} color={"green"}>
+                  Reglas de Distribución
+                </Span>
               </>
-              :
+            ) : (
               <AddRules id={product._id} />
-            }
+            )}
           </FlexBox>
-          <FlexBox alignItems="left" gap={2} sx={{ height: '33px' }}>
-            {product.status?.completado?.includes(5) ?
+          <FlexBox alignItems="left" gap={2} sx={{ height: "33px" }}>
+            {product.status?.completado?.includes(5) ? (
               <>
                 <Verify />
-                <Span gap={4} color={'green'}>Reglas Fijas</Span>
+                <Span gap={4} color={"green"}>
+                  Reglas Fijas
+                </Span>
               </>
-              :
+            ) : (
               <AddFixedRules id={product._id} />
-            }
+            )}
           </FlexBox>
           <Divider
             sx={{
@@ -229,7 +354,11 @@ const ProductDetails = ({ product }) => {
               }}
             />
           )}
-          {!product.status?.finished && (<FlexBox alignItems="center" gap={2}><FinishProject project={product} /></FlexBox>)}
+          {!product.status?.finished && (
+            <FlexBox alignItems="center" gap={2}>
+              <FinishProject project={product} />
+            </FlexBox>
+          )}
           {product.status?.finished && (
             <>
               <FlexBox alignItems="center" gap={2}>
@@ -241,7 +370,12 @@ const ProductDetails = ({ product }) => {
                   variant="outlined"
                   color="primary"
                   sx={{ mt: 2 }}
-                  onClick={() => window.open(product.acta_finalizacion.documento_url, '_blank')}
+                  onClick={() =>
+                    window.open(
+                      product.acta_finalizacion.documento_url,
+                      "_blank"
+                    )
+                  }
                 >
                   Descargar versión oficial
                 </Button>
@@ -263,7 +397,7 @@ const ProductDetails = ({ product }) => {
               <Tab value="2" label="Movimientos" />
               <Tab value="3" label="Actividades" />
               <Tab value="4" label="Logs" />
-              <Tab value="5" label="Cuentas contables" />
+              <Tab value="5" label="Partidas y fondos" />
             </TabList>
             <Box>
               <TabPanel value="0">
@@ -282,12 +416,26 @@ const ProductDetails = ({ product }) => {
                 <ProductLogs id={product._id} />
               </TabPanel>
               <TabPanel value="5">
-                <ProductAccounts projectId={product._id} />
+                <ProductAccounts projectId={product._id} project={product} />
               </TabPanel>
             </Box>
           </TabContext>
         </Card>
       </Grid>
+      <ProjectFundingDrawer
+        open={openFunding}
+        onClose={() => setOpenFunding(false)}
+        project={product}
+        fundingSummary={fundingSummary}
+        onSuccess={handleFundingSuccess}
+      />
+      <ProjectFundingMigrationDrawer
+        open={openMigration}
+        onClose={() => setOpenMigration(false)}
+        project={product}
+        fundingSummary={fundingSummary}
+        onSuccess={handleFundingSuccess}
+      />
       {/* <Grid item md={3} xs={12}>
         <Card
           sx={{

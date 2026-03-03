@@ -1,13 +1,23 @@
-'use client'
+"use client";
 
-import { useState } from 'react';
-import { Button, Box, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import { useApi } from 'contexts/AxiosContext';
+import { useState } from "react";
+import {
+  Button,
+  Box,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import { useSnackbar } from "notistack";
+import { useApi } from "contexts/AxiosContext";
 
 function DescargarMovimientosConModal({ id }) {
   const [open, setOpen] = useState(false);
-  const [formato, setFormato] = useState('csv');
+  const [formato, setFormato] = useState("csv");
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -16,15 +26,18 @@ function DescargarMovimientosConModal({ id }) {
 
   const handleDownload = async () => {
     try {
-      const response = await api.get(`/proyecto/${id}/movimientos/descargar?formato=${formato}`, {
-        responseType: 'blob',
-      });
+      const response = await api.get(
+        `/proyecto/${id}/movimientos/descargar?formato=${formato}`,
+        {
+          responseType: "blob",
+        }
+      );
 
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', `movimientos.${formato}`);
+      link.setAttribute("download", `timeline_movimientos.${formato}`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -32,9 +45,11 @@ function DescargarMovimientosConModal({ id }) {
       handleClose(); // Cerrar modal después de descargar
     } catch (error) {
       if (error.response) {
-        enqueueSnackbar(error.response.data.error || 'Error al descargar', { variant: 'error' });
+        enqueueSnackbar(error.response.data.error || "Error al descargar", {
+          variant: "error",
+        });
       } else {
-        enqueueSnackbar(error.message, { variant: 'error' });
+        enqueueSnackbar(error.message, { variant: "error" });
       }
     }
   };
@@ -42,13 +57,18 @@ function DescargarMovimientosConModal({ id }) {
   return (
     <Box>
       <Button variant="outlined" color="secondary" onClick={handleOpen}>
-        Descargar Movimientos
+        Descargar Timeline
       </Button>
 
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Descargar Movimientos</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <Typography>Selecciona el formato en que deseas descargar los movimientos:</Typography>
+        <DialogTitle>Descargar Timeline</DialogTitle>
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        >
+          <Typography>
+            Selecciona el formato para exportar la línea de tiempo financiera
+            del proyecto:
+          </Typography>
           <Select
             value={formato}
             onChange={(e) => setFormato(e.target.value)}
