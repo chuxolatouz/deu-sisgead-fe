@@ -80,6 +80,19 @@ export const getNavigations = () => {
     });
   }
 
+  if (role === 'super_admin') {
+    baseNavigations.push({
+      name: "Configuración",
+      icon: duotone.Settings,
+      children: [
+        {
+          name: "Categorías de Proyecto",
+          path: "/admin/settings/project-categories",
+        },
+      ],
+    });
+  }
+
   // Add Logout at the end
   baseNavigations.push({
     name: "Logout",

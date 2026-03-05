@@ -8,7 +8,6 @@ import VendorDashboardLayout from "components/layouts/vendor-dashboard";
 import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
 import { parseISO } from "date-fns";
-import { ro } from "date-fns/locale";
 
 // =============================================================================
 EditProduct.getLayout = function getLayout(page) {
@@ -44,7 +43,6 @@ export default function EditProduct() {
       api.get(
         `/proyecto/${slug}`,
         ).then((response) => {
-          console.log(response.data)
             const parsedProduct = {
                 nombre: response.data.nombre,
                 categoria: response.data.categoria,
@@ -103,6 +101,7 @@ export default function EditProduct() {
           initialValues={product}
           validationSchema={validationSchema}
           handleFormSubmit={handleFormSubmit}
+          selectedCategory={product?.categoria}
         />
 
       

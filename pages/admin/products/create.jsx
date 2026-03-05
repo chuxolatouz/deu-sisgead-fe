@@ -70,6 +70,7 @@ export default function CreateProduct() {
         initialValues={INITIAL_VALUES}
         validationSchema={validationSchema}
         handleFormSubmit={handleFormSubmit}
+        selectedCategory={INITIAL_VALUES.categoria}
       />
     </Box>
   );

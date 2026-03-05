@@ -38,6 +38,23 @@ import ProjectFundingMigrationDrawer from "./actions/add/ProjectFundingMigration
 
 // ===================================================================
 
+const normalizeCategoryReference = (value) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") {
+    if (value.$oid) return String(value.$oid);
+    if (value.value) return String(value.value);
+  }
+  return String(value).trim();
+};
+
+const categoryMatchesReference = (category, reference) => {
+  const ref = normalizeCategoryReference(reference);
+  if (!ref) return false;
+  const categoryId = normalizeCategoryReference(category?._id);
+  const categoryValue = normalizeCategoryReference(category?.value);
+  return ref === categoryId || ref === categoryValue;
+};
+
 const ProductDetails = ({ product }) => {
   const router = useRouter();
   const [tab, setTab] = useState("0");
@@ -64,12 +81,11 @@ const ProductDetails = ({ product }) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     api
-      .get("/mostrar_categorias")
+      .get("/mostrar_categorias?includeInactive=true&includeDeleted=true")
       .then((response) => {
         setCategories(response.data);
       })
       .catch((error) => {
-        console.log(error);
         if (error.response) {
           enqueueSnackbar(error.response.data.message, { variant: "error" });
         } else {
@@ -79,12 +95,15 @@ const ProductDetails = ({ product }) => {
   }, []);
 
   const findCategory = (catValue) => {
-    const category = categories.find((c) => c.value === catValue);
+    const category = categories.find((c) => categoryMatchesReference(c, catValue));
     if (!category) {
-      return catValue; // Return the original value if not found
+      return {
+        nombre: normalizeCategoryReference(catValue),
+        activo: true,
+        eliminado: false,
+      };
     }
-    // Return the name of the category if found
-    return category.nombre;
+    return category;
   };
 
   const handleFundingSuccess = () => {
@@ -242,7 +261,26 @@ const ProductDetails = ({ product }) => {
           </FlexBox>
           <FlexBox alignItems="left" gap={4}>
             {product.categoria ? (
-              <Chip label={findCategory(product.categoria)} />
+              (() => {
+                const category = findCategory(product.categoria);
+                const statusSuffix = category.eliminado
+                  ? " (eliminada)"
+                  : category.activo === false
+                  ? " (deshabilitada)"
+                  : "";
+                const color = category.eliminado
+                  ? "default"
+                  : category.activo === false
+                  ? "warning"
+                  : "primary";
+                return (
+                  <Chip
+                    label={`${category.nombre}${statusSuffix}`}
+                    color={color}
+                    variant="outlined"
+                  />
+                );
+              })()
             ) : null}
           </FlexBox>
           <Divider

@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button, Card, Grid, MenuItem, TextField, Box } from "@mui/material";
-import addDays from "date-fns/addDays";
-import parseISO from "date-fns/parseISO";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import enGB from 'date-fns/locale/en-GB';
@@ -15,25 +13,91 @@ import { parseSafeDate } from "lib";
 
 // ================================================================
 
+const normalizeCategoryReference = (value) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") {
+    if (value.$oid) return String(value.$oid);
+    if (value.value) return String(value.value);
+  }
+  return String(value).trim();
+};
+
+const categoryMatchesReference = (category, reference) => {
+  const ref = normalizeCategoryReference(reference);
+  if (!ref) return false;
+  const categoryId = normalizeCategoryReference(category?._id);
+  const categoryValue = normalizeCategoryReference(category?.value);
+  return ref === categoryId || ref === categoryValue;
+};
+
 const ProductForm = (props) => {
   const [categories, setCategories] = useState([]);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
-  const { initialValues, validationSchema, handleFormSubmit, reinitialize = false, shrink = false } = props;
+  const {
+    initialValues,
+    validationSchema,
+    handleFormSubmit,
+    reinitialize = false,
+    shrink = false,
+    selectedCategory = null,
+  } = props;
+  const normalizedSelectedCategory = useMemo(
+    () => normalizeCategoryReference(selectedCategory),
+    [selectedCategory]
+  );
 
   useEffect(() => {
-    api.get('/mostrar_categorias')
-      .then((response) => {
-        setCategories(response.data);
-      }).catch((error) => {
-        console.log(error)
-        if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error' })
-        } else {
-          enqueueSnackbar(error.message, { variant: 'error' })
+    let cancelled = false;
+    const loadCategories = async () => {
+      try {
+        const activeResponse = await api.get("/mostrar_categorias?activeOnly=true");
+        let mergedCategories = Array.isArray(activeResponse.data) ? activeResponse.data : [];
+
+        if (normalizedSelectedCategory) {
+          const existsInActive = mergedCategories.some((category) =>
+            categoryMatchesReference(category, normalizedSelectedCategory)
+          );
+          if (!existsInActive) {
+            const allResponse = await api.get(
+              "/mostrar_categorias?includeInactive=true&includeDeleted=true"
+            );
+            const allCategories = Array.isArray(allResponse.data) ? allResponse.data : [];
+            const currentCategory = allCategories.find((category) =>
+              categoryMatchesReference(category, normalizedSelectedCategory)
+            );
+            if (currentCategory) {
+              mergedCategories = [currentCategory, ...mergedCategories];
+            }
+          }
         }
-      })
-  }, [api, enqueueSnackbar]);
+
+        const uniqueCategories = [];
+        const seenKeys = new Set();
+        mergedCategories.forEach((category) => {
+          const key = normalizeCategoryReference(category?._id || category?.value);
+          if (!key || seenKeys.has(key)) return;
+          seenKeys.add(key);
+          uniqueCategories.push(category);
+        });
+
+        if (!cancelled) {
+          setCategories(uniqueCategories);
+        }
+      } catch (error) {
+        if (error.response) {
+          enqueueSnackbar(error.response.data.message, { variant: "error" });
+        } else {
+          enqueueSnackbar(error.message, { variant: "error" });
+        }
+      }
+    };
+
+    loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, [api, enqueueSnackbar, normalizedSelectedCategory]);
 
   return (
     <Card
@@ -88,14 +152,31 @@ const ProductForm = (props) => {
                   onChange={(e) => {
                     handleChange(e);
                   }}
-                  value={values.categoria ? values.categoria : " "}
+                  value={values.categoria ? values.categoria : ""}
                   label="Seleccionar Categoria"
                   error={!!touched.categoria && !!errors.categoria}
                   helperText={touched.categoria && errors.categoria}
                 >
-                  {categories.map((category) => (
-                    <MenuItem key={category.value || category._id} value={category.value || category._id}>{category.nombre}</MenuItem>
-                  ))}
+                  {categories.map((category) => {
+                    const categoryValue = category._id || category.value;
+                    const isCurrentCategory = categoryMatchesReference(category, values.categoria);
+                    const disabled = (category.eliminado || category.activo === false) && !isCurrentCategory;
+                    const statusSuffix = category.eliminado
+                      ? " (eliminada)"
+                      : category.activo === false
+                      ? " (deshabilitada)"
+                      : "";
+
+                    return (
+                      <MenuItem
+                        key={categoryValue}
+                        value={categoryValue}
+                        disabled={disabled}
+                      >
+                        {`${category.nombre}${statusSuffix}`}
+                      </MenuItem>
+                    );
+                  })}
                 </TextField>
               </Grid>
 
@@ -123,6 +204,7 @@ const ProductForm = (props) => {
               <Grid item xs={12}>
                 <TextField
                   rows={6}
+                  multiline
                   fullWidth
                   color="info"
                   size="medium"
