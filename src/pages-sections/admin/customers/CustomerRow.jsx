@@ -28,9 +28,12 @@ import EditUserModal from './EditUserModal';
 
 // ========================================================================
 
-const CustomerRow = ({ customer, fetchUsers }) => {
+const CustomerRow = ({ customer, fetchUsers, canManageUsers = false }) => {
   const { email, nombre, avatar } = customer;
   const userRole = customer?.rol || customer?.role || (customer?.is_admin ? 'super_admin' : 'usuario');
+  const userId = customer?._id?.$oid || customer?._id;
+  const departmentId = customer?.departmentId || customer?.departamento_id;
+  const departmentName = customer?.departamento?.nombre || customer?.department?.nombre;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [openChangeRole, setOpenChangeRole] = useState(false);
   const [openEditUser, setOpenEditUser] = useState(false);
@@ -43,8 +46,13 @@ const CustomerRow = ({ customer, fetchUsers }) => {
   const handleCancelDelete = () => setIsDeleteOpen(false);
 
   const handleConfirmDelete = () => {
+    if (!userId) {
+      enqueueSnackbar("Usuario inválido", { variant: "error" });
+      return;
+    }
+
     api.post('/eliminar_usuario', {
-      id_usuario: customer._id.$oid,
+      id_usuario: userId,
     }).then((response) => {
       enqueueSnackbar(response.data.message, { variant: 'success' });
       handleCancelDelete();
@@ -73,6 +81,11 @@ const CustomerRow = ({ customer, fetchUsers }) => {
                 sx={{ mt: 0.5 }}
               />
             )}
+            {userRole !== "super_admin" && (
+              <Paragraph fontSize={11} color="grey.600">
+                {departmentName || "Departamento"}: {departmentId || "Sin asignar"}
+              </Paragraph>
+            )}
           </Box>
         </FlexBox>
       </StyledTableCell>
@@ -80,31 +93,37 @@ const CustomerRow = ({ customer, fetchUsers }) => {
       <StyledTableCell align="left">{email}</StyledTableCell>
 
       <StyledTableCell align="center">
-        <Stack direction="row" spacing={1} justifyContent="center">
-          <Tooltip title="Ver usuario">
-            <StyledIconButton onClick={() => setOpenShowUser(true)}>
-              <Visibility color="success" />
-            </StyledIconButton>
-          </Tooltip>
+        {canManageUsers ? (
+          <Stack direction="row" spacing={1} justifyContent="center">
+            <Tooltip title="Ver usuario">
+              <StyledIconButton onClick={() => setOpenShowUser(true)}>
+                <Visibility color="success" />
+              </StyledIconButton>
+            </Tooltip>
 
-          <Tooltip title="Editar usuario">
-            <StyledIconButton onClick={() => setOpenEditUser(true)}>
-              <Edit color="secondary" />
-            </StyledIconButton>
-          </Tooltip>
+            <Tooltip title="Editar usuario">
+              <StyledIconButton onClick={() => setOpenEditUser(true)}>
+                <Edit color="secondary" />
+              </StyledIconButton>
+            </Tooltip>
 
-          <Tooltip title="Cambiar rol">
-            <StyledIconButton onClick={() => setOpenChangeRole(true)}>
-              <Shield color="warning"/>
-            </StyledIconButton>
-          </Tooltip>
+            <Tooltip title="Cambiar rol">
+              <StyledIconButton onClick={() => setOpenChangeRole(true)}>
+                <Shield color="warning"/>
+              </StyledIconButton>
+            </Tooltip>
 
-          <Tooltip title="Eliminar usuario de la plataforma">
-            <StyledIconButton onClick={handleDelete}>
-              <Delete color="error" />
-            </StyledIconButton>
-          </Tooltip>
-        </Stack>
+            <Tooltip title="Eliminar usuario de la plataforma">
+              <StyledIconButton onClick={handleDelete}>
+                <Delete color="error" />
+              </StyledIconButton>
+            </Tooltip>
+          </Stack>
+        ) : (
+          <Paragraph fontSize={12} color="grey.600">
+            Sin permisos
+          </Paragraph>
+        )}
       </StyledTableCell>
 
       <DeleteUserModal

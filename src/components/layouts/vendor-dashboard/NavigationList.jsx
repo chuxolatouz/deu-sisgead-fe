@@ -48,12 +48,15 @@ export const getNavigations = () => {
         },
       ]
     },
-    {
+  ];
+
+  if (role === "super_admin" || role === "admin_departamento") {
+    baseNavigations.push({
       name: "Usuarios",
       icon: duotone.Customers,
       path: "/admin/customers",
-    },
-  ];
+    });
+  }
 
   // Add Departamentos section only for super_admin when NOT in department context
   // When in department context, hide this section since they're viewing as that department

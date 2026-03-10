@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,33 +7,104 @@ import {
   Button,
   TextField,
   Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+  Typography,
 } from "@mui/material";
 import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
 
-const EditUserModal = ({ open, onClose, user, onSuccess }) => {
-  const { api } = useApi();
-  const { enqueueSnackbar } = useSnackbar();
+const getEntityId = (value) => value?._id?.$oid || value?._id || "";
+const getRole = (value) => value?.rol || value?.role || (value?.is_admin ? "super_admin" : "usuario");
+const getDepartmentId = (value) => value?.departmentId || value?.departamento_id || "";
 
-  const [nombre, setNombre] = useState(user?.nombre || "");
+const EditUserModal = ({ open, onClose, user: targetUser, onSuccess }) => {
+  const { api, user } = useApi();
+  const { enqueueSnackbar } = useSnackbar();
+  const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+
+  const actorRole = user?.role || "";
+  const actorDepartmentId = getDepartmentId(user);
+  const targetRole = getRole(targetUser);
+  const canManageUsers = actorRole === "super_admin" || actorRole === "admin_departamento";
+  const canSelectDepartment = actorRole === "super_admin";
+  const isDepartmentRequired = targetRole !== "super_admin";
 
   useEffect(() => {
-    setNombre(user?.nombre || "");
+    if (!open) return;
+    setNombre(targetUser?.nombre || "");
     setPassword("");
-  }, [user]);
+    setDepartmentId(canSelectDepartment ? getDepartmentId(targetUser) : actorDepartmentId);
+  }, [open, targetUser, canSelectDepartment, actorDepartmentId]);
 
-  const handleUpdate = () => {
-    const payload = {
-      nombre,
+  useEffect(() => {
+    if (!open || !isDepartmentRequired || !canManageUsers) return;
+
+    const loadDepartments = async () => {
+      setLoadingDepartments(true);
+      try {
+        if (canSelectDepartment) {
+          const response = await api.get("/departamentos?limit=200");
+          const list = Array.isArray(response.data)
+            ? response.data
+            : (response.data.request_list || response.data.departamentos || []);
+          setDepartments(list);
+          return;
+        }
+
+        if (actorDepartmentId) {
+          const response = await api.get(`/departamentos/${actorDepartmentId}`);
+          setDepartments([response.data]);
+        } else {
+          setDepartments([]);
+        }
+      } catch (error) {
+        if (error.response) {
+          enqueueSnackbar(error.response.data.message || "Error al cargar departamentos", { variant: "error" });
+        } else {
+          enqueueSnackbar(error.message || "Error al cargar departamentos", { variant: "error" });
+        }
+      } finally {
+        setLoadingDepartments(false);
+      }
     };
 
+    loadDepartments();
+  }, [open, isDepartmentRequired, canManageUsers, canSelectDepartment, actorDepartmentId, api, enqueueSnackbar]);
+
+  const handleUpdate = () => {
+    if (!canManageUsers) {
+      enqueueSnackbar("No autorizado para editar usuarios", { variant: "error" });
+      return;
+    }
+
+    const targetUserId = getEntityId(targetUser);
+    if (!targetUserId) {
+      enqueueSnackbar("Usuario inválido", { variant: "error" });
+      return;
+    }
+
+    const payload = { nombre };
     if (password.trim() !== "") {
       payload.password = password;
     }
 
-    api
-      .put(`/editar_usuario/${user._id.$oid}`, payload)
+    if (isDepartmentRequired) {
+      payload.departmentId = canSelectDepartment ? departmentId : actorDepartmentId;
+      if (!payload.departmentId) {
+        enqueueSnackbar("El usuario debe tener departamento asociado", { variant: "error" });
+        return;
+      }
+    }
+
+    api.put(`/editar_usuario/${targetUserId}`, payload)
       .then((response) => {
         enqueueSnackbar(response.data.message, { variant: "success" });
         onSuccess();
@@ -48,12 +119,18 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
       });
   };
 
-  if (!user) return null;
+  if (!targetUser) return null;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
       <DialogTitle>Editar Usuario</DialogTitle>
       <DialogContent dividers>
+        {!canManageUsers && (
+          <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+            No autorizado para editar este usuario.
+          </Typography>
+        )}
+
         <Box mb={2}>
           <TextField
             label="Nombre"
@@ -63,15 +140,39 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
           />
         </Box>
 
-        {Boolean(user?.rol === 'super_admin' || user?.is_admin) && (
-          <Box mb={2}>
-            <TextField
-              label="Nueva Contraseña (opcional)"
-              fullWidth
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+        <Box mb={2}>
+          <TextField
+            label="Nueva Contraseña (opcional)"
+            fullWidth
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </Box>
+
+        {isDepartmentRequired && (
+          <Box mb={1}>
+            <FormControl fullWidth disabled={!canSelectDepartment || loadingDepartments || !canManageUsers}>
+              <InputLabel id="edit-department-label">Departamento</InputLabel>
+              <Select
+                labelId="edit-department-label"
+                value={canSelectDepartment ? departmentId : actorDepartmentId}
+                label="Departamento"
+                onChange={(event) => setDepartmentId(event.target.value)}
+              >
+                {departments.map((department) => {
+                  const depId = getEntityId(department);
+                  return (
+                    <MenuItem key={depId} value={depId}>
+                      {department?.nombre || "Sin nombre"} {department?.codigo ? `(${department.codigo})` : ""}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+              {!canSelectDepartment && (
+                <FormHelperText>Solo puedes usar tu propio departamento.</FormHelperText>
+              )}
+            </FormControl>
           </Box>
         )}
       </DialogContent>
@@ -80,7 +181,7 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
         <Button onClick={onClose} color="secondary">
           Cancelar
         </Button>
-        <Button onClick={handleUpdate} variant="contained" color="primary">
+        <Button onClick={handleUpdate} variant="contained" color="primary" disabled={!canManageUsers}>
           Guardar Cambios
         </Button>
       </DialogActions>

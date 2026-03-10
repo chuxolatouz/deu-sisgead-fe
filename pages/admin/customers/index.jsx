@@ -49,7 +49,9 @@ export default function CustomerList() {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
 
-  const { api } = useApi();
+  const { api, user } = useApi();
+  const actorRole = user?.role || "";
+  const canManageUsers = actorRole === "super_admin" || actorRole === "admin_departamento";
   const fetchUsers = () => api.get(
     `/mostrar_usuarios?page=${pagination.page}&limit=${pagination.limit}`,
   ).then((respon) => {
@@ -81,9 +83,11 @@ export default function CustomerList() {
   return (
     <Box py={4}>
       <H3 mb={2}>Usuarios</H3>
-      <Button variant="outlined" color="success"  onClick={() => router.push('/admin/customers/create')}>
-        Agregar Usuario
-      </Button>
+      {canManageUsers && (
+        <Button variant="outlined" color="success" onClick={() => router.push('/admin/customers/create')}>
+          Agregar Usuario
+        </Button>
+      )}
       <Card>
         <Scrollbar>
           <TableContainer
@@ -99,7 +103,12 @@ export default function CustomerList() {
 
               <TableBody>
                 { data.map((customer) => (
-                  <CustomerRow customer={customer} key={customer._id.$oid} fetchUsers={fetchUsers} />
+                  <CustomerRow
+                    customer={customer}
+                    key={customer?._id?.$oid || customer?._id}
+                    fetchUsers={fetchUsers}
+                    canManageUsers={canManageUsers}
+                  />
                 ))}
               </TableBody>
             </Table>

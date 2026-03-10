@@ -14,6 +14,8 @@ import {
 const ShowUserModal = ({ open, onClose, user }) => {
   if (!user) return null;
   const userRole = user?.rol || user?.role || (user?.is_admin ? 'super_admin' : 'usuario');
+  const departmentId = user?.departmentId || user?.departamento_id;
+  const departmentName = user?.departamento?.nombre || user?.department?.nombre || "";
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
@@ -56,6 +58,30 @@ const ShowUserModal = ({ open, onClose, user }) => {
           {userRole === 'admin_departamento' && <Chip label="Admin Departamento" color="info" />}
           {userRole === 'usuario' && <Chip label="Usuario regular" variant="outlined" />}
         </Box>
+
+        {userRole !== "super_admin" && (
+          <>
+            <Divider />
+            <Box mt={2}>
+              <Typography variant="subtitle2" color="textSecondary">
+                Departamento:
+              </Typography>
+              {departmentName && (
+                <Typography variant="body1">{departmentName}</Typography>
+              )}
+              {departmentId && (
+                <Typography variant="caption" color="textSecondary">
+                  {departmentId}
+                </Typography>
+              )}
+              {!departmentId && (
+                <Typography variant="body2" color="error">
+                  Sin departamento asignado
+                </Typography>
+              )}
+            </Box>
+          </>
+        )}
       </DialogContent>
 
       <DialogActions>

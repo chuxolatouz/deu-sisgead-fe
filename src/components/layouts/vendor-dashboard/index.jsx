@@ -3,6 +3,7 @@ import { Fragment, useState } from "react";
 import DashboardNavbar from "./DashboardNavbar";
 import DashboardSidebar from "./DashboardSidebar";
 import DepartmentSelector from "./DepartmentSelector";
+import CurrentDepartmentChip from "./CurrentDepartmentChip";
 
 // styled components
 const BodyWrapper = styled(Box)(({ theme, compact }) => ({
@@ -32,7 +33,8 @@ const TopBar = styled(Box)(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
   padding: theme.spacing(1.5, 2),
   display: "flex",
-  justifyContent: "flex-end",
+  justifyContent: "space-between",
+  gap: theme.spacing(1.5),
   alignItems: "center",
 }));
 
@@ -62,6 +64,7 @@ const VendorDashboardLayout = ({ children }) => {
       <BodyWrapper compact={sidebarCompact ? 1 : 0}>
         {/* <DashboardNavbar handleDrawerToggle={handleMobileDrawerToggle} /> */}
         <TopBar>
+          <CurrentDepartmentChip />
           <DepartmentSelector />
         </TopBar>
         <InnerWrapper>{children}</InnerWrapper>

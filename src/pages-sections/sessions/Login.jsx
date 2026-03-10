@@ -58,10 +58,13 @@ const Login = () => {
   
   const handleFormSubmit = (values) => {
     api.post('/login', values).then((response) => {
+      const departmentId = response.data.departmentId || response.data.departamento_id || "";
       const userData = {
         nombre: response.data.nombre,
         role: response.data.role,
-        email: response.data.email
+        email: response.data.email,
+        departmentId,
+        departamento_id: departmentId,
       };
       
       localStorage.setItem('token', response.data.token);
