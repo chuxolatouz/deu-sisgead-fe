@@ -113,9 +113,9 @@ export const sendLoginNotification = async (api, user, silent = true) => {
     template: 'notificaciones.html',
     variables: {
       nombre: user.nombre || 'Usuario',
-      mensaje: 'Has iniciado sesión exitosamente en la plataforma ENII.',
+      mensaje: 'Has iniciado sesión exitosamente en la plataforma DEU.',
       fecha: new Date().toLocaleDateString('es-ES'),
-      plataforma: 'ENII'
+      plataforma: 'DEU'
     },
     silent
   });
@@ -136,13 +136,13 @@ export const sendWelcomeEmail = async (api, user, onError) => {
 
   return sendEmailWithTemplate(api, {
     recipient: user.email,
-    subject: 'Bienvenido a ENII',
+    subject: 'Bienvenido a DEU',
     template: 'notificaciones.html',
     variables: {
       nombre: user.nombre || 'Usuario',
-      mensaje: '¡Bienvenido a la plataforma ENII! Tu cuenta ha sido creada exitosamente.',
+      mensaje: '¡Bienvenido a la plataforma DEU! Tu cuenta ha sido creada exitosamente.',
       fecha: new Date().toLocaleDateString('es-ES'),
-      plataforma: 'ENII'
+      plataforma: 'DEU'
     },
     onError
   });

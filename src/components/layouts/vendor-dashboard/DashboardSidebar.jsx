@@ -137,9 +137,9 @@ const DashboardSidebar = (props) => {
         <Box p={2} maxHeight={TOP_HEADER_AREA}>
           <Image
             alt="Logo"
-            width={105}
-            height={50}
-            src="/assets/images/logo-enii.png"
+            width={52}
+            height={52}
+            src="/assets/images/logo-deu.png"
             style={{
               marginLeft: 8,
             }}
@@ -162,14 +162,11 @@ const DashboardSidebar = (props) => {
         justifyContent={COMPACT ? "center" : "space-between"}
       >
         <Avatar
-          src={
-            COMPACT
-              ? "/assets/images/logo-reducido.png"
-              : "/assets/images/logo-enii.png"
-          }
+          src="/assets/images/logo-deu.png"
           sx={{
             borderRadius: 0,
-            width: "auto",
+            width: COMPACT ? 42 : 52,
+            height: COMPACT ? 42 : 52,
             marginLeft: COMPACT ? 0 : 1,
           }}
         />

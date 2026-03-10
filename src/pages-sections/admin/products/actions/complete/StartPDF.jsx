@@ -58,7 +58,7 @@ function Acta({ project }) {
             <Text>Universidad Central de Venezuela</Text>
             <Text>Facultad de Ciencias</Text>
             <Text>Escuela de Computación</Text>
-            <Text>ENII</Text>
+            <Text>DEU</Text>
           </View>
           <View style={styles.header}>Ciencias</View>
         </View>

@@ -42,7 +42,7 @@ const App = (props) => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
         <OpenGraphTags />
-        <title>ENII - Universidad Central de Venezuela</title>
+        <title>DEU - Universidad Central de Venezuela</title>
       </Head>
 
       <SettingsProvider>

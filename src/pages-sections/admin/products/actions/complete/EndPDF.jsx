@@ -77,7 +77,7 @@ function Acta({ project, movements = [], logs = [], budgets = [] }) {
             <Text style={styles.textBody}>Universidad Central de Venezuela</Text>
             <Text style={styles.textBody}>Facultad de Ciencias</Text>
             <Text style={styles.textBody}>Escuela de Computación</Text>
-            <Text style={styles.textBody}>ENII</Text>
+            <Text style={styles.textBody}>DEU</Text>
           </View>
         </View>
         <View style={styles.section}>

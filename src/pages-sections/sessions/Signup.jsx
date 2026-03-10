@@ -64,7 +64,7 @@ const Signup = () => {
           value={values.email}
           onChange={handleChange}
           label="Email"
-          placeholder="example@enii.com.ve"
+          placeholder="example@deu.ucv.ve"
           error={!!touched.email && !!errors.email}
           helperText={touched.email && errors.email}
         />

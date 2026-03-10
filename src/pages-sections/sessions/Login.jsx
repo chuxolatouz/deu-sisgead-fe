@@ -94,15 +94,16 @@ const Login = () => {
     <Wrapper elevation={3} passwordVisibility={passwordVisibility}>
       <form onSubmit={handleSubmit}>
         <BazaarImage
-          src="/assets/images/logo-enii.png"
+          src="/assets/images/logo-deu.png"
           sx={{
             m: "auto",
-            width: "-webkit-fill-available"
+            width: 130,
+            height: 130,
           }}
         />
 
         <H1 textAlign="center" mt={1} mb={4} fontSize={16}>
-          Bienvenidos a ENII
+          Bienvenidos a DEU
         </H1>
 
         <BazaarTextField
@@ -116,7 +117,7 @@ const Login = () => {
           value={values.email}
           onChange={handleChange}
           label="Email"
-          placeholder="example@enii.com.ve"
+          placeholder="example@deu.ucv.ve"
           error={!!touched.email && !!errors.email}
           helperText={touched.email && errors.email}
         />
