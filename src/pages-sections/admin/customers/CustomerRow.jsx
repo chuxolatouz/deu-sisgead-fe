@@ -33,6 +33,7 @@ const CustomerRow = ({ customer, fetchUsers, canManageUsers = false }) => {
   const userRole = customer?.rol || customer?.role || (customer?.is_admin ? 'super_admin' : 'usuario');
   const userId = customer?._id?.$oid || customer?._id;
   const departmentId = customer?.departmentId || customer?.departamento_id;
+  const departmentCode = customer?.departmentCode || customer?.departamento_codigo || customer?.departamento?.codigo || customer?.department?.codigo;
   const departmentName = customer?.departamento?.nombre || customer?.department?.nombre;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [openChangeRole, setOpenChangeRole] = useState(false);
@@ -83,7 +84,7 @@ const CustomerRow = ({ customer, fetchUsers, canManageUsers = false }) => {
             )}
             {userRole !== "super_admin" && (
               <Paragraph fontSize={11} color="grey.600">
-                {departmentName || "Departamento"}: {departmentId || "Sin asignar"}
+                Departamento: {departmentCode || departmentName || departmentId || "Sin asignar"}
               </Paragraph>
             )}
           </Box>
