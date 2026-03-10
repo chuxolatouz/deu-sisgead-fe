@@ -34,7 +34,7 @@ const TYPE_COLORS = {
   adjustment: "default",
 };
 
-function ProductMovements({ id }) {
+function ProductMovements({ id, year = new Date().getFullYear() }) {
   const [pagination, setPagination] = useState(1);
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
@@ -45,7 +45,7 @@ function ProductMovements({ id }) {
     if (!id) return;
     api
       .get(
-        `/api/projects/${id}/funding-timeline?page=${pagination - 1}&limit=10`
+        `/api/projects/${id}/funding-timeline?page=${pagination - 1}&limit=10&year=${year}`
       )
       .then((response) => {
         setRows(response.data.request_list || []);
@@ -58,7 +58,7 @@ function ProductMovements({ id }) {
           "Error al cargar movimientos";
         enqueueSnackbar(message, { variant: "error" });
       });
-  }, [api, enqueueSnackbar, id, pagination]);
+  }, [api, enqueueSnackbar, id, pagination, year]);
 
   return (
     <Box>

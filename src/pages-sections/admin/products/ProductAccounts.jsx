@@ -55,9 +55,13 @@ const flattenTree = (nodes, depth = 0) => {
   return rows;
 };
 
-export default function ProductAccounts({ projectId, project }) {
+export default function ProductAccounts({
+  projectId,
+  project,
+  year: defaultYear = new Date().getFullYear(),
+}) {
   const normalizedProjectId = normalizeProjectId(projectId || project?._id);
-  const [year, setYear] = useState(2025);
+  const [year, setYear] = useState(defaultYear);
   const [showZeroAssigned, setShowZeroAssigned] = useState(false);
   const [tree, setTree] = useState([]);
   const [meta, setMeta] = useState(null);
@@ -70,6 +74,10 @@ export default function ProductAccounts({ projectId, project }) {
   const { enqueueSnackbar } = useSnackbar();
 
   const rows = useMemo(() => flattenTree(tree), [tree]);
+
+  useEffect(() => {
+    setYear(defaultYear);
+  }, [defaultYear]);
 
   const refreshFunding = () => {
     if (!normalizedProjectId) return;
@@ -339,6 +347,7 @@ export default function ProductAccounts({ projectId, project }) {
         onClose={() => setOpenFunding(false)}
         project={project || { _id: normalizedProjectId, departmentId }}
         fundingSummary={summary}
+        year={year}
         onSuccess={handleSuccess}
       />
       <ProjectFundingMigrationDrawer
@@ -346,6 +355,7 @@ export default function ProductAccounts({ projectId, project }) {
         onClose={() => setOpenMigration(false)}
         project={project || { _id: normalizedProjectId, departmentId }}
         fundingSummary={summary}
+        year={year}
         onSuccess={handleSuccess}
       />
     </Box>

@@ -19,7 +19,7 @@ import { formatMonto } from 'lib';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-export default function ProjectReport({ id }) {
+export default function ProjectReport({ id, year = new Date().getFullYear() }) {
   const [balanceHistory, setBalanceHistory] = useState([]);
   const [egresosPorTipo, setEgresosPorTipo] = useState([]);
   const [summary, setSummary] = useState({
@@ -35,7 +35,7 @@ export default function ProjectReport({ id }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: id es la única dependencia necesaria
   useEffect(() => {
     if (id) {
-      api.get(`/proyecto/${id}/reporte`)
+      api.get(`/proyecto/${id}/reporte?year=${year}`)
         .then((res) => {
           // El backend devuelve balance_history y egresos_tipo (snake_case)
           const balanceHistory = Array.isArray(res.data?.balance_history)
@@ -64,7 +64,7 @@ export default function ProjectReport({ id }) {
           setEgresosPorTipo([]);
         });
     }
-  }, [id]);
+  }, [id, year]);
 
   return (
     <Grid container spacing={3}>

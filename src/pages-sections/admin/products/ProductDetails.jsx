@@ -55,7 +55,7 @@ const categoryMatchesReference = (category, reference) => {
   return ref === categoryId || ref === categoryValue;
 };
 
-const ProductDetails = ({ product }) => {
+const ProductDetails = ({ product, onRefresh }) => {
   const router = useRouter();
   const [tab, setTab] = useState("0");
   const [categories, setCategories] = useState([]);
@@ -65,6 +65,7 @@ const ProductDetails = ({ product }) => {
   const { enqueueSnackbar } = useSnackbar();
   const fundingSummary = product?.fundingSummary;
   const fundingModel = product?.fundingModel;
+  const fundingYear = Number(product?.fundingYear || new Date().getFullYear());
 
   const handleChange = (_, newValue) => {
     setTab(newValue);
@@ -107,7 +108,8 @@ const ProductDetails = ({ product }) => {
   };
 
   const handleFundingSuccess = () => {
-    router.replace(router.asPath);
+    onRefresh?.();
+    router.reload();
   };
 
   return (
@@ -439,13 +441,13 @@ const ProductDetails = ({ product }) => {
             </TabList>
             <Box>
               <TabPanel value="0">
-                <ProductReport id={product._id} />
+                <ProductReport id={product._id} year={fundingYear} />
               </TabPanel>
               <TabPanel value="1">
                 <ProductUsers id={product._id} users={product.miembros} />
               </TabPanel>
               <TabPanel value="2">
-                <ProductMovements id={product._id} />
+                <ProductMovements id={product._id} year={fundingYear} />
               </TabPanel>
               <TabPanel value="3">
                 <ProductBudget project={product} />
@@ -454,7 +456,11 @@ const ProductDetails = ({ product }) => {
                 <ProductLogs id={product._id} />
               </TabPanel>
               <TabPanel value="5">
-                <ProductAccounts projectId={product._id} project={product} />
+                <ProductAccounts
+                  projectId={product._id}
+                  project={product}
+                  year={fundingYear}
+                />
               </TabPanel>
             </Box>
           </TabContext>
@@ -465,6 +471,7 @@ const ProductDetails = ({ product }) => {
         onClose={() => setOpenFunding(false)}
         project={product}
         fundingSummary={fundingSummary}
+        year={fundingYear}
         onSuccess={handleFundingSuccess}
       />
       <ProjectFundingMigrationDrawer
@@ -472,6 +479,7 @@ const ProductDetails = ({ product }) => {
         onClose={() => setOpenMigration(false)}
         project={product}
         fundingSummary={fundingSummary}
+        year={fundingYear}
         onSuccess={handleFundingSuccess}
       />
       {/* <Grid item md={3} xs={12}>

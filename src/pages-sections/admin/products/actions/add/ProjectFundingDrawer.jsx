@@ -20,8 +20,6 @@ import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
 import { formatMonto } from "lib";
 
-const DEFAULT_YEAR = 2025;
-
 const buildRow = (baseAmount = "") => ({
   fromAccountCode: "",
   fromAccount: null,
@@ -38,6 +36,7 @@ function ProjectFundingDrawer({
   fundingSummary,
   onSuccess,
   migration = false,
+  year = new Date().getFullYear(),
 }) {
   const { api, user } = useApi();
   const { enqueueSnackbar } = useSnackbar();
@@ -49,6 +48,7 @@ function ProjectFundingDrawer({
   const allowedSources = fundingSummary?.permissions?.allowedSources || [];
   const isSuperAdmin = user?.role === "super_admin";
   const totalRequired = Number(fundingSummary?.totals?.currentAvailable || 0);
+  const resolvedYear = Number(year || new Date().getFullYear());
 
   useEffect(() => {
     if (!open) return;
@@ -92,7 +92,7 @@ function ProjectFundingDrawer({
     setSubmitting(true);
     try {
       const payload = {
-        year: DEFAULT_YEAR,
+        year: resolvedYear,
         sourceScopeType,
         sourceScopeId,
         allocations: rows.map((row) => ({
@@ -226,7 +226,7 @@ function ProjectFundingDrawer({
                   <AccountSelector
                     label="Cuenta origen"
                     value={row.fromAccountCode || null}
-                    year={DEFAULT_YEAR}
+                    year={resolvedYear}
                     allowHeaders={false}
                     scopeType={sourceScopeType}
                     scopeId={sourceScopeId}
@@ -244,7 +244,7 @@ function ProjectFundingDrawer({
                   <AccountSelector
                     label="Partida destino del proyecto"
                     value={row.toAccountCode || null}
-                    year={DEFAULT_YEAR}
+                    year={resolvedYear}
                     allowHeaders={false}
                     scopeType="project"
                     scopeId={projectId}
