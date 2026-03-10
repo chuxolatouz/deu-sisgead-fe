@@ -18,6 +18,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TablePagination,
   TableContainer,
   TableHead,
   TableRow,
@@ -66,6 +67,8 @@ export default function ProjectCategoriesPage() {
   const [formCategoryId, setFormCategoryId] = useState("");
   const [formState, setFormState] = useState(DEFAULT_FORM_STATE);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const fetchCategories = async (text = searchText) => {
     setLoading(true);
@@ -104,6 +107,16 @@ export default function ProjectCategoriesPage() {
       return true;
     });
   }, [categories, statusFilter]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, categories.length]);
+
+  const paginatedCategories = useMemo(() => {
+    const start = page * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredCategories.slice(start, end);
+  }, [filteredCategories, page, rowsPerPage]);
 
   const openCreateDialog = () => {
     setFormMode("create");
@@ -149,12 +162,15 @@ export default function ProjectCategoriesPage() {
       if (formMode === "create") {
         await api.post("/categorias", payload);
         enqueueSnackbar("Categoría creada con éxito", { variant: "success" });
+        setSearchText("");
+        setStatusFilter("all");
       } else {
         await api.put(`/categorias/${formCategoryId}`, payload);
         enqueueSnackbar("Categoría actualizada con éxito", { variant: "success" });
       }
       closeFormDialog();
-      fetchCategories();
+      setPage(0);
+      await fetchCategories(formMode === "create" ? "" : searchText);
     } catch (error) {
       if (error.response) {
         enqueueSnackbar(error.response.data.message || "Error al guardar categoría", { variant: "error" });
@@ -168,7 +184,7 @@ export default function ProjectCategoriesPage() {
     try {
       await api.patch(`/categorias/${category._id}/estado`, { activo: nextStatus });
       enqueueSnackbar("Estado actualizado con éxito", { variant: "success" });
-      fetchCategories();
+      await fetchCategories();
     } catch (error) {
       if (error.response) {
         enqueueSnackbar(error.response.data.message || "Error al actualizar estado", { variant: "error" });
@@ -184,7 +200,7 @@ export default function ProjectCategoriesPage() {
       await api.delete(`/categorias/${deleteTarget._id}`);
       enqueueSnackbar("Categoría eliminada con éxito", { variant: "success" });
       setDeleteTarget(null);
-      fetchCategories();
+      await fetchCategories();
     } catch (error) {
       if (error.response) {
         enqueueSnackbar(error.response.data.message || "Error al eliminar categoría", { variant: "error" });
@@ -198,7 +214,7 @@ export default function ProjectCategoriesPage() {
     try {
       await api.post(`/categorias/${categoryId}/restaurar`);
       enqueueSnackbar("Categoría restaurada con éxito", { variant: "success" });
-      fetchCategories();
+      await fetchCategories();
     } catch (error) {
       if (error.response) {
         enqueueSnackbar(error.response.data.message || "Error al restaurar categoría", { variant: "error" });
@@ -273,7 +289,7 @@ export default function ProjectCategoriesPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredCategories.map((category) => (
+              {paginatedCategories.map((category) => (
                 <TableRow key={category._id}>
                   <TableCell>{category.nombre}</TableCell>
                   <TableCell>{category.value}</TableCell>
@@ -360,6 +376,19 @@ export default function ProjectCategoriesPage() {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={filteredCategories.length}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[5, 10, 20, 50]}
+          labelRowsPerPage="Filas por página"
+        />
       </Card>
 
       <Dialog open={openFormDialog} onClose={closeFormDialog} fullWidth maxWidth="sm">
@@ -382,6 +411,32 @@ export default function ProjectCategoriesPage() {
               onChange={(event) => setFormState((prev) => ({ ...prev, color: event.target.value }))}
               fullWidth
             />
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
+              <TextField
+                label="Selector visual"
+                type="color"
+                value={`#${isHexColor(formState.color) ? normalizeColor(formState.color) : "1976D2"}`}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, color: normalizeColor(event.target.value) }))
+                }
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: 160 }}
+              />
+              <Box display="inline-flex" alignItems="center" gap={1}>
+                <Box
+                  sx={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "4px",
+                    border: "1px solid #ccc",
+                    backgroundColor: `#${isHexColor(formState.color) ? normalizeColor(formState.color) : "1976D2"}`,
+                  }}
+                />
+                <Typography variant="body2">
+                  {`#${isHexColor(formState.color) ? normalizeColor(formState.color) : "1976D2"}`}
+                </Typography>
+              </Box>
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>
