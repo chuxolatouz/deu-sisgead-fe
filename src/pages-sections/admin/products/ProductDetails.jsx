@@ -200,20 +200,25 @@ const ProductDetails = ({ product, onRefresh }) => {
               variant="outlined"
               sx={{ width: "fit-content", mt: 1 }}
             />
-            {fundingSummary?.permissions?.canFund ? (
-              <Button
-                variant="contained"
-                sx={{ mt: 1 }}
-                onClick={() => setOpenFunding(true)}
-              >
-                Asignar fondos
-              </Button>
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {fundingSummary?.permissions?.reason ||
-                  "Solo lectura de fondos."}
-              </Typography>
-            )}
+            {tab !== "5" &&
+              (fundingSummary?.permissions?.canFund ? (
+                <Button
+                  variant="contained"
+                  sx={{ mt: 1 }}
+                  onClick={() => setOpenFunding(true)}
+                >
+                  Asignar fondos
+                </Button>
+              ) : (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
+                  {fundingSummary?.permissions?.reason ||
+                    "Solo lectura de fondos."}
+                </Typography>
+              ))}
           </Stack>
 
           <Divider
