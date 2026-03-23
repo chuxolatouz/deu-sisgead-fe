@@ -341,7 +341,7 @@ export default function AccountsPage() {
 
   return (
     <Box py={4}>
-      <H3 mb={2}>Cuentas Contables 2025</H3>
+      <H3 mb={2}>Cuentas Contables</H3>
 
       <Card sx={{ p: 2, mb: 2 }}>
         <Stack spacing={2}>
