@@ -4,16 +4,32 @@ import { useRouter } from 'next/router';
 
 export const AxiosContext = createContext();
 
+const normalizeStoredUser = (rawUser) => {
+  if (!rawUser) return null;
+
+  const role = rawUser.role || rawUser.rol || "";
+  const departmentId = rawUser.departmentId || rawUser.departamento_id || "";
+
+  return {
+    ...rawUser,
+    role,
+    rol: rawUser.rol || role,
+    departmentId,
+    departamento_id: rawUser.departamento_id || departmentId,
+  };
+};
+
 export function AxiosProvider({ children }) {
   const BASE_URL = (process.env.NEXT_PUBLIC_APP_BACKEND || "").trim();
   const router = useRouter();
 
   const user = useMemo(() => {
+    if (typeof window === 'undefined') return null;
     const userData = localStorage.getItem('user');
-    return userData ? JSON.parse(userData) : null;
+    return userData ? normalizeStoredUser(JSON.parse(userData)) : null;
   }, []);
 
-  const token = user?.token || localStorage.getItem('token');
+  const token = user?.token || (typeof window !== 'undefined' ? localStorage.getItem('token') : '');
 
   const api = useMemo(() => {
 

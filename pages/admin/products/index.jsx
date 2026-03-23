@@ -11,7 +11,7 @@ import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from "notistack";
 
 // TABLE HEADING DATA LIST
-const tableHeading = [
+const baseTableHeading = [
   {
     id: "nombre",
     label: "Nombre",
@@ -62,7 +62,18 @@ export default function ProductList() {
   });
   const { enqueueSnackbar } = useSnackbar();
 
-  const { api } = useApi();
+  const { api, user } = useApi();
+  const actorRole = user?.role || user?.rol || "";
+  const isSuperAdmin = actorRole === "super_admin";
+  const tableHeading = isSuperAdmin ? [
+    ...baseTableHeading.slice(0, 1),
+    {
+      id: "departmentName",
+      label: "Asignado a",
+      align: "left",
+    },
+    ...baseTableHeading.slice(1),
+  ] : baseTableHeading;
   
   const fetchProducts = () => api.get(
     `/mostrar_proyectos?page=${pagination.page}&limit=${pagination.limit}`,
@@ -110,7 +121,12 @@ export default function ProductList() {
 
               <TableBody>
                 {projects.map((product, index) => (
-                  <ProductRow product={product} key={index} fetchProducts={fetchProducts}/>
+                  <ProductRow
+                    product={product}
+                    key={index}
+                    fetchProducts={fetchProducts}
+                    showDepartmentColumn={isSuperAdmin}
+                  />
                 ))}
               </TableBody>
             </Table>

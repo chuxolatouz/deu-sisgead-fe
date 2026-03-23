@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { Edit, RemoveRedEye } from "@mui/icons-material";
-import { Box, Tooltip } from "@mui/material";
+import { Box, Chip, Tooltip } from "@mui/material";
 import { FlexBox } from "components/flex-box";
 import { Paragraph } from "components/Typography";
 import { currency, formatSafeDate } from "lib";
@@ -17,7 +17,7 @@ import { useApi } from "contexts/AxiosContext";
 
 // ========================================================================
 
-const ProductRow = ({ product, fetchProducts }) => {
+const ProductRow = ({ product, fetchProducts, showDepartmentColumn = false }) => {
   const {
     nombre,
     balance,
@@ -26,10 +26,15 @@ const ProductRow = ({ product, fetchProducts }) => {
     _id,
     status,
     fundingModel,
+    departmentName,
+    departmentCode,
+    departamento,
   } = product;
 
   const router = useRouter();
   const { user } = useApi();
+  const departmentLabel = departmentName || departamento?.nombre || departmentCode || "DEU";
+  const isGlobalScope = departmentLabel === "DEU";
   return (
     // biome-ignore lint/a11y/useSemanticElements: <explanation>
     <StyledTableRow tabIndex={-1} role="checkbox">
@@ -47,6 +52,24 @@ const ProductRow = ({ product, fetchProducts }) => {
           </Box>
         </FlexBox>
       </StyledTableCell>
+      {showDepartmentColumn && (
+        <StyledTableCell align="left">
+          <Chip
+            label={departmentLabel}
+            size="small"
+            color={isGlobalScope ? "primary" : "info"}
+            variant={isGlobalScope ? "filled" : "outlined"}
+            sx={{
+              fontWeight: 700,
+              maxWidth: 220,
+              "& .MuiChip-label": {
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              },
+            }}
+          />
+        </StyledTableCell>
+      )}
       <StyledTableCell>
         <Paragraph>{formatSafeDate(fecha_inicio)}</Paragraph>
       </StyledTableCell>
@@ -85,7 +108,7 @@ const ProductRow = ({ product, fetchProducts }) => {
       </StyledTableCell>
 
       <StyledTableCell align="center">
-        {user.role === "admin" && !status?.finished && (
+        {user?.role === "admin" && !status?.finished && (
           <StyledIconButton
             onClick={() => router.push(`/admin/products/edit/${_id.$oid}`)}
           >
@@ -102,7 +125,7 @@ const ProductRow = ({ product, fetchProducts }) => {
             <RemoveRedEye />
           </Tooltip>
         </StyledIconButton>
-        {user.role === "admin" && (
+        {user?.role === "admin" && (
           <DeleteProduct product={product} fetchProducts={fetchProducts} />
         )}
       </StyledTableCell>
