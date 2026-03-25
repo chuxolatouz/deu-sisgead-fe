@@ -22,11 +22,13 @@ import AccountSelector from 'components/accounting/AccountSelector';
 import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from 'notistack';
 import AccountRow from 'pages-sections/admin/accounts/AccountRow';
+import { INCOME_TYPE_OPTIONS } from 'utils/accounting';
 
 const tableHeading = [
   { id: 'code', label: 'Código', align: 'left' },
   { id: 'description', label: 'Descripción', align: 'left' },
   { id: 'group', label: 'Grupo', align: 'center' },
+  { id: 'incomeType', label: 'Tipo de ingreso', align: 'center' },
   { id: 'is_header', label: 'Tipo', align: 'center' },
   { id: 'level', label: 'Nivel', align: 'center' },
   { id: 'parent_code', label: 'Código Padre', align: 'left' },
@@ -70,6 +72,7 @@ export default function AccountsPage() {
     code: '',
     description: '',
     group: 'EGRESO',
+    incomeType: '',
     level: 1,
     parent_code: '',
     is_header: false,
@@ -182,6 +185,10 @@ export default function AccountsPage() {
       enqueueSnackbar('Código y descripción son obligatorios', { variant: 'error' });
       return;
     }
+    if (!createForm.incomeType) {
+      enqueueSnackbar('Selecciona el tipo de ingreso', { variant: 'error' });
+      return;
+    }
 
     const payload = {
       ...createForm,
@@ -200,6 +207,7 @@ export default function AccountsPage() {
           code: '',
           description: '',
           group: 'EGRESO',
+          incomeType: '',
           level: 1,
           parent_code: '',
           is_header: false,
@@ -461,7 +469,7 @@ export default function AccountsPage() {
               <TableBody>
                 {accounts.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '20px' }}>
                       No hay cuentas para mostrar
                     </td>
                   </tr>
@@ -498,6 +506,18 @@ export default function AccountsPage() {
             <TextField label="Grupo" select value={createForm.group} onChange={(event) => setCreateForm((prev) => ({ ...prev, group: event.target.value }))}>
               {GROUPS.filter(Boolean).map((group) => (
                 <MenuItem key={group} value={group}>{group}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Tipo de ingreso"
+              select
+              value={createForm.incomeType}
+              onChange={(event) => setCreateForm((prev) => ({ ...prev, incomeType: event.target.value }))}
+              required
+            >
+              <MenuItem value="" disabled>Selecciona...</MenuItem>
+              {INCOME_TYPE_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
               ))}
             </TextField>
             <TextField label="Nivel" type="number" value={createForm.level} onChange={(event) => setCreateForm((prev) => ({ ...prev, level: Number(event.target.value || 1) }))} />

@@ -11,6 +11,11 @@ const DropZone = ({
   onChange,
   title = "Drag & drop product image here",
   imageSize = "Upload 280*280 image",
+  accept = {
+    "image/*": [".png", ".gif", ".jpeg", ".jpg"],
+    "application/pdf": [".pdf"],
+  },
+  maxFiles = 10,
 }) => {
   const onDrop = useCallback(
     (acceptedFiles) => onChange(acceptedFiles),
@@ -18,13 +23,9 @@ const DropZone = ({
   );
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    maxFiles: 10,
+    maxFiles,
     multiple: true,
-    accept: {
-      "image/*": [".png", ".gif", ".jpeg", ".jpg"],
-      "application/pdf": [".pdf"]
-
-    },
+    accept,
   });
   return (
     <Box

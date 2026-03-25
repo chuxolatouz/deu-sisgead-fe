@@ -13,6 +13,7 @@ import {
 import { H3 } from 'components/Typography';
 import { useSnackbar } from 'notistack';
 import { useApi } from 'contexts/AxiosContext';
+import { INCOME_TYPE_OPTIONS } from 'utils/accounting';
 
 const GROUPS = ['PASIVO', 'INGRESO', 'EGRESO'];
 
@@ -20,6 +21,7 @@ const EditAccountModal = ({ open, onClose, account, year, onSuccess }) => {
   const [formData, setFormData] = useState({
     description: '',
     group: 'EGRESO',
+    incomeType: '',
     level: 1,
     parent_code: '',
     is_header: false
@@ -32,6 +34,7 @@ const EditAccountModal = ({ open, onClose, account, year, onSuccess }) => {
     setFormData({
       description: account.description || '',
       group: account.group || 'EGRESO',
+      incomeType: account.incomeType || '',
       level: Number(account.level || 1),
       parent_code: account.parent_code || '',
       is_header: Boolean(account.is_header)
@@ -51,10 +54,15 @@ const EditAccountModal = ({ open, onClose, account, year, onSuccess }) => {
       enqueueSnackbar('La descripción es obligatoria', { variant: 'error' });
       return;
     }
+    if (!formData.incomeType) {
+      enqueueSnackbar('Selecciona el tipo de ingreso', { variant: 'error' });
+      return;
+    }
 
     const payload = {
       description: formData.description.trim(),
       group: formData.group,
+      incomeType: formData.incomeType,
       level: Number(formData.level),
       parent_code: formData.parent_code.trim() || null,
       is_header: Boolean(formData.is_header)
@@ -86,6 +94,21 @@ const EditAccountModal = ({ open, onClose, account, year, onSuccess }) => {
             <TextField fullWidth select label="Grupo" name="group" value={formData.group} onChange={handleChange}>
               {GROUPS.map((group) => (
                 <MenuItem key={group} value={group}>{group}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              fullWidth
+              select
+              label="Tipo de ingreso"
+              name="incomeType"
+              value={formData.incomeType}
+              onChange={handleChange}
+              required
+              helperText={!formData.incomeType ? 'Las cuentas legadas aparecen como Sin definir hasta clasificarlas.' : ''}
+            >
+              <MenuItem value="" disabled>Sin definir</MenuItem>
+              {INCOME_TYPE_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
               ))}
             </TextField>
             <TextField fullWidth type="number" label="Nivel" name="level" value={formData.level} onChange={handleChange} inputProps={{ min: 1 }} />

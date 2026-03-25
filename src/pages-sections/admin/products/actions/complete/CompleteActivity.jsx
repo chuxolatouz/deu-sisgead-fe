@@ -20,7 +20,7 @@ import { useSnackbar } from "notistack";
 
 function CerrarActividad({ budget, onComplete }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [text, setText] = useState("");
+  const [resultText, setResultText] = useState("");
   const [amount, setAmount] = useState(0);
   const [files, setFiles] = useState([]);
   const [referencia, setReferencia] = useState("");
@@ -42,7 +42,7 @@ function CerrarActividad({ budget, onComplete }) {
   const handleClose = () => {
     setIsOpen(false);
     // Limpiar campos del formulario
-    setText("");
+    setResultText("");
     setAmount(0);
     setFiles([]);
     setReferencia("");
@@ -52,6 +52,18 @@ function CerrarActividad({ budget, onComplete }) {
     setCuentaContableManual("");
   };
   const handleCrearDoc = () => {
+    if (!resultText.trim()) {
+      enqueueSnackbar("Debes agregar una descripción final del resultado", {
+        variant: "error",
+      });
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      enqueueSnackbar("Debes indicar un monto aprobado válido", {
+        variant: "error",
+      });
+      return;
+    }
     const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
     if (!cuentaContable) {
       enqueueSnackbar(
@@ -62,7 +74,7 @@ function CerrarActividad({ budget, onComplete }) {
     }
     setSubmitting(true);
     const formData = new FormData();
-    formData.append("descripcion", text);
+    formData.append("description", resultText.trim());
 
     // biome-ignore lint/complexity/noForEach: <explanation>
     files.forEach((file) => {
@@ -71,7 +83,6 @@ function CerrarActividad({ budget, onComplete }) {
     formData.append("projectId", resolvedProjectId || "");
     formData.append("monto", amount);
     formData.append("docId", budget._id.$oid);
-    formData.append("description", budget.descripcion);
     formData.append("referencia", referencia);
     formData.append("transferAmount", montoTransferencia);
     formData.append("banco", banco);
@@ -119,14 +130,16 @@ function CerrarActividad({ budget, onComplete }) {
         label="Asignar Monto"
       />
       <Dialog open={isOpen} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>Agrega la factura de {budget.descripcion}</DialogTitle>
+        <DialogTitle>Cerrar actividad: {budget.descripcion}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-            <InputLabel id="documentos">Descripcion</InputLabel>
+            <InputLabel id="documentos">Descripción final</InputLabel>
             <OutlinedInput
-              label="Descripción"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
+              label="Descripción final"
+              value={resultText}
+              onChange={(e) => setResultText(e.target.value)}
+              multiline
+              minRows={3}
             />
           </FormControl>
           <FormControl
@@ -212,9 +225,14 @@ function CerrarActividad({ budget, onComplete }) {
             onChange={(file) => {
               setFiles(file);
             }}
+            title="Arrastra las imágenes del resultado aquí"
+            imageSize="Solo imágenes JPG, JPEG, PNG o GIF"
+            accept={{
+              "image/*": [".png", ".gif", ".jpeg", ".jpg"],
+            }}
           />
           <aside>
-            <h4>Files</h4>
+            <h4>Imágenes</h4>
             <ul>{fileList}</ul>
           </aside>
         </DialogContent>
@@ -228,7 +246,7 @@ function CerrarActividad({ budget, onComplete }) {
             onClick={handleCrearDoc}
             loading={submitting}
           >
-            Subir Actividad
+            Cerrar actividad
           </LoadingButton>
         </DialogActions>
       </Dialog>

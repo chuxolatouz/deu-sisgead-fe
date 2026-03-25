@@ -12,6 +12,10 @@ import { useApi } from 'contexts/AxiosContext';
 import DeleteAccountModal from './DeleteAccountModal';
 import EditAccountModal from './EditAccountModal';
 import { formatMonto } from 'lib';
+import {
+  getIncomeTypeChipColor,
+  getIncomeTypeLabel
+} from 'utils/accounting';
 
 const AccountRow = ({ account, year, onRefresh }) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -47,6 +51,15 @@ const AccountRow = ({ account, year, onRefresh }) => {
 
       <StyledTableCell align="center">
         <Chip label={account.group} size="small" color="info" />
+      </StyledTableCell>
+
+      <StyledTableCell align="center">
+        <Chip
+          label={getIncomeTypeLabel(account.incomeType)}
+          size="small"
+          color={getIncomeTypeChipColor(account.incomeType)}
+          variant="outlined"
+        />
       </StyledTableCell>
 
       <StyledTableCell align="center">

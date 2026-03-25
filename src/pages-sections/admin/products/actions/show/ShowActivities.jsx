@@ -19,27 +19,38 @@ import { FlexBox } from "components/flex-box";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import { StyledIconButton } from "pages-sections/admin/StyledComponents";
 import { currency } from "lib";
+import { useApi } from "contexts/AxiosContext";
+import { useSnackbar } from "notistack";
+import { openDocumentAttachment } from "utils/documentAttachments";
 
 export default function ShowDocument({ budgets }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { api } = useApi();
+  const { enqueueSnackbar } = useSnackbar();
   const specificObjective =
     budgets?.specificObjective || budgets?.objetivo_especifico;
   const transferAmount =
     budgets?.transferAmount || budgets?.monto_transferencia;
   const accountCode = budgets?.accountCode || budgets?.cuenta_contable;
+  const resultDescription = budgets?.resultDescription || budgets?.description;
+  const resultAttachments =
+    budgets?.resultAttachments || budgets?.archivos_aprobado || [];
 
   const handleDownload = async (archivo) => {
-    if (archivo.download_url) {
-      window.open(archivo.download_url, "_blank");
-    } else if (archivo.url) {
-      window.open(archivo.url, "_blank");
-    } else if (archivo.public_id) {
-      window.open(
-        `https://f005.backblazeb2.com/b2api/v1/b2_download_file_by_id?fileId=${archivo.public_id}`,
-        "_blank"
+    try {
+      const opened = await openDocumentAttachment(api, archivo);
+      if (!opened) {
+        enqueueSnackbar("No se encontró una URL válida para este archivo", {
+          variant: "error",
+        });
+      }
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          error?.message ||
+          "No se pudo abrir el archivo",
+        { variant: "error" }
       );
-    } else {
-      alert("No se encontró una URL válida para este archivo");
     }
   };
 
@@ -140,7 +151,13 @@ export default function ShowDocument({ budgets }) {
           <Divider />
           {budgets.status === "finished" && (
             <Box>
-              <H3>Justificantes:</H3>
+              {resultDescription && (
+                <>
+                  <H3>Resultado:</H3>
+                  <Span display="block" mb={2}>{resultDescription}</Span>
+                </>
+              )}
+              <H3>Adjuntos del resultado:</H3>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -149,7 +166,7 @@ export default function ShowDocument({ budgets }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {budgets?.archivos_aprobado?.map((archivo) => (
+                  {resultAttachments.map((archivo) => (
                     <TableRow key={archivo.nombre}>
                       <TableCell>{archivo.nombre}</TableCell>
                       <TableCell>

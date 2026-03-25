@@ -10,6 +10,10 @@ import {
 } from "@mui/material";
 import { useApi } from "contexts/AxiosContext";
 import { formatMonto } from "lib";
+import {
+  getIncomeTypeChipColor,
+  getIncomeTypeLabel,
+} from "utils/accounting";
 
 const DEFAULT_YEAR = 2025;
 
@@ -208,6 +212,12 @@ function AccountSelector({
                 size="small"
                 label={option.is_header ? "Titular" : "Detalle"}
                 color={option.is_header ? "warning" : "success"}
+                variant="outlined"
+              />
+              <Chip
+                size="small"
+                label={getIncomeTypeLabel(option.incomeType)}
+                color={getIncomeTypeChipColor(option.incomeType)}
                 variant="outlined"
               />
               <Typography variant="body2" color="text.secondary">

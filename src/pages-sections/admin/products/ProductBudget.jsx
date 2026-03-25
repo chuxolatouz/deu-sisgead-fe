@@ -17,7 +17,7 @@ import ActivityStatus from './activity/ActivityStatus';
 import ActivityActions from './activity/ActivityActions';
 import AddActivity from './actions/add/AddActivity';
 
-function Documentos({ project }) {
+function Documentos({ project, onActivitiesChange }) {
   const [count, setCount] = useState(0);
   const [documentos, setDocumentos] = useState([]);
   const [pagination, setPagination] = useState(1);
@@ -32,8 +32,10 @@ function Documentos({ project }) {
     api
       .get(`/proyecto/${project._id}/documentos?page=${pagination - 1}&limit=10`)
       .then((response) => {
-        setDocumentos(response.data.request_list || []);
+        const nextRows = response.data.request_list || [];
+        setDocumentos(nextRows);
         setCount(response.data.count || 1);
+        onActivitiesChange?.(nextRows);
       }).catch((error) => {
         if (error.response) {
           enqueueSnackbar(error.response.data.message, { variant: 'error' })
@@ -41,7 +43,7 @@ function Documentos({ project }) {
           enqueueSnackbar(error.message, { variant: 'error' })
         }
       })
-  }, [api, project._id, pagination, enqueueSnackbar]);
+  }, [api, project._id, pagination, enqueueSnackbar, onActivitiesChange]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {

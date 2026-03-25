@@ -20,6 +20,10 @@ import {
 import { useSnackbar } from "notistack";
 import { useApi } from "contexts/AxiosContext";
 import { formatMonto, formatSafeDate } from "lib";
+import {
+  getIncomeTypeChipColor,
+  getIncomeTypeLabel,
+} from "utils/accounting";
 import ProjectFundingDrawer from "./actions/add/ProjectFundingDrawer";
 import ProjectFundingMigrationDrawer from "./actions/add/ProjectFundingMigrationDrawer";
 
@@ -309,6 +313,7 @@ export default function ProductAccounts({
                 <TableCell>Código</TableCell>
                 <TableCell>Descripción</TableCell>
                 <TableCell>Grupo</TableCell>
+                <TableCell>Tipo de ingreso</TableCell>
                 <TableCell>Tipo</TableCell>
                 <TableCell align="right">Saldo</TableCell>
                 <TableCell align="right">Movimientos</TableCell>
@@ -323,6 +328,14 @@ export default function ProductAccounts({
                     <Box sx={{ pl: row.__depth * 2 }}>{row.description}</Box>
                   </TableCell>
                   <TableCell>{row.group || "-"}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={getIncomeTypeLabel(row.incomeType)}
+                      color={getIncomeTypeChipColor(row.incomeType)}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </TableCell>
                   <TableCell>
                     {TYPE_LABELS[String(Boolean(row.is_header))] || "Detalle"}
                   </TableCell>
