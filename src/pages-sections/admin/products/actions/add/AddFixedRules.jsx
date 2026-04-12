@@ -22,13 +22,14 @@ import TodoList from "components/icons/duotone/TodoList";
 import AccountSelector from "components/accounting/AccountSelector";
 import { formatMonto } from "lib";
 
-function AddFixedRules({ id }) {
+function AddFixedRules({ id, year }) {
   const [rules, setRules] = useState([]);
   const [selectedRuleId, setSelectedRuleId] = useState("");
   const [open, setOpen] = useState(false);
   const [accountMappings, setAccountMappings] = useState({});
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
+  const resolvedYear = Number(year || new Date().getFullYear());
 
   useEffect(() => {
     api
@@ -59,6 +60,7 @@ function AddFixedRules({ id }) {
       .post("/asignar_regla_fija/", {
         ruleId: selectedRuleId,
         projectId: id,
+        year: resolvedYear,
         accountMappings: Object.entries(accountMappings).map(
           ([itemIndex, accountCode]) => ({
             itemIndex: Number(itemIndex),
@@ -140,7 +142,7 @@ function AddFixedRules({ id }) {
                       label={`Partida para "${item.nombre_regla}"`}
                       value={accountMappings[index] || null}
                       group="EGRESO"
-                      year={2025}
+                      year={resolvedYear}
                       allowHeaders={false}
                       scopeType="project"
                       scopeId={id}

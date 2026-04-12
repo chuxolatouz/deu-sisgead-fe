@@ -362,7 +362,7 @@ const ProductDetails = ({ product, onRefresh }) => {
                 </Span>
               </>
             ) : (
-              <AddFixedRules id={product._id} />
+              <AddFixedRules id={product._id} year={fundingYear} />
             )}
           </FlexBox>
           <Divider

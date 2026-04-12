@@ -256,7 +256,9 @@ export default function ProductAccounts({
             type="number"
             size="small"
             value={year}
-            onChange={(event) => setYear(Number(event.target.value || 2025))}
+            onChange={(event) =>
+              setYear(Number(event.target.value || new Date().getFullYear()))
+            }
             sx={{ width: 120 }}
             inputProps={{ min: 2000, max: 2100 }}
           />

@@ -15,7 +15,7 @@ import {
   getIncomeTypeLabel,
 } from "utils/accounting";
 
-const DEFAULT_YEAR = 2025;
+const DEFAULT_YEAR = new Date().getFullYear();
 
 function AccountSelector({
   value = null,
