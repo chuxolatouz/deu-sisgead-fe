@@ -23,6 +23,7 @@ function Documentos({ project, onActivitiesChange }) {
   const [pagination, setPagination] = useState(1);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
+  const fundingYear = Number(project?.fundingYear || new Date().getFullYear());
 
   const handlePagination = (_, value) => {
     setPagination(value);
@@ -52,7 +53,7 @@ function Documentos({ project, onActivitiesChange }) {
 
   return (
     <Box>
-      <AddActivity project={project} />
+      <AddActivity project={project} onCreated={fetchActivities} />
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
           <TableHead>
@@ -75,7 +76,11 @@ function Documentos({ project, onActivitiesChange }) {
                   </TableCell>
                   <TableCell key={`${action._id.$oid}-archivos-length`}>{action.archivos?.length}</TableCell>
                   <TableCell key={`${action._id.$oid}-status`}>
-                    <ActivityStatus budget={action} onComplete={fetchActivities} />
+                    <ActivityStatus
+                      budget={action}
+                      onComplete={fetchActivities}
+                      year={fundingYear}
+                    />
                   </TableCell>
                   <TableCell key={`${action._id.$oid}-archivos-dialog`}>
                     <ActivityActions budget={action} />
@@ -86,7 +91,7 @@ function Documentos({ project, onActivitiesChange }) {
           ) : (
             <TableBody>
               <TableRow>
-                <TableCell> No hay Documentos</TableCell>
+                <TableCell>No hay actividades registradas</TableCell>
               </TableRow>
             </TableBody>
           )}

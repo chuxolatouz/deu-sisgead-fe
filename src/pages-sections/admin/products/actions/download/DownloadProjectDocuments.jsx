@@ -4,6 +4,7 @@ import { useSnackbar } from 'notistack';
 import { pdf } from '@react-pdf/renderer';
 
 import { useApi } from 'contexts/AxiosContext';
+import { formatMonto } from 'lib';
 import ActaInicioPDF from './ActaInicioPDF';
 import InformeActividadPDF from './InformeActividadPDF';
 
@@ -25,6 +26,19 @@ const downloadBlob = (blobData, filename) => {
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
+};
+
+const resolveTimestamp = (value) => {
+  if (!value) return 0;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const timestamp = new Date(value).getTime();
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  }
+  if (typeof value === 'object' && value.$date) {
+    const timestamp = new Date(value.$date).getTime();
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  }
+  return 0;
 };
 
 function DownloadProjectDocuments({ project }) {
@@ -94,11 +108,60 @@ function DownloadProjectDocuments({ project }) {
   const handleDownloadInforme = async () => {
     setLoadingInforme(true);
     try {
+      let activityData = {};
+      try {
+        const response = await api.get(
+          `/proyecto/${project._id}/documentos?page=0&limit=50&status=finished`
+        );
+        const activities = response.data?.request_list || [];
+        const latestActivity = [...activities].sort((left, right) => {
+          const leftValue = resolveTimestamp(
+            left?.finalizedAt || left?.finalized_at || left?.created_at
+          );
+          const rightValue = resolveTimestamp(
+            right?.finalizedAt || right?.finalized_at || right?.created_at
+          );
+          return rightValue - leftValue;
+        })[0];
+
+        if (latestActivity) {
+          const attachments =
+            latestActivity.resultAttachments ||
+            latestActivity.archivos_aprobado ||
+            [];
+          const amountInCents = Number(
+            latestActivity.monto_aprobado ?? latestActivity.monto ?? 0
+          );
+
+          activityData = {
+            nombre_actividad: latestActivity.descripcion || project?.nombre,
+            resultados:
+              latestActivity.resultados ||
+              latestActivity.resultDescription ||
+              latestActivity.description ||
+              '',
+            logros: latestActivity.logros || '',
+            limitaciones: latestActivity.limitaciones || '',
+            lecciones: latestActivity.lecciones || '',
+            lineas_accion:
+              latestActivity.lineasAccion || latestActivity.lineas_accion || '',
+            registro_fotografico: attachments
+              .map((attachment) => attachment?.nombre)
+              .filter(Boolean)
+              .join(', '),
+            presupuesto:
+              amountInCents > 0 ? formatMonto(amountInCents / 100) : '',
+          };
+        }
+      } catch (err) {
+        console.warn('Could not fetch latest finished activity:', err);
+      }
+
       // Generate PDF with default data
       const blob = await pdf(
         <InformeActividadPDF
           project={project}
-          data={{}}
+          data={activityData}
         />
       ).toBlob();
 

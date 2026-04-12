@@ -175,6 +175,7 @@ export default function ProductResults({ projectId }) {
       <Stack spacing={2}>
         {results.map((result) => {
           const attachments = result?.resultAttachments || [];
+          const lineasAccion = result?.lineasAccion || result?.lineas_accion;
           return (
             <Paper key={result?._id?.$oid || result?.descripcion} variant="outlined" sx={{ p: 2.5 }}>
               <Stack spacing={1.5}>
@@ -182,8 +183,53 @@ export default function ProductResults({ projectId }) {
                   {result.descripcion || "Actividad sin nombre"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {result.resultDescription || "Sin descripción final."}
+                  {result.resultados || result.resultDescription || "Sin resultados registrados."}
                 </Typography>
+                {(result?.logros ||
+                  result?.limitaciones ||
+                  result?.lecciones ||
+                  lineasAccion) && (
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                      gap: 1.5,
+                    }}
+                  >
+                    {result?.logros && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Logros
+                        </Typography>
+                        <Typography variant="body2">{result.logros}</Typography>
+                      </Box>
+                    )}
+                    {result?.limitaciones && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Limitaciones
+                        </Typography>
+                        <Typography variant="body2">{result.limitaciones}</Typography>
+                      </Box>
+                    )}
+                    {result?.lecciones && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Lecciones
+                        </Typography>
+                        <Typography variant="body2">{result.lecciones}</Typography>
+                      </Box>
+                    )}
+                    {lineasAccion && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Lineas de accion
+                        </Typography>
+                        <Typography variant="body2">{lineasAccion}</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                )}
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
                   <Button
                     variant="outlined"

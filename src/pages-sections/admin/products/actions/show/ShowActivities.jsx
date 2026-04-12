@@ -11,6 +11,7 @@ import {
   TableRow,
   Button,
   Box,
+  Chip,
   Divider,
   Tooltip,
 } from "@mui/material";
@@ -32,9 +33,20 @@ export default function ShowDocument({ budgets }) {
   const transferAmount =
     budgets?.transferAmount || budgets?.monto_transferencia;
   const accountCode = budgets?.accountCode || budgets?.cuenta_contable;
-  const resultDescription = budgets?.resultDescription || budgets?.description;
+  const resultDescription =
+    budgets?.resultados || budgets?.resultDescription || budgets?.description;
   const resultAttachments =
     budgets?.resultAttachments || budgets?.archivos_aprobado || [];
+  const lineasAccion = budgets?.lineasAccion || budgets?.lineas_accion;
+  const hasAdministrativeInfo =
+    budgets?.status !== "new" &&
+    (budgets?.referencia || transferAmount || budgets?.banco || accountCode);
+  const statusLabel =
+    budgets?.status === "finished"
+      ? "Finalizada"
+      : budgets?.status === "in_progress"
+      ? "Cierre administrativo"
+      : "Nueva";
 
   const handleDownload = async (archivo) => {
     try {
@@ -67,6 +79,12 @@ export default function ShowDocument({ budgets }) {
         </DialogTitle>
         <DialogContent>
           <Box mt={2} mb={3}>
+            <Chip
+              label={statusLabel}
+              color={budgets?.status === "finished" ? "success" : budgets?.status === "in_progress" ? "warning" : "default"}
+              variant="outlined"
+              sx={{ mb: 2 }}
+            />
             {specificObjective && (
               <FlexBox alignItems="center" gap={1} mb={2}>
                 <Span color="grey.600" fontSize={14}>
@@ -79,20 +97,16 @@ export default function ShowDocument({ budgets }) {
             )}
 
             <FlexBox alignItems="center" gap={1} mb={2}>
-              <Span color="grey.600">Monto presupuestado:</Span>
+              <Span color="grey.600">Monto de la actividad:</Span>
               <H3 mt={0} mb={0}>
                 {currency(budgets.monto)}
               </H3>
             </FlexBox>
 
-            {budgets.status === "finished" &&
-              (budgets.referencia ||
-                transferAmount ||
-                budgets.banco ||
-                accountCode) && (
+            {hasAdministrativeInfo && (
                 <Box mb={3}>
                   <Divider sx={{ mb: 2 }} />
-                  <H3 mb={2}>Información de Transferencia</H3>
+                  <H3 mb={2}>Cierre administrativo</H3>
 
                   {budgets.referencia && (
                     <FlexBox alignItems="center" gap={1} mb={1}>
@@ -101,9 +115,16 @@ export default function ShowDocument({ budgets }) {
                     </FlexBox>
                   )}
 
+                  {budgets.monto_aprobado && (
+                    <FlexBox alignItems="center" gap={1} mb={1}>
+                      <Span color="grey.600">Monto aprobado:</Span>
+                      <Span fontWeight="bold">{currency(budgets.monto_aprobado)}</Span>
+                    </FlexBox>
+                  )}
+
                   {transferAmount && (
                     <FlexBox alignItems="center" gap={1} mb={1}>
-                      <Span color="grey.600">Monto Transferido:</Span>
+                      <Span color="grey.600">Monto transferido:</Span>
                       <Span fontWeight="bold">{currency(transferAmount)}</Span>
                     </FlexBox>
                   )}
@@ -153,8 +174,32 @@ export default function ShowDocument({ budgets }) {
             <Box>
               {resultDescription && (
                 <>
-                  <H3>Resultado:</H3>
+                  <H3>Resultados:</H3>
                   <Span display="block" mb={2}>{resultDescription}</Span>
+                </>
+              )}
+              {budgets?.logros && (
+                <>
+                  <H3>Logros:</H3>
+                  <Span display="block" mb={2}>{budgets.logros}</Span>
+                </>
+              )}
+              {budgets?.limitaciones && (
+                <>
+                  <H3>Limitaciones:</H3>
+                  <Span display="block" mb={2}>{budgets.limitaciones}</Span>
+                </>
+              )}
+              {budgets?.lecciones && (
+                <>
+                  <H3>Lecciones:</H3>
+                  <Span display="block" mb={2}>{budgets.lecciones}</Span>
+                </>
+              )}
+              {lineasAccion && (
+                <>
+                  <H3>Lineas de accion:</H3>
+                  <Span display="block" mb={2}>{lineasAccion}</Span>
                 </>
               )}
               <H3>Adjuntos del resultado:</H3>
@@ -166,19 +211,25 @@ export default function ShowDocument({ budgets }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {resultAttachments.map((archivo) => (
-                    <TableRow key={archivo.nombre}>
-                      <TableCell>{archivo.nombre}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outlined"
-                          onClick={() => handleDownload(archivo)}
-                        >
-                          Descargar
-                        </Button>
-                      </TableCell>
+                  {resultAttachments.length ? (
+                    resultAttachments.map((archivo) => (
+                      <TableRow key={archivo.nombre}>
+                        <TableCell>{archivo.nombre}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outlined"
+                            onClick={() => handleDownload(archivo)}
+                          >
+                            Descargar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2}>No hay imagenes de resultado cargadas</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </Box>

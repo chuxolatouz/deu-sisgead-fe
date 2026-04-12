@@ -5,12 +5,14 @@ import { useApi } from "contexts/AxiosContext";
 
 function BudgetActions({ budget }) {
     const { user } = useApi()
+    const resolvedRole = user?.role || user?.rol || "";
+    const canDeleteActivity = ["admin", "super_admin", "admin_departamento"].includes(resolvedRole);
     return (
         <Box>
             <Tooltip title="Ver actividades">
                 <ShowActivities budgets={budget} />
             </Tooltip>
-            {budget?.status !== "finished" && user.role === "admin" &&
+            {budget?.status === "new" && canDeleteActivity &&
                 <Tooltip title="Eliminar actividad">
                     <DeleteActivity budget={budget} />
                 </Tooltip>

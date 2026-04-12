@@ -19,7 +19,7 @@ import { Span } from 'components/Typography';
 import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from 'notistack';
 
-function AddBudget({ project }) {
+function AddBudget({ project, onCreated }) {
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState('');
   const [objectives, setObjectives] = useState([]);
@@ -60,7 +60,12 @@ function AddBudget({ project }) {
 
     api.post('/documento_crear', formData).then((response) => {
       setIsOpen(false);
+      setText('');
+      setSelectedObjective('');
+      setAmount(0);
+      setFiles([]);
       enqueueSnackbar(response.data.mensaje, { variant: 'success' });
+      onCreated?.();
     }).catch((error) => {
       if (error?.response?.data?.message) {
         enqueueSnackbar(error.response.data.message, { variant: 'error' })
@@ -80,10 +85,10 @@ function AddBudget({ project }) {
   return (
     <Box>
       <Button variant="outlined" color="secondary" onClick={() => setIsOpen(true)}>
-        Subir presupuestos
+        Registrar actividad
       </Button>
       <Dialog open={isOpen}>
-        <DialogTitle><Span>Agrega una solicitud de presupuesto</Span></DialogTitle>
+        <DialogTitle><Span>Registrar actividad</Span></DialogTitle>
         <DialogContent>
           <FormControl fullWidth variant="outlined" sx={{ marginTop: '20px', marginBottom: '20px' }}>
             <InputLabel id="documentos">Descripción</InputLabel>
@@ -131,7 +136,7 @@ function AddBudget({ project }) {
 
           <DropZone onChange={(file) => { setFiles(file) }} />
           <aside>
-            <h4>Files</h4>
+            <h4>Adjuntos</h4>
             <ul>{fileList}</ul>
           </aside>
         </DialogContent>
@@ -145,7 +150,7 @@ function AddBudget({ project }) {
             onClick={handleCrearDoc}
             loading={submitting}
           >
-            Subir Actividad
+            Guardar actividad
           </LoadingButton>
         </DialogActions>
       </Dialog>

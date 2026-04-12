@@ -62,7 +62,6 @@ const ProductDetails = ({ product, onRefresh }) => {
   const [categories, setCategories] = useState([]);
   const [openFunding, setOpenFunding] = useState(false);
   const [openMigration, setOpenMigration] = useState(false);
-  const [hasFinishedActivities, setHasFinishedActivities] = useState(false);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const fundingSummary = product?.fundingSummary;
@@ -113,30 +112,6 @@ const ProductDetails = ({ product, onRefresh }) => {
     onRefresh?.();
     router.reload();
   };
-
-  const refreshResultsAvailability = () => {
-    if (!product?._id) return;
-
-    api
-      .get(`/proyecto/${product._id}/documentos?page=0&limit=1&status=finished`)
-      .then((response) => {
-        const finishedRows = response.data?.request_list || [];
-        setHasFinishedActivities(finishedRows.length > 0);
-      })
-      .catch(() => {
-        setHasFinishedActivities(false);
-      });
-  };
-
-  useEffect(() => {
-    refreshResultsAvailability();
-  }, [api, product?._id]);
-
-  useEffect(() => {
-    if (!hasFinishedActivities && tab === "6") {
-      setTab("5");
-    }
-  }, [hasFinishedActivities, tab]);
 
   return (
     <Grid container spacing={3}>
@@ -469,7 +444,7 @@ const ProductDetails = ({ product, onRefresh }) => {
               <Tab value="3" label="Actividades" />
               <Tab value="4" label="Logs" />
               <Tab value="5" label="Partidas y fondos" />
-              {hasFinishedActivities && <Tab value="6" label="Resultados" />}
+              <Tab value="6" label="Resultados" />
             </TabList>
             <Box>
               <TabPanel value="0">
@@ -482,10 +457,7 @@ const ProductDetails = ({ product, onRefresh }) => {
                 <ProductMovements id={product._id} year={fundingYear} />
               </TabPanel>
               <TabPanel value="3">
-                <ProductBudget
-                  project={product}
-                  onActivitiesChange={refreshResultsAvailability}
-                />
+                <ProductBudget project={product} />
               </TabPanel>
               <TabPanel value="4">
                 <ProductLogs id={product._id} />
@@ -497,11 +469,9 @@ const ProductDetails = ({ product, onRefresh }) => {
                   year={fundingYear}
                 />
               </TabPanel>
-              {hasFinishedActivities && (
-                <TabPanel value="6">
-                  <ProductResults projectId={product._id} />
-                </TabPanel>
-              )}
+              <TabPanel value="6">
+                <ProductResults projectId={product._id} />
+              </TabPanel>
             </Box>
           </TabContext>
         </Card>

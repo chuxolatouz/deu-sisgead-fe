@@ -25,8 +25,9 @@ export default function ProjectReport({ id, year = new Date().getFullYear() }) {
   const [summary, setSummary] = useState({
     ingresos: 0,
     egresos: 0,
-    presupuestos: 0,
-    represupuestos: 0,
+    actividades_nuevas: 0,
+    actividades_cierre_administrativo: 0,
+    actividades_finalizadas: 0,
     miembros: 0
   });
   const { api } = useApi();
@@ -51,8 +52,12 @@ export default function ProjectReport({ id, year = new Date().getFullYear() }) {
           setSummary({
             ingresos: resumen.ingresos || 0,
             egresos: resumen.egresos || 0,
-            presupuestos: resumen.presupuestos || 0,
-            represupuestos: resumen.represupuestos || 0,
+            actividades_nuevas:
+              resumen.actividades_nuevas ??
+              Math.max((resumen.represupuestos || 0) - (resumen.actividades_cierre_administrativo || 0), 0),
+            actividades_cierre_administrativo: resumen.actividades_cierre_administrativo || 0,
+            actividades_finalizadas:
+              resumen.actividades_finalizadas ?? (resumen.presupuestos || 0),
             miembros: resumen.miembros || 0
           });
         })
@@ -122,8 +127,9 @@ export default function ProjectReport({ id, year = new Date().getFullYear() }) {
             {[
               { label: "Ingresos", value: formatMonto(summary.ingresos || 0), color: 'text.primary' },
               { label: "Egresos", value: formatMonto(summary.egresos || 0), color: 'error.main' },
-              { label: "Actividades Finalizadas", value: summary.presupuestos },
-              { label: "Actividades Nuevas", value: summary.represupuestos },
+              { label: "Actividades nuevas", value: summary.actividades_nuevas },
+              { label: "Cierre administrativo", value: summary.actividades_cierre_administrativo },
+              { label: "Actividades finalizadas", value: summary.actividades_finalizadas },
               { label: "Miembros", value: summary.miembros }
             ].map((item) => (
               <Grid item xs={6} md={2.4} key={item.label}>

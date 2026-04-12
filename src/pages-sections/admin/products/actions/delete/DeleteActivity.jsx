@@ -50,7 +50,7 @@ const DeleteBudget = ({ budget }) => {
                 </StyledIconButton>
             </Tooltip>
             <Dialog open={open} onClose={handleCancelDelete}>
-                <DialogTitle>¿Estás seguro de que quieres eliminar este presupuesto?</DialogTitle>
+                <DialogTitle>¿Estas seguro de que quieres eliminar esta actividad?</DialogTitle>
                 <DialogActions>
                     <Button color="error" onClick={handleCancelDelete}>Cancelar</Button>
                     <Button color="secondary" onClick={handleDelete}>Eliminar</Button>

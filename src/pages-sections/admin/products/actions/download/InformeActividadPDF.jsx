@@ -238,7 +238,7 @@ function InformeActividadPDF({ project, data = {} }) {
                     {context.factura}
                 </Text>
                 <Text style={styles.text}>
-                    <Text style={styles.label}>Presupuesto: </Text>
+                    <Text style={styles.label}>Monto de la actividad: </Text>
                     {context.presupuesto}
                 </Text>
                 <Text style={styles.text}>

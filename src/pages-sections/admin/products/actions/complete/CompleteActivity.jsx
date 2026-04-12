@@ -1,28 +1,32 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle,
+  Alert,
+  Box,
   Button,
   Chip,
+  FormControl,
   InputLabel,
   OutlinedInput,
-  Box,
-  FormControl,
   TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import DropZone from "components/DropZone";
 import AccountSelector from "components/accounting/AccountSelector";
 import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
 
-function CerrarActividad({ budget, onComplete }) {
+function CerrarActividad({ budget, onComplete, year }) {
+  const initialAmount = useMemo(() => {
+    const rawAmount = Number(budget?.monto || 0);
+    if (!rawAmount) return "";
+    return String(rawAmount / 100);
+  }, [budget?.monto]);
+
   const [isOpen, setIsOpen] = useState(false);
-  const [resultText, setResultText] = useState("");
-  const [amount, setAmount] = useState(0);
-  const [files, setFiles] = useState([]);
+  const [amount, setAmount] = useState(initialAmount);
   const [referencia, setReferencia] = useState("");
   const [montoTransferencia, setMontoTransferencia] = useState("");
   const [banco, setBanco] = useState("");
@@ -33,33 +37,27 @@ function CerrarActividad({ budget, onComplete }) {
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
+  const resolvedFundingYear = Number(year || budget?.fundingYear || new Date().getFullYear());
+
   const handleClickStatus = () => {
-    if (budget.status !== "finished") {
+    if (budget.status === "new") {
       setIsOpen(true);
     }
   };
 
   const handleClose = () => {
     setIsOpen(false);
-    // Limpiar campos del formulario
-    setResultText("");
-    setAmount(0);
-    setFiles([]);
+    setAmount(initialAmount);
     setReferencia("");
     setMontoTransferencia("");
     setBanco("");
     setCuentaContableCode(null);
     setCuentaContableManual("");
   };
+
   const handleCrearDoc = () => {
-    if (!resultText.trim()) {
-      enqueueSnackbar("Debes agregar una descripción final del resultado", {
-        variant: "error",
-      });
-      return;
-    }
     if (!amount || Number(amount) <= 0) {
-      enqueueSnackbar("Debes indicar un monto aprobado válido", {
+      enqueueSnackbar("Debes indicar un monto aprobado valido", {
         variant: "error",
       });
       return;
@@ -72,17 +70,13 @@ function CerrarActividad({ budget, onComplete }) {
       );
       return;
     }
+
     setSubmitting(true);
     const formData = new FormData();
-    formData.append("description", resultText.trim());
-
-    // biome-ignore lint/complexity/noForEach: <explanation>
-    files.forEach((file) => {
-      formData.append("files", file);
-    });
     formData.append("projectId", resolvedProjectId || "");
     formData.append("monto", amount);
     formData.append("docId", budget._id.$oid);
+    formData.append("year", String(resolvedFundingYear));
     formData.append("referencia", referencia);
     formData.append("transferAmount", montoTransferencia);
     formData.append("banco", banco);
@@ -93,11 +87,7 @@ function CerrarActividad({ budget, onComplete }) {
       .then((response) => {
         handleClose();
         enqueueSnackbar(response.data.mensaje, { variant: "success" });
-
-        // Recargar la lista de actividades
-        if (onComplete) {
-          onComplete();
-        }
+        onComplete?.();
       })
       .catch((error) => {
         if (error.response) {
@@ -106,19 +96,17 @@ function CerrarActividad({ budget, onComplete }) {
             { variant: "error" }
           );
         } else {
-          enqueueSnackbar(error.message || "Error al completar la actividad", {
-            variant: "error",
-          });
+          enqueueSnackbar(
+            error.message ||
+              "Error al registrar el cierre administrativo de la actividad",
+            { variant: "error" }
+          );
         }
       })
       .finally(() => {
         setSubmitting(false);
       });
   };
-
-  const fileList = files.map((file) => (
-    <Box key={file.path}>{`${file.path}-${file.size}bytes`}</Box>
-  ));
 
   return (
     <Box>
@@ -127,34 +115,32 @@ function CerrarActividad({ budget, onComplete }) {
         onClick={handleClickStatus}
         clickable
         variant="outlined"
-        label="Asignar Monto"
+        label="Cierre administrativo"
       />
       <Dialog open={isOpen} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>Cerrar actividad: {budget.descripcion}</DialogTitle>
+        <DialogTitle>
+          Registrar cierre administrativo: {budget.descripcion}
+        </DialogTitle>
         <DialogContent>
-          <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-            <InputLabel id="documentos">Descripción final</InputLabel>
-            <OutlinedInput
-              label="Descripción final"
-              value={resultText}
-              onChange={(e) => setResultText(e.target.value)}
-              multiline
-              minRows={3}
-            />
-          </FormControl>
+          <Alert severity="info" variant="outlined" sx={{ mt: 2 }}>
+            Este paso asigna los fondos a la actividad y la deja lista para el
+            cierre final con resultados.
+          </Alert>
+
           <FormControl
             fullWidth
             type="number"
             variant="outlined"
             sx={{ mt: 2 }}
           >
-            <InputLabel id="monto">Monto</InputLabel>
+            <InputLabel id="monto">Monto aprobado</InputLabel>
             <OutlinedInput
-              label="Monto"
+              label="Monto aprobado"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
           </FormControl>
+
           <Box display="flex" gap={2} mt={2}>
             <FormControl fullWidth>
               <InputLabel htmlFor="referencia">Referencia</InputLabel>
@@ -166,13 +152,13 @@ function CerrarActividad({ budget, onComplete }) {
               />
             </FormControl>
 
-            <FormControl sx={{ minWidth: "150px" }}>
+            <FormControl sx={{ minWidth: "180px" }}>
               <InputLabel htmlFor="montoTransferencia">
-                Monto Transferencia
+                Monto transferencia
               </InputLabel>
               <OutlinedInput
                 id="montoTransferencia"
-                label="Monto Transferencia"
+                label="Monto transferencia"
                 value={montoTransferencia}
                 onChange={(e) => setMontoTransferencia(e.target.value)}
                 type="number"
@@ -195,7 +181,7 @@ function CerrarActividad({ budget, onComplete }) {
               label="Partida del proyecto"
               value={cuentaContableCode}
               group="EGRESO"
-              year={2025}
+              year={resolvedFundingYear}
               allowHeaders={false}
               helperText="Solo se muestran partidas del proyecto con saldo disponible."
               scopeType="project"
@@ -210,31 +196,17 @@ function CerrarActividad({ budget, onComplete }) {
             <TextField
               sx={{ mt: 2 }}
               fullWidth
-              label="Cuenta Contable manual"
+              label="Cuenta contable manual"
               value={cuentaContableManual}
               onChange={(event) => setCuentaContableManual(event.target.value)}
               disabled={Boolean(cuentaContableCode)}
               helperText={
                 cuentaContableCode
-                  ? "Hay una partida seleccionada; limpia la selección para usar texto libre."
+                  ? "Hay una partida seleccionada; limpia la seleccion para usar texto libre."
                   : "Compatibilidad temporal para cuentas no catalogadas."
               }
             />
           </Box>
-          <DropZone
-            onChange={(file) => {
-              setFiles(file);
-            }}
-            title="Arrastra las imágenes del resultado aquí"
-            imageSize="Solo imágenes JPG, JPEG, PNG o GIF"
-            accept={{
-              "image/*": [".png", ".gif", ".jpeg", ".jpg"],
-            }}
-          />
-          <aside>
-            <h4>Imágenes</h4>
-            <ul>{fileList}</ul>
-          </aside>
         </DialogContent>
         <DialogActions>
           <Button variant="outlined" color="error" onClick={handleClose}>
@@ -246,7 +218,7 @@ function CerrarActividad({ budget, onComplete }) {
             onClick={handleCrearDoc}
             loading={submitting}
           >
-            Cerrar actividad
+            Registrar cierre administrativo
           </LoadingButton>
         </DialogActions>
       </Dialog>

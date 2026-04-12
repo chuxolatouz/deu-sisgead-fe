@@ -34,8 +34,8 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 const stats = [
     { label: "Proyectos", valueKey: "proyectos", icon: <FolderIcon color="primary" /> },
     { label: "Miembros", valueKey: "miembros", icon: <GroupWorkIcon color="secondary" /> },
-    { label: "Presupuestos", valueKey: "presupuestos", icon: <AssignmentIcon color="warning" /> },
-    { label: "Presupuestos Completados", valueKey: "presupuestos_finalizados", icon: <CheckCircleIcon color="success" /> },
+    { label: "Actividades", valueKey: "presupuestos", icon: <AssignmentIcon color="warning" /> },
+    { label: "Actividades finalizadas", valueKey: "presupuestos_finalizados", icon: <CheckCircleIcon color="success" /> },
   ];
 
 DashboardResumen.getLayout = function getLayout(page) {
