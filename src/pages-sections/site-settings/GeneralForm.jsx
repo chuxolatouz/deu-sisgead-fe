@@ -37,7 +37,7 @@ const GeneralForm = () => {
             <Grid item xs={12}>
               <DropZone
                 onChange={(files) => console.log(files)}
-                title="Drag & Drop Site Logo"
+                title="Arrastra y suelta el logo del sitio"
               />
             </Grid>
 
@@ -90,7 +90,7 @@ const GeneralForm = () => {
             <Grid item xs={12}>
               <DropZone
                 onChange={(files) => console.log(files)}
-                title="Drag & Drop Site Banner Image"
+                title="Arrastra y suelta la imagen del banner principal"
               />
             </Grid>
           </Grid>

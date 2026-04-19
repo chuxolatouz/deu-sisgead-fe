@@ -9,8 +9,8 @@ import { H5, Small } from "./Typography";
 
 const DropZone = ({
   onChange,
-  title = "Drag & drop product image here",
-  imageSize = "Upload 280*280 image",
+  title = "Arrastra y suelta los archivos aquí",
+  imageSize = "Formatos permitidos: imágenes y PDF",
   accept = {
     "image/*": [".png", ".gif", ".jpeg", ".jpg"],
     "application/pdf": [".pdf"],
@@ -64,7 +64,7 @@ const DropZone = ({
         }}
       >
         <Small color="text.disabled" px={1}>
-          OR
+          O
         </Small>
       </Divider>
 
@@ -77,7 +77,7 @@ const DropZone = ({
           my: 4,
         }}
       >
-        Select files
+        Seleccionar archivos
       </Button>
 
       <Small color="grey.600">{imageSize}</Small>

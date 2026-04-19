@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -19,11 +19,13 @@ import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
 
 function CerrarActividad({ budget, onComplete, year }) {
+  const isSponsored = Boolean(budget?.isSponsored || budget?.patrocinada);
   const initialAmount = useMemo(() => {
+    if (isSponsored) return "0";
     const rawAmount = Number(budget?.monto || 0);
     if (!rawAmount) return "";
     return String(rawAmount / 100);
-  }, [budget?.monto]);
+  }, [budget?.monto, isSponsored]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState(initialAmount);
@@ -39,6 +41,15 @@ function CerrarActividad({ budget, onComplete, year }) {
   const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
   const resolvedFundingYear = Number(year || budget?.fundingYear || new Date().getFullYear());
 
+  useEffect(() => {
+    setAmount(initialAmount);
+    if (isSponsored) {
+      setMontoTransferencia("0");
+      setCuentaContableCode(null);
+      setCuentaContableManual("");
+    }
+  }, [initialAmount, isSponsored]);
+
   const handleClickStatus = () => {
     if (budget.status === "new") {
       setIsOpen(true);
@@ -49,21 +60,21 @@ function CerrarActividad({ budget, onComplete, year }) {
     setIsOpen(false);
     setAmount(initialAmount);
     setReferencia("");
-    setMontoTransferencia("");
+    setMontoTransferencia(isSponsored ? "0" : "");
     setBanco("");
     setCuentaContableCode(null);
     setCuentaContableManual("");
   };
 
   const handleCrearDoc = () => {
-    if (!amount || Number(amount) <= 0) {
+    if (!isSponsored && (!amount || Number(amount) <= 0)) {
       enqueueSnackbar("Debes indicar un monto aprobado valido", {
         variant: "error",
       });
       return;
     }
     const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
-    if (!cuentaContable) {
+    if (!isSponsored && !cuentaContable) {
       enqueueSnackbar(
         "Debes seleccionar una partida del proyecto para imputar el gasto",
         { variant: "error" }
@@ -73,14 +84,18 @@ function CerrarActividad({ budget, onComplete, year }) {
 
     setSubmitting(true);
     const formData = new FormData();
+    const approvedAmount = isSponsored ? "0" : amount;
+    const transferAmount = isSponsored ? "0" : montoTransferencia;
     formData.append("projectId", resolvedProjectId || "");
-    formData.append("monto", amount);
+    formData.append("monto", approvedAmount);
     formData.append("docId", budget._id.$oid);
     formData.append("year", String(resolvedFundingYear));
     formData.append("referencia", referencia);
-    formData.append("transferAmount", montoTransferencia);
+    formData.append("transferAmount", transferAmount);
     formData.append("banco", banco);
-    formData.append("accountCode", cuentaContable);
+    if (!isSponsored) {
+      formData.append("accountCode", cuentaContable);
+    }
 
     api
       .post("/documento_cerrar", formData)
@@ -123,9 +138,19 @@ function CerrarActividad({ budget, onComplete, year }) {
         </DialogTitle>
         <DialogContent>
           <Alert severity="info" variant="outlined" sx={{ mt: 2 }}>
-            Este paso asigna los fondos a la actividad y la deja lista para el
-            cierre final con resultados.
+            {isSponsored
+              ? "Esta actividad fue marcada como patrocinada. El cierre administrativo se registrará sin consumir fondos del proyecto."
+              : "Este paso asigna los fondos a la actividad y la deja lista para el cierre final con resultados."}
           </Alert>
+
+          {isSponsored && (
+            <Chip
+              sx={{ mt: 2 }}
+              color="info"
+              variant="outlined"
+              label="Actividad patrocinada"
+            />
+          )}
 
           <FormControl
             fullWidth
@@ -138,6 +163,7 @@ function CerrarActividad({ budget, onComplete, year }) {
               label="Monto aprobado"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              disabled={isSponsored}
             />
           </FormControl>
 
@@ -162,6 +188,7 @@ function CerrarActividad({ budget, onComplete, year }) {
                 value={montoTransferencia}
                 onChange={(e) => setMontoTransferencia(e.target.value)}
                 type="number"
+                disabled={isSponsored}
               />
             </FormControl>
           </Box>
@@ -176,37 +203,43 @@ function CerrarActividad({ budget, onComplete, year }) {
             />
           </FormControl>
 
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <AccountSelector
-              label="Partida del proyecto"
-              value={cuentaContableCode}
-              group="EGRESO"
-              year={resolvedFundingYear}
-              allowHeaders={false}
-              helperText="Solo se muestran partidas del proyecto con saldo disponible."
-              scopeType="project"
-              scopeId={resolvedProjectId}
-              assignedOnly
-              includeZero={false}
-              optionBalanceLabel="Disponible"
-              onChange={(accountCode) => {
-                setCuentaContableCode(accountCode);
-              }}
-            />
-            <TextField
-              sx={{ mt: 2 }}
-              fullWidth
-              label="Cuenta contable manual"
-              value={cuentaContableManual}
-              onChange={(event) => setCuentaContableManual(event.target.value)}
-              disabled={Boolean(cuentaContableCode)}
-              helperText={
-                cuentaContableCode
-                  ? "Hay una partida seleccionada; limpia la seleccion para usar texto libre."
-                  : "Compatibilidad temporal para cuentas no catalogadas."
-              }
-            />
-          </Box>
+          {isSponsored ? (
+            <Alert severity="success" variant="outlined" sx={{ mt: 2, mb: 2 }}>
+              No es necesario seleccionar una partida ni una cuenta manual. El sistema usará la cuenta de patrocinio configurada como referencia y registrará el cierre en cero.
+            </Alert>
+          ) : (
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <AccountSelector
+                label="Partida del proyecto"
+                value={cuentaContableCode}
+                group="EGRESO"
+                year={resolvedFundingYear}
+                allowHeaders={false}
+                helperText="Solo se muestran partidas del proyecto con saldo disponible."
+                scopeType="project"
+                scopeId={resolvedProjectId}
+                assignedOnly
+                includeZero={false}
+                optionBalanceLabel="Disponible"
+                onChange={(accountCode) => {
+                  setCuentaContableCode(accountCode);
+                }}
+              />
+              <TextField
+                sx={{ mt: 2 }}
+                fullWidth
+                label="Cuenta contable manual"
+                value={cuentaContableManual}
+                onChange={(event) => setCuentaContableManual(event.target.value)}
+                disabled={Boolean(cuentaContableCode)}
+                helperText={
+                  cuentaContableCode
+                    ? "Hay una partida seleccionada; limpia la selección para usar texto libre."
+                    : "Compatibilidad temporal para cuentas no catalogadas."
+                }
+              />
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button variant="outlined" color="error" onClick={handleClose}>

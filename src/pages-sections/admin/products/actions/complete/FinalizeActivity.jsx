@@ -154,9 +154,9 @@ function FinalizeActivity({ budget, onComplete }) {
           </FormControl>
 
           <FormControl fullWidth variant="outlined" sx={{ mt: 2, mb: 2 }}>
-            <InputLabel id="lineas-accion">Lineas de accion</InputLabel>
+            <InputLabel id="lineas-accion">Líneas de acción</InputLabel>
             <OutlinedInput
-              label="Lineas de accion"
+              label="Líneas de acción"
               value={lineasAccion}
               onChange={(e) => setLineasAccion(e.target.value)}
               multiline
@@ -168,14 +168,14 @@ function FinalizeActivity({ budget, onComplete }) {
             onChange={(file) => {
               setFiles(file);
             }}
-            title="Arrastra las imagenes del resultado aqui"
-            imageSize="Solo imagenes JPG, JPEG, PNG o GIF"
+            title="Arrastra las imágenes del resultado aquí"
+            imageSize="Solo imágenes JPG, JPEG, PNG o GIF"
             accept={{
               "image/*": [".png", ".gif", ".jpeg", ".jpg"],
             }}
           />
           <aside>
-            <h4>Imagenes</h4>
+            <h4>Imágenes</h4>
             <ul>{fileList}</ul>
           </aside>
         </DialogContent>

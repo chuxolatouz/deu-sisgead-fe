@@ -9,12 +9,14 @@ import {
   Box,
   Paper,
   Stack,
+  Chip,
 } from '@mui/material';
 import TablePagination from 'components/data-table/TablePagination';
 import { useApi } from 'contexts/AxiosContext';
 import { useSnackbar } from 'notistack';
 import ActivityStatus from './activity/ActivityStatus';
 import ActivityActions from './activity/ActivityActions';
+import ActivityItemsDrawer from './activity/ActivityItemsDrawer';
 import AddActivity from './actions/add/AddActivity';
 
 function Documentos({ project, onActivitiesChange }) {
@@ -59,7 +61,8 @@ function Documentos({ project, onActivitiesChange }) {
           <TableHead>
             <TableRow>
               <TableCell>Descripción</TableCell>
-              <TableCell>Archivos</TableCell>
+              <TableCell>Items</TableCell>
+              <TableCell>Adjuntos</TableCell>
               <TableCell>Estado</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
@@ -72,9 +75,21 @@ function Documentos({ project, onActivitiesChange }) {
                   sx={{ '&:last-child td, &:last-child th': { border: 0 }, height: '50px' }}
                 >
                   <TableCell key={`${action._id.$oid}-descripcion`} component="th" scope="row">
-                    {action.descripcion}
+                    <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                      <span>{action.descripcion}</span>
+                      {Boolean(action?.isSponsored || action?.patrocinada) && (
+                        <Chip size="small" color="info" variant="outlined" label="Patrocinada" />
+                      )}
+                    </Box>
                   </TableCell>
-                  <TableCell key={`${action._id.$oid}-archivos-length`}>{action.archivos?.length}</TableCell>
+                  <TableCell key={`${action._id.$oid}-items-summary`}>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                      <Chip size="small" label={`${action.itemsSummary?.total || 0} total`} />
+                      <Chip size="small" color="success" variant="outlined" label={`${action.itemsSummary?.closed || 0} cerrados`} />
+                      <Chip size="small" color="warning" variant="outlined" label={`${action.itemsSummary?.pending || 0} pendientes`} />
+                    </Stack>
+                  </TableCell>
+                  <TableCell key={`${action._id.$oid}-archivos-length`}>{action.archivos?.length || 0}</TableCell>
                   <TableCell key={`${action._id.$oid}-status`}>
                     <ActivityStatus
                       budget={action}
@@ -83,7 +98,10 @@ function Documentos({ project, onActivitiesChange }) {
                     />
                   </TableCell>
                   <TableCell key={`${action._id.$oid}-archivos-dialog`}>
-                    <ActivityActions budget={action} />
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <ActivityItemsDrawer budget={action} project={project} onChanged={fetchActivities} />
+                      <ActivityActions budget={action} />
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}

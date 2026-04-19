@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Button, Card, styled } from "@mui/material";
+import Link from "next/link";
+import { Box, Button, Card, styled } from "@mui/material";
 import * as yup from "yup";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
@@ -65,6 +66,7 @@ const Login = () => {
         email: response.data.email,
         departmentId,
         departamento_id: departmentId,
+        mustChangePassword: Boolean(response.data.mustChangePassword),
       };
       
       localStorage.setItem('token', response.data.token);
@@ -75,7 +77,7 @@ const Login = () => {
         // Error silencioso, no afecta el flujo de login
       });
       
-      window.location.href = '/admin/products';
+      window.location.href = response.data.mustChangePassword ? '/change-password' : '/admin/products';
     }).catch((error) => {
       if (error.response) {
         enqueueSnackbar(error.response.data.message, { variant: 'error'});
@@ -130,7 +132,7 @@ const Login = () => {
           fullWidth
           size="small"
           name="password"
-          label="Password"
+          label="Contraseña"
           autoComplete="on"
           variant="outlined"
           onBlur={handleBlur}
@@ -159,8 +161,13 @@ const Login = () => {
             height: 44,
           }}
         >
-          Login
+          Iniciar sesión
         </Button>
+        <Box textAlign="center" mt={2}>
+          <Link href="/reset-password">
+            Recuperar contraseña
+          </Link>
+        </Box>
       </form>
       
     </Wrapper>
@@ -171,7 +178,7 @@ const initialValues = {
   password: "",
 };
 const formSchema = yup.object().shape({
-  password: yup.string().required("Password is required"),
-  email: yup.string().email("invalid email").required("Email is required"),
+  password: yup.string().required("La contraseña es obligatoria"),
+  email: yup.string().email("Email inválido").required("El email es obligatorio"),
 });
 export default Login;

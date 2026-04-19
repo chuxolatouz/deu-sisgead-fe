@@ -96,7 +96,7 @@ const CategoryForm = (props) => {
 
               <Grid item xs={12}>
                 <DropZone
-                  title="Drop & drag category image"
+                  title="Arrastra y suelta la imagen de la categoría"
                   onChange={(files) => handleChangeDropZone(files)}
                 />
 

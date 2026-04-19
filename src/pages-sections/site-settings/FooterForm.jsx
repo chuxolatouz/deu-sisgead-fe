@@ -26,7 +26,7 @@ const FooterForm = () => {
             <Grid item xs={12}>
               <DropZone
                 onChange={(files) => console.log(files)}
-                title="Drag & Drop Footer Logo"
+                title="Arrastra y suelta el logo del pie de página"
               />
             </Grid>
 

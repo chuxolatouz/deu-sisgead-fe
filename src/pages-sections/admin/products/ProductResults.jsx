@@ -223,7 +223,7 @@ export default function ProductResults({ projectId }) {
                     {lineasAccion && (
                       <Box>
                         <Typography variant="caption" color="text.secondary">
-                          Lineas de accion
+                          Líneas de acción
                         </Typography>
                         <Typography variant="body2">{lineasAccion}</Typography>
                       </Box>

@@ -5,10 +5,11 @@ export const getNavigations = () => {
   const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
   const user = userStr ? JSON.parse(userStr) : null;
   const role = user?.role || '';
-  
+
   // Check if there's an active department context
   const departmentContext = typeof window !== 'undefined' ? localStorage.getItem('departmentContext') : null;
   const usandoContexto = departmentContext !== null;
+  const hideFixedRules = role === "admin_departamento" || (role === "super_admin" && usandoContexto);
 
   const baseNavigations = [
     {
@@ -34,7 +35,10 @@ export const getNavigations = () => {
         },
       ],
     },
-    {
+  ];
+
+  if (!hideFixedRules) {
+    baseNavigations.push({
       name: "Reglas Fijas",
       icon: duotone.AccountSetting,
       children: [
@@ -47,8 +51,8 @@ export const getNavigations = () => {
           path: "/admin/request",
         },
       ]
-    },
-  ];
+    });
+  }
 
   if (role === "super_admin" || role === "admin_departamento") {
     baseNavigations.push({

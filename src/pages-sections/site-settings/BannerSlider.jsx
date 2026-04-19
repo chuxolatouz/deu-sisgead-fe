@@ -35,8 +35,8 @@ const BannerSlider = () => {
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <DropZone
-            title="Drag and Drop slide image here"
-            imageSize="upload landscape photo"
+            title="Arrastra y suelta la imagen del banner aquí"
+            imageSize="Carga una imagen horizontal"
             onChange={(files) => console.log(files)}
           />
 

@@ -11,13 +11,15 @@ function RouteGuard({ children }) {
       const publicPaths = [
         "/login",
         "/reset-password",
-        "/change-password",
         "/404"
       ];
       const path = url.split("?")[0];
       const isPublicPath = publicPaths.includes(path);
       const token = window.localStorage.getItem("token")
       const isLoggedIn = typeof token === 'string' && token.trim().length > 0;
+      const userData = window.localStorage.getItem("user");
+      const user = userData ? JSON.parse(userData) : null;
+      const mustChangePassword = Boolean(user?.mustChangePassword);
       const returnUrl = router.query.returnUrl;
       
       if (path === "/") {
@@ -30,6 +32,8 @@ function RouteGuard({ children }) {
           pathname: "/login",
           query: { returnUrl: router.asPath }
         });
+      } else if (isLoggedIn && mustChangePassword && path !== "/change-password") {
+        router.push("/change-password");
       } else if (isLoggedIn && returnUrl) {
         router.push(returnUrl);
       } else {

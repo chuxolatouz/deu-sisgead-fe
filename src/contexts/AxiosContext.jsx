@@ -16,6 +16,7 @@ const normalizeStoredUser = (rawUser) => {
     rol: rawUser.rol || role,
     departmentId,
     departamento_id: rawUser.departamento_id || departmentId,
+    mustChangePassword: Boolean(rawUser.mustChangePassword),
   };
 };
 

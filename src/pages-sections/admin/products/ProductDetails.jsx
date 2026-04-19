@@ -27,6 +27,7 @@ import ProductReport from "pages-sections/admin/products/ProductReport";
 import ProductAccounts from "pages-sections/admin/products/ProductAccounts";
 import ProductResults from "pages-sections/admin/products/ProductResults";
 import { useApi } from "contexts/AxiosContext";
+import { useDepartment } from "contexts/DepartmentContext";
 import { useSnackbar } from "notistack";
 import AddFixedRules from "./actions/add/AddFixedRules";
 import AddRules from "./actions/add/AddRules";
@@ -63,10 +64,18 @@ const ProductDetails = ({ product, onRefresh }) => {
   const [openFunding, setOpenFunding] = useState(false);
   const [openMigration, setOpenMigration] = useState(false);
   const { api } = useApi();
+  const { usandoContexto } = useDepartment();
   const { enqueueSnackbar } = useSnackbar();
   const fundingSummary = product?.fundingSummary;
   const fundingModel = product?.fundingModel;
   const fundingYear = Number(product?.fundingYear || new Date().getFullYear());
+  const storedUser = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
+  const role = storedUser?.role || storedUser?.rol || "";
+  const hideFixedRules = role === "admin_departamento" || (role === "super_admin" && usandoContexto);
+  const completedSteps = product.status?.completado || [];
+  const isConfigured = hideFixedRules
+    ? [1, 2, 3, 4].every((step) => completedSteps.includes(step))
+    : [1, 2, 3, 4, 5].every((step) => completedSteps.includes(step));
 
   const handleChange = (_, newValue) => {
     setTab(newValue);
@@ -353,18 +362,20 @@ const ProductDetails = ({ product, onRefresh }) => {
               <AddRules id={product._id} />
             )}
           </FlexBox>
-          <FlexBox alignItems="left" gap={2} sx={{ height: "33px" }}>
-            {product.status?.completado?.includes(5) ? (
-              <>
-                <Verify />
-                <Span gap={4} color={"green"}>
-                  Reglas Fijas
-                </Span>
-              </>
-            ) : (
-              <AddFixedRules id={product._id} year={fundingYear} />
-            )}
-          </FlexBox>
+          {!hideFixedRules && (
+            <FlexBox alignItems="left" gap={2} sx={{ height: "33px" }}>
+              {product.status?.completado?.includes(5) ? (
+                <>
+                  <Verify />
+                  <Span gap={4} color={"green"}>
+                    Reglas Fijas
+                  </Span>
+                </>
+              ) : (
+                <AddFixedRules id={product._id} year={fundingYear} />
+              )}
+            </FlexBox>
+          )}
           <Divider
             sx={{
               my: 2,
@@ -376,7 +387,7 @@ const ProductDetails = ({ product, onRefresh }) => {
               my: 2,
             }}
           />
-          {product.status?.completado.length === 5 && (
+          {isConfigured && (
             <FlexBox alignItems="center" gap={2}>
               {product?.acta_inicio?.documento_url ? (
                 <Button
@@ -393,7 +404,7 @@ const ProductDetails = ({ product, onRefresh }) => {
               )}
             </FlexBox>
           )}
-          {product.status?.completado.length === 5 && (
+          {isConfigured && (
             <Divider
               sx={{
                 my: 2,

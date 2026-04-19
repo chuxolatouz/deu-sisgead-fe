@@ -28,11 +28,13 @@ export default function ShowDocument({ budgets }) {
   const [isOpen, setIsOpen] = useState(false);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
+  const hasValue = (value) => value !== undefined && value !== null && value !== "";
   const specificObjective =
     budgets?.specificObjective || budgets?.objetivo_especifico;
   const transferAmount =
     budgets?.transferAmount || budgets?.monto_transferencia;
   const accountCode = budgets?.accountCode || budgets?.cuenta_contable;
+  const isSponsored = Boolean(budgets?.isSponsored || budgets?.patrocinada);
   const resultDescription =
     budgets?.resultados || budgets?.resultDescription || budgets?.description;
   const resultAttachments =
@@ -40,7 +42,12 @@ export default function ShowDocument({ budgets }) {
   const lineasAccion = budgets?.lineasAccion || budgets?.lineas_accion;
   const hasAdministrativeInfo =
     budgets?.status !== "new" &&
-    (budgets?.referencia || transferAmount || budgets?.banco || accountCode);
+    (hasValue(budgets?.referencia) ||
+      hasValue(transferAmount) ||
+      hasValue(budgets?.banco) ||
+      hasValue(accountCode) ||
+      isSponsored ||
+      hasValue(budgets?.monto_aprobado));
   const statusLabel =
     budgets?.status === "finished"
       ? "Finalizada"
@@ -85,6 +92,14 @@ export default function ShowDocument({ budgets }) {
               variant="outlined"
               sx={{ mb: 2 }}
             />
+            {isSponsored && (
+              <Chip
+                label="Patrocinada"
+                color="info"
+                variant="outlined"
+                sx={{ mb: 2, ml: 1 }}
+              />
+            )}
             {specificObjective && (
               <FlexBox alignItems="center" gap={1} mb={2}>
                 <Span color="grey.600" fontSize={14}>
@@ -115,14 +130,14 @@ export default function ShowDocument({ budgets }) {
                     </FlexBox>
                   )}
 
-                  {budgets.monto_aprobado && (
+                  {hasValue(budgets.monto_aprobado) && (
                     <FlexBox alignItems="center" gap={1} mb={1}>
                       <Span color="grey.600">Monto aprobado:</Span>
                       <Span fontWeight="bold">{currency(budgets.monto_aprobado)}</Span>
                     </FlexBox>
                   )}
 
-                  {transferAmount && (
+                  {hasValue(transferAmount) && (
                     <FlexBox alignItems="center" gap={1} mb={1}>
                       <Span color="grey.600">Monto transferido:</Span>
                       <Span fontWeight="bold">{currency(transferAmount)}</Span>
@@ -138,7 +153,7 @@ export default function ShowDocument({ budgets }) {
 
                   {accountCode && (
                     <FlexBox alignItems="center" gap={1}>
-                      <Span color="grey.600">Partida:</Span>
+                      <Span color="grey.600">{isSponsored ? "Cuenta de patrocinio:" : "Partida:"}</Span>
                       <Span fontWeight="bold">{accountCode}</Span>
                     </FlexBox>
                   )}
@@ -198,7 +213,7 @@ export default function ShowDocument({ budgets }) {
               )}
               {lineasAccion && (
                 <>
-                  <H3>Lineas de accion:</H3>
+                  <H3>Líneas de acción:</H3>
                   <Span display="block" mb={2}>{lineasAccion}</Span>
                 </>
               )}
@@ -227,7 +242,7 @@ export default function ShowDocument({ budgets }) {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={2}>No hay imagenes de resultado cargadas</TableCell>
+                      <TableCell colSpan={2}>No hay imágenes de resultado cargadas</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

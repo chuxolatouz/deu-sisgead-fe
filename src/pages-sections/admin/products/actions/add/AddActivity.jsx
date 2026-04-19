@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
+  Alert,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogActions,
@@ -11,7 +13,8 @@ import {
   MenuItem,
   Box,
   FormControl,
-  CircularProgress
+  CircularProgress,
+  FormControlLabel
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import DropZone from 'components/DropZone';
@@ -26,6 +29,7 @@ function AddBudget({ project, onCreated }) {
   const [selectedObjective, setSelectedObjective] = useState('');
   const [loadingObjectives, setLoadingObjectives] = useState(false);
   const [amount, setAmount] = useState(0);
+  const [isSponsored, setIsSponsored] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState([]);
   const { api } = useApi();
@@ -47,6 +51,15 @@ function AddBudget({ project, onCreated }) {
     }
   }, [isOpen]);
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setText('');
+    setSelectedObjective('');
+    setAmount(0);
+    setIsSponsored(false);
+    setFiles([]);
+  };
+
   const handleCrearDoc = () => {
     setSubmitting(true);
     const formData = new FormData();
@@ -57,13 +70,11 @@ function AddBudget({ project, onCreated }) {
     formData.append('projectId', project._id);
     formData.append('monto', amount);
     formData.append('specificObjective', selectedObjective);
+    formData.append('patrocinada', String(isSponsored));
+    formData.append('items', JSON.stringify([]));
 
     api.post('/documento_crear', formData).then((response) => {
-      setIsOpen(false);
-      setText('');
-      setSelectedObjective('');
-      setAmount(0);
-      setFiles([]);
+      handleClose();
       enqueueSnackbar(response.data.mensaje, { variant: 'success' });
       onCreated?.();
     }).catch((error) => {
@@ -87,7 +98,7 @@ function AddBudget({ project, onCreated }) {
       <Button variant="outlined" color="secondary" onClick={() => setIsOpen(true)}>
         Registrar actividad
       </Button>
-      <Dialog open={isOpen}>
+      <Dialog open={isOpen} onClose={handleClose}>
         <DialogTitle><Span>Registrar actividad</Span></DialogTitle>
         <DialogContent>
           <FormControl fullWidth variant="outlined" sx={{ marginTop: '20px', marginBottom: '20px' }}>
@@ -134,6 +145,23 @@ function AddBudget({ project, onCreated }) {
             />
           </FormControl>
 
+          <FormControlLabel
+            sx={{ mt: 1, mb: 1 }}
+            control={
+              <Checkbox
+                checked={isSponsored}
+                onChange={(event) => setIsSponsored(event.target.checked)}
+              />
+            }
+            label="Patrocinada"
+          />
+
+          {isSponsored && (
+            <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+              La actividad quedará marcada como patrocinada. En el cierre administrativo se registrará con financiamiento institucional en cero.
+            </Alert>
+          )}
+
           <DropZone onChange={(file) => { setFiles(file) }} />
           <aside>
             <h4>Adjuntos</h4>
@@ -141,7 +169,7 @@ function AddBudget({ project, onCreated }) {
           </aside>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" color="error" onClick={() => setIsOpen(false)}>
+          <Button variant="outlined" color="error" onClick={handleClose}>
             Cancelar
           </Button>
           <LoadingButton
