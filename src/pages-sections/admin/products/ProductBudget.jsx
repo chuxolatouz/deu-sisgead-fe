@@ -100,7 +100,11 @@ function Documentos({ project, onActivitiesChange }) {
                   <TableCell key={`${action._id.$oid}-archivos-dialog`}>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <ActivityItemsDrawer budget={action} project={project} onChanged={fetchActivities} />
-                      <ActivityActions budget={action} />
+                      <ActivityActions
+                        budget={action}
+                        project={project}
+                        onChanged={fetchActivities}
+                      />
                     </Stack>
                   </TableCell>
                 </TableRow>

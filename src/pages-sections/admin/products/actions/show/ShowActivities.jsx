@@ -29,8 +29,13 @@ export default function ShowDocument({ budgets }) {
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const hasValue = (value) => value !== undefined && value !== null && value !== "";
-  const specificObjective =
-    budgets?.specificObjective || budgets?.objetivo_especifico;
+  const specificObjectives = Array.isArray(
+    budgets?.specificObjectives || budgets?.objetivos_especificos
+  )
+    ? budgets?.specificObjectives || budgets?.objetivos_especificos
+    : budgets?.specificObjective || budgets?.objetivo_especifico
+    ? [budgets?.specificObjective || budgets?.objetivo_especifico]
+    : [];
   const transferAmount =
     budgets?.transferAmount || budgets?.monto_transferencia;
   const accountCode = budgets?.accountCode || budgets?.cuenta_contable;
@@ -100,14 +105,19 @@ export default function ShowDocument({ budgets }) {
                 sx={{ mb: 2, ml: 1 }}
               />
             )}
-            {specificObjective && (
-              <FlexBox alignItems="center" gap={1} mb={2}>
+            {specificObjectives.length > 0 && (
+              <FlexBox alignItems="flex-start" gap={1} mb={2} flexWrap="wrap">
                 <Span color="grey.600" fontSize={14}>
-                  Objetivo específico:
+                  Objetivos específicos:
                 </Span>
-                <Span fontSize={14} fontWeight="bold">
-                  {specificObjective}
-                </Span>
+                {specificObjectives.map((objective) => (
+                  <Chip
+                    key={objective}
+                    label={objective}
+                    size="small"
+                    variant="outlined"
+                  />
+                ))}
               </FlexBox>
             )}
 

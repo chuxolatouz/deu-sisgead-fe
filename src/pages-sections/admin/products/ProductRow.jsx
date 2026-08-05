@@ -29,12 +29,21 @@ const ProductRow = ({ product, fetchProducts, showDepartmentColumn = false }) =>
     departmentName,
     departmentCode,
     departamento,
+    owner,
+    canEdit,
   } = product;
 
   const router = useRouter();
   const { user } = useApi();
   const departmentLabel = departmentName || departamento?.nombre || departmentCode || "DEU";
   const isGlobalScope = departmentLabel === "DEU";
+  const ownerId = owner?.$oid || owner?._id?.$oid || owner?._id || owner || "";
+  const actorId = user?.id || user?._id?.$oid || user?._id || "";
+  const canEditProject = Boolean(
+    canEdit ||
+      user?.role === "super_admin" ||
+      (ownerId && actorId && String(ownerId) === String(actorId))
+  );
   return (
     // biome-ignore lint/a11y/useSemanticElements: <explanation>
     <StyledTableRow tabIndex={-1} role="checkbox">
@@ -108,7 +117,7 @@ const ProductRow = ({ product, fetchProducts, showDepartmentColumn = false }) =>
       </StyledTableCell>
 
       <StyledTableCell align="center">
-        {user?.role === "admin" && !status?.finished && (
+        {canEditProject && !status?.finished && (
           <StyledIconButton
             onClick={() => router.push(`/admin/products/edit/${_id.$oid}`)}
           >

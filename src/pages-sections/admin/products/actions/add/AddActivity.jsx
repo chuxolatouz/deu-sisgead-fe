@@ -11,6 +11,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  ListItemText,
   Box,
   FormControl,
   CircularProgress,
@@ -26,7 +27,7 @@ function AddBudget({ project, onCreated }) {
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState('');
   const [objectives, setObjectives] = useState([]);
-  const [selectedObjective, setSelectedObjective] = useState('');
+  const [selectedObjectives, setSelectedObjectives] = useState([]);
   const [loadingObjectives, setLoadingObjectives] = useState(false);
   const [amount, setAmount] = useState(0);
   const [isSponsored, setIsSponsored] = useState(false);
@@ -42,7 +43,7 @@ function AddBudget({ project, onCreated }) {
     if (isOpen) {
       setLoadingObjectives(true);
       api.get(`/proyecto/${project._id}/objetivos`)
-        .then((res) => setObjectives(res.data.objetivos_especificos))
+        .then((res) => setObjectives(Array.isArray(res.data.objetivos_especificos) ? res.data.objetivos_especificos : []))
         .catch((err) => {
           console.error(err);
           enqueueSnackbar("Error al cargar los objetivos específicos", { variant: 'error' });
@@ -54,7 +55,7 @@ function AddBudget({ project, onCreated }) {
   const handleClose = () => {
     setIsOpen(false);
     setText('');
-    setSelectedObjective('');
+    setSelectedObjectives([]);
     setAmount(0);
     setIsSponsored(false);
     setFiles([]);
@@ -69,7 +70,7 @@ function AddBudget({ project, onCreated }) {
     }
     formData.append('projectId', project._id);
     formData.append('monto', amount);
-    formData.append('specificObjective', selectedObjective);
+    formData.append('specificObjectives', JSON.stringify(selectedObjectives));
     formData.append('patrocinada', String(isSponsored));
     formData.append('items', JSON.stringify([]));
 
@@ -119,16 +120,26 @@ function AddBudget({ project, onCreated }) {
           ) : (
             objectives.length > 0 && (
               <FormControl fullWidth variant="outlined" sx={{ marginTop: '20px', marginBottom: '20px' }}>
-                <InputLabel id="objetivo">Seleccionar Objetivo Específico</InputLabel>
+                <InputLabel id="objetivos-especificos">Objetivos específicos</InputLabel>
                 <Select
-                  labelId="objetivo"
-                  value={selectedObjective}
-                  onChange={(e) => setSelectedObjective(e.target.value)}
-                  label="Seleccionar Objetivo Específico"
+                  multiple
+                  labelId="objetivos-especificos"
+                  value={selectedObjectives}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSelectedObjectives(typeof value === 'string' ? value.split(',') : value);
+                  }}
+                  label="Objetivos específicos"
+                  renderValue={(selected) =>
+                    selected.length === 1
+                      ? selected[0]
+                      : `${selected.length} objetivos seleccionados`
+                  }
                 >
                   {objectives.map((objective, index) => (
                     <MenuItem key={index + objective} value={objective}>
-                      {objective}
+                      <Checkbox checked={selectedObjectives.includes(objective)} />
+                      <ListItemText primary={objective} />
                     </MenuItem>
                   ))}
                 </Select>

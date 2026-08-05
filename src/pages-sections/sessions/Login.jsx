@@ -61,6 +61,7 @@ const Login = () => {
     api.post('/login', values).then((response) => {
       const departmentId = response.data.departmentId || response.data.departamento_id || "";
       const userData = {
+        id: response.data.id,
         nombre: response.data.nombre,
         role: response.data.role,
         email: response.data.email,

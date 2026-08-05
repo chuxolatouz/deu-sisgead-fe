@@ -9,9 +9,11 @@ const normalizeStoredUser = (rawUser) => {
 
   const role = rawUser.role || rawUser.rol || "";
   const departmentId = rawUser.departmentId || rawUser.departamento_id || "";
+  const id = rawUser.id || rawUser._id?.$oid || rawUser._id || "";
 
   return {
     ...rawUser,
+    id,
     role,
     rol: rawUser.rol || role,
     departmentId,
