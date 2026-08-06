@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Alert,
   Checkbox,
@@ -15,46 +15,62 @@ import {
   Box,
   FormControl,
   CircularProgress,
-  FormControlLabel
-} from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import DropZone from 'components/DropZone';
-import { Span } from 'components/Typography';
-import { useApi } from 'contexts/AxiosContext';
-import { useSnackbar } from 'notistack';
+  FormControlLabel,
+} from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import DropZone from "components/DropZone";
+import { Span } from "components/Typography";
+import { useApi } from "contexts/AxiosContext";
+import { useSnackbar } from "notistack";
 
 function AddBudget({ project, onCreated }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [objectives, setObjectives] = useState([]);
   const [selectedObjectives, setSelectedObjectives] = useState([]);
   const [loadingObjectives, setLoadingObjectives] = useState(false);
   const [amount, setAmount] = useState(0);
   const [isSponsored, setIsSponsored] = useState(false);
+  const [sponsoredEnabled, setSponsoredEnabled] = useState(false);
+  const [loadingConfiguration, setLoadingConfiguration] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState([]);
   const { api } = useApi();
 
   const { enqueueSnackbar } = useSnackbar();
 
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (isOpen) {
       setLoadingObjectives(true);
-      api.get(`/proyecto/${project._id}/objetivos`)
-        .then((res) => setObjectives(Array.isArray(res.data.objetivos_especificos) ? res.data.objetivos_especificos : []))
+      setLoadingConfiguration(true);
+      api
+        .get(`/proyecto/${project._id}/objetivos`)
+        .then((res) =>
+          setObjectives(
+            Array.isArray(res.data.objetivos_especificos)
+              ? res.data.objetivos_especificos
+              : []
+          )
+        )
         .catch((err) => {
           console.error(err);
-          enqueueSnackbar("Error al cargar los objetivos específicos", { variant: 'error' });
+          enqueueSnackbar("Error al cargar los objetivos específicos", {
+            variant: "error",
+          });
         })
         .finally(() => setLoadingObjectives(false));
+      api
+        .get("/actividades/configuracion")
+        .then((res) => setSponsoredEnabled(Boolean(res.data?.sponsoredEnabled)))
+        .catch(() => setSponsoredEnabled(false))
+        .finally(() => setLoadingConfiguration(false));
     }
   }, [isOpen]);
 
   const handleClose = () => {
     setIsOpen(false);
-    setText('');
+    setText("");
     setSelectedObjectives([]);
     setAmount(0);
     setIsSponsored(false);
@@ -62,47 +78,80 @@ function AddBudget({ project, onCreated }) {
   };
 
   const handleCrearDoc = () => {
+    if (!text.trim()) {
+      enqueueSnackbar("La descripción de la actividad es requerida", {
+        variant: "error",
+      });
+      return;
+    }
+    if (Number(amount) < 0) {
+      enqueueSnackbar("El monto de la actividad no puede ser negativo", {
+        variant: "error",
+      });
+      return;
+    }
+    if (isSponsored && !sponsoredEnabled) {
+      enqueueSnackbar("No hay una cuenta de patrocinio configurada", {
+        variant: "error",
+      });
+      return;
+    }
     setSubmitting(true);
     const formData = new FormData();
-    formData.append('descripcion', text);
+    formData.append("descripcion", text);
     for (const file of files) {
-      formData.append('files', file);
+      formData.append("files", file);
     }
-    formData.append('projectId', project._id);
-    formData.append('monto', amount);
-    formData.append('specificObjectives', JSON.stringify(selectedObjectives));
-    formData.append('patrocinada', String(isSponsored));
-    formData.append('items', JSON.stringify([]));
+    formData.append("projectId", project._id);
+    formData.append("monto", isSponsored ? "0" : amount);
+    formData.append("specificObjectives", JSON.stringify(selectedObjectives));
+    formData.append("patrocinada", String(isSponsored));
+    formData.append("items", JSON.stringify([]));
 
-    api.post('/documento_crear', formData).then((response) => {
-      handleClose();
-      enqueueSnackbar(response.data.mensaje, { variant: 'success' });
-      onCreated?.();
-    }).catch((error) => {
-      if (error?.response?.data?.message) {
-        enqueueSnackbar(error.response.data.message, { variant: 'error' })
-      } else {
-        enqueueSnackbar(error.message, { variant: 'error' })
-      }
-    }).finally(() => {
-      setSubmitting(false);
-    })
+    api
+      .post("/documento_crear", formData)
+      .then((response) => {
+        handleClose();
+        enqueueSnackbar(response.data.mensaje, { variant: "success" });
+        onCreated?.();
+      })
+      .catch((error) => {
+        if (error?.response?.data?.message || error?.response?.data?.error) {
+          enqueueSnackbar(
+            error.response.data.message || error.response.data.error,
+            { variant: "error" }
+          );
+        } else {
+          enqueueSnackbar(error.message, { variant: "error" });
+        }
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
   };
 
   const fileList = files.map((file) => (
-    <Box key={file.path}>
-      {`${file.path}-${file.size}bytes`}
-    </Box>
+    <Box key={file.path}>{`${file.path}-${file.size}bytes`}</Box>
   ));
   return (
     <Box>
-      <Button variant="outlined" color="secondary" onClick={() => setIsOpen(true)}>
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={() => setIsOpen(true)}
+      >
         Registrar actividad
       </Button>
       <Dialog open={isOpen} onClose={handleClose}>
-        <DialogTitle><Span>Registrar actividad</Span></DialogTitle>
+        <DialogTitle>
+          <Span>Registrar actividad</Span>
+        </DialogTitle>
         <DialogContent>
-          <FormControl fullWidth variant="outlined" sx={{ marginTop: '20px', marginBottom: '20px' }}>
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{ marginTop: "20px", marginBottom: "20px" }}
+          >
             <InputLabel id="documentos">Descripción</InputLabel>
             <OutlinedInput
               labelid="documentos"
@@ -114,20 +163,34 @@ function AddBudget({ project, onCreated }) {
 
           {/* Renderizar objetivos específicos si existen */}
           {loadingObjectives ? (
-            <Box display="flex" justifyContent="center" alignItems="center" mt={3} mb={3}>
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              mt={3}
+              mb={3}
+            >
               <CircularProgress size={24} />
             </Box>
           ) : (
             objectives.length > 0 && (
-              <FormControl fullWidth variant="outlined" sx={{ marginTop: '20px', marginBottom: '20px' }}>
-                <InputLabel id="objetivos-especificos">Objetivos específicos</InputLabel>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ marginTop: "20px", marginBottom: "20px" }}
+              >
+                <InputLabel id="objetivos-especificos">
+                  Objetivos específicos
+                </InputLabel>
                 <Select
                   multiple
                   labelId="objetivos-especificos"
                   value={selectedObjectives}
                   onChange={(e) => {
                     const value = e.target.value;
-                    setSelectedObjectives(typeof value === 'string' ? value.split(',') : value);
+                    setSelectedObjectives(
+                      typeof value === "string" ? value.split(",") : value
+                    );
                   }}
                   label="Objetivos específicos"
                   renderValue={(selected) =>
@@ -138,7 +201,9 @@ function AddBudget({ project, onCreated }) {
                 >
                   {objectives.map((objective, index) => (
                     <MenuItem key={index + objective} value={objective}>
-                      <Checkbox checked={selectedObjectives.includes(objective)} />
+                      <Checkbox
+                        checked={selectedObjectives.includes(objective)}
+                      />
                       <ListItemText primary={objective} />
                     </MenuItem>
                   ))}
@@ -146,13 +211,19 @@ function AddBudget({ project, onCreated }) {
               </FormControl>
             )
           )}
-          <FormControl fullWidth variant="outlined" sx={{ marginTop: '20px', marginBottom: '20px' }}>
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{ marginTop: "20px", marginBottom: "20px" }}
+          >
             <InputLabel id="monto">Monto</InputLabel>
             <OutlinedInput
               labelid="monto"
               label="Monto"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              type="number"
+              disabled={isSponsored}
             />
           </FormControl>
 
@@ -161,7 +232,11 @@ function AddBudget({ project, onCreated }) {
             control={
               <Checkbox
                 checked={isSponsored}
-                onChange={(event) => setIsSponsored(event.target.checked)}
+                disabled={loadingConfiguration || !sponsoredEnabled}
+                onChange={(event) => {
+                  setIsSponsored(event.target.checked);
+                  if (event.target.checked) setAmount(0);
+                }}
               />
             }
             label="Patrocinada"
@@ -169,11 +244,24 @@ function AddBudget({ project, onCreated }) {
 
           {isSponsored && (
             <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-              La actividad quedará marcada como patrocinada. En el cierre administrativo se registrará con financiamiento institucional en cero.
+              La actividad quedará marcada como patrocinada. En el cierre
+              administrativo se registrará con financiamiento institucional en
+              cero.
             </Alert>
           )}
 
-          <DropZone onChange={(file) => { setFiles(file) }} />
+          {!loadingConfiguration && !sponsoredEnabled && (
+            <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
+              Las actividades patrocinadas no están disponibles porque falta
+              configurar la cuenta de patrocinio.
+            </Alert>
+          )}
+
+          <DropZone
+            onChange={(file) => {
+              setFiles(file);
+            }}
+          />
           <aside>
             <h4>Adjuntos</h4>
             <ul>{fileList}</ul>

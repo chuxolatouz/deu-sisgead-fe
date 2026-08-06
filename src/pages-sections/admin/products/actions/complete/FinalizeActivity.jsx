@@ -29,6 +29,7 @@ function FinalizeActivity({ budget, onComplete }) {
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
+  const resolvedDocumentId = budget?._id?.$oid || budget?._id;
 
   const handleOpen = () => {
     if (budget.status === "in_progress") {
@@ -57,7 +58,7 @@ function FinalizeActivity({ budget, onComplete }) {
     setSubmitting(true);
     const formData = new FormData();
     formData.append("projectId", resolvedProjectId || "");
-    formData.append("docId", budget._id.$oid);
+    formData.append("docId", resolvedDocumentId || "");
     formData.append("resultados", resultados.trim());
     formData.append("logros", logros.trim());
     formData.append("limitaciones", limitaciones.trim());
@@ -82,10 +83,9 @@ function FinalizeActivity({ budget, onComplete }) {
             { variant: "error" }
           );
         } else {
-          enqueueSnackbar(
-            error.message || "Error al finalizar la actividad",
-            { variant: "error" }
-          );
+          enqueueSnackbar(error.message || "Error al finalizar la actividad", {
+            variant: "error",
+          });
         }
       })
       .finally(() => {

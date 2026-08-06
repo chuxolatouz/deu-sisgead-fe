@@ -12,9 +12,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import AccountSelector from "components/accounting/AccountSelector";
+import DropZone from "components/DropZone";
 import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
 
@@ -35,11 +37,15 @@ function CerrarActividad({ budget, onComplete, year }) {
   const [cuentaContableCode, setCuentaContableCode] = useState(null);
   const [cuentaContableManual, setCuentaContableManual] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [supportFiles, setSupportFiles] = useState([]);
 
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
-  const resolvedFundingYear = Number(year || budget?.fundingYear || new Date().getFullYear());
+  const resolvedDocumentId = budget?._id?.$oid || budget?._id;
+  const resolvedFundingYear = Number(
+    year || budget?.fundingYear || new Date().getFullYear()
+  );
 
   useEffect(() => {
     setAmount(initialAmount);
@@ -64,17 +70,26 @@ function CerrarActividad({ budget, onComplete, year }) {
     setBanco("");
     setCuentaContableCode(null);
     setCuentaContableManual("");
+    setSupportFiles([]);
   };
 
   const handleCrearDoc = () => {
-    if (!isSponsored && (!amount || Number(amount) <= 0)) {
-      enqueueSnackbar("Debes indicar un monto aprobado valido", {
+    const numericAmount = Number(amount || 0);
+    if (numericAmount < 0) {
+      enqueueSnackbar("El monto aprobado no puede ser negativo", {
         variant: "error",
       });
       return;
     }
     const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
-    if (!isSponsored && !cuentaContable) {
+    if (!isSponsored && numericAmount === 0 && cuentaContable) {
+      enqueueSnackbar(
+        "Un cierre con monto 0 no puede tener una cuenta asociada",
+        { variant: "error" }
+      );
+      return;
+    }
+    if (!isSponsored && numericAmount > 0 && !cuentaContable) {
       enqueueSnackbar(
         "Debes seleccionar una partida del proyecto para imputar el gasto",
         { variant: "error" }
@@ -88,14 +103,15 @@ function CerrarActividad({ budget, onComplete, year }) {
     const transferAmount = isSponsored ? "0" : montoTransferencia;
     formData.append("projectId", resolvedProjectId || "");
     formData.append("monto", approvedAmount);
-    formData.append("docId", budget._id.$oid);
+    formData.append("docId", resolvedDocumentId || "");
     formData.append("year", String(resolvedFundingYear));
     formData.append("referencia", referencia);
     formData.append("transferAmount", transferAmount);
     formData.append("banco", banco);
     if (!isSponsored) {
-      formData.append("accountCode", cuentaContable);
+      if (cuentaContable) formData.append("accountCode", cuentaContable);
     }
+    supportFiles.forEach((file) => formData.append("supportFiles", file));
 
     api
       .post("/documento_cerrar", formData)
@@ -205,7 +221,9 @@ function CerrarActividad({ budget, onComplete, year }) {
 
           {isSponsored ? (
             <Alert severity="success" variant="outlined" sx={{ mt: 2, mb: 2 }}>
-              No es necesario seleccionar una partida ni una cuenta manual. El sistema usará la cuenta de patrocinio configurada como referencia y registrará el cierre en cero.
+              No es necesario seleccionar una partida ni una cuenta manual. El
+              sistema usará la cuenta de patrocinio configurada como referencia
+              y registrará el cierre en cero.
             </Alert>
           ) : (
             <Box sx={{ mt: 2, mb: 2 }}>
@@ -230,7 +248,9 @@ function CerrarActividad({ budget, onComplete, year }) {
                 fullWidth
                 label="Cuenta contable manual"
                 value={cuentaContableManual}
-                onChange={(event) => setCuentaContableManual(event.target.value)}
+                onChange={(event) =>
+                  setCuentaContableManual(event.target.value)
+                }
                 disabled={Boolean(cuentaContableCode)}
                 helperText={
                   cuentaContableCode
@@ -240,6 +260,26 @@ function CerrarActividad({ budget, onComplete, year }) {
               />
             </Box>
           )}
+          <DropZone
+            onChange={setSupportFiles}
+            onRejected={() =>
+              enqueueSnackbar(
+                "Solo se permiten hasta 10 imágenes o PDF de 10 MB",
+                { variant: "error" }
+              )
+            }
+            title="Arrastra los respaldos del cierre aquí"
+            imageSize="Imágenes o PDF, máximo 10 MB por archivo"
+          />
+          {supportFiles.map((file) => (
+            <Typography
+              key={`${file.name}-${file.size}`}
+              variant="caption"
+              display="block"
+            >
+              {file.name}
+            </Typography>
+          ))}
         </DialogContent>
         <DialogActions>
           <Button variant="outlined" color="error" onClick={handleClose}>

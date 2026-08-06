@@ -16,6 +16,8 @@ const DropZone = ({
     "application/pdf": [".pdf"],
   },
   maxFiles = 10,
+  maxSize = 10 * 1024 * 1024,
+  onRejected,
 }) => {
   const onDrop = useCallback(
     (acceptedFiles) => onChange(acceptedFiles),
@@ -26,6 +28,8 @@ const DropZone = ({
     maxFiles,
     multiple: true,
     accept,
+    maxSize,
+    onDropRejected: onRejected,
   });
   return (
     <Box

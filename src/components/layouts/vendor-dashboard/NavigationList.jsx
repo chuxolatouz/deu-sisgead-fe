@@ -1,15 +1,21 @@
 import duotone from "components/icons/duotone";
+import { HelpOutline } from "@mui/icons-material";
 
 // Function to get navigations based on user role
 export const getNavigations = () => {
-  const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+  const userStr =
+    typeof window !== "undefined" ? localStorage.getItem("user") : null;
   const user = userStr ? JSON.parse(userStr) : null;
-  const role = user?.role || '';
+  const role = user?.role || "";
 
   // Check if there's an active department context
-  const departmentContext = typeof window !== 'undefined' ? localStorage.getItem('departmentContext') : null;
+  const departmentContext =
+    typeof window !== "undefined"
+      ? localStorage.getItem("departmentContext")
+      : null;
   const usandoContexto = departmentContext !== null;
-  const hideFixedRules = role === "admin_departamento" || (role === "super_admin" && usandoContexto);
+  const hideFixedRules =
+    role === "admin_departamento" || (role === "super_admin" && usandoContexto);
 
   const baseNavigations = [
     {
@@ -44,13 +50,13 @@ export const getNavigations = () => {
       children: [
         {
           name: "Crear Solicitud",
-          path: "/admin/request/create"
+          path: "/admin/request/create",
         },
         {
           name: "Lista de Solicitudes",
           path: "/admin/request",
         },
-      ]
+      ],
     });
   }
 
@@ -64,7 +70,7 @@ export const getNavigations = () => {
 
   // Add Departamentos section only for super_admin when NOT in department context
   // When in department context, hide this section since they're viewing as that department
-  if (role === 'super_admin' && !usandoContexto) {
+  if (role === "super_admin" && !usandoContexto) {
     baseNavigations.push({
       name: "Departamentos",
       icon: duotone.AdminEcommerce,
@@ -87,7 +93,7 @@ export const getNavigations = () => {
     });
   }
 
-  if (role === 'super_admin') {
+  if (role === "super_admin") {
     baseNavigations.push({
       name: "Configuración",
       icon: duotone.Settings,
@@ -99,6 +105,12 @@ export const getNavigations = () => {
       ],
     });
   }
+
+  baseNavigations.push({
+    name: "Ayuda",
+    icon: HelpOutline,
+    path: "/admin/ayuda",
+  });
 
   // Add Logout at the end
   baseNavigations.push({

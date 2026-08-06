@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { EditOutlined } from "@mui/icons-material";
 import {
+  Alert,
   Button,
   Checkbox,
   Dialog,
@@ -8,6 +9,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   InputLabel,
   ListItemText,
   MenuItem,
@@ -24,10 +26,12 @@ import { StyledIconButton } from "pages-sections/admin/StyledComponents";
 const getDocumentId = (budget) => budget?._id?.$oid || budget?._id || "";
 
 const getSelectedObjectives = (budget) => {
-  const objectives = budget?.specificObjectives || budget?.objetivos_especificos;
+  const objectives =
+    budget?.specificObjectives || budget?.objetivos_especificos;
   if (Array.isArray(objectives)) return objectives;
 
-  const legacyObjective = budget?.specificObjective || budget?.objetivo_especifico;
+  const legacyObjective =
+    budget?.specificObjective || budget?.objetivo_especifico;
   return legacyObjective ? [legacyObjective] : [];
 };
 
@@ -38,20 +42,33 @@ function EditActivityDialog({ budget, project, onChanged }) {
   const [description, setDescription] = useState("");
   const [projectObjectives, setProjectObjectives] = useState([]);
   const [selectedObjectives, setSelectedObjectives] = useState([]);
+  const [isSponsored, setIsSponsored] = useState(false);
+  const [sponsoredEnabled, setSponsoredEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setDescription(budget?.descripcion || "");
     setSelectedObjectives(getSelectedObjectives(budget));
+    setIsSponsored(Boolean(budget?.isSponsored || budget?.patrocinada));
     setProjectObjectives(
-      Array.isArray(project?.objetivos_especificos) ? project.objetivos_especificos : []
+      Array.isArray(project?.objetivos_especificos)
+        ? project.objetivos_especificos
+        : []
     );
-  }, [open, budget, project]);
+    api
+      .get("/actividades/configuracion")
+      .then((response) =>
+        setSponsoredEnabled(Boolean(response.data?.sponsoredEnabled))
+      )
+      .catch(() => setSponsoredEnabled(false));
+  }, [open, budget, project, api]);
 
   const handleSave = () => {
     if (!description.trim()) {
-      enqueueSnackbar("La descripción de la actividad es requerida", { variant: "error" });
+      enqueueSnackbar("La descripción de la actividad es requerida", {
+        variant: "error",
+      });
       return;
     }
 
@@ -60,6 +77,7 @@ function EditActivityDialog({ budget, project, onChanged }) {
       .put(`/documentos/${getDocumentId(budget)}`, {
         descripcion: description.trim(),
         specificObjectives: selectedObjectives,
+        patrocinada: isSponsored,
       })
       .then((response) => {
         enqueueSnackbar(response.data.message, { variant: "success" });
@@ -82,7 +100,12 @@ function EditActivityDialog({ budget, project, onChanged }) {
         </StyledIconButton>
       </Tooltip>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Editar actividad</DialogTitle>
         <DialogContent>
           <Stack spacing={2.5} sx={{ pt: 1 }}>
@@ -95,7 +118,9 @@ function EditActivityDialog({ budget, project, onChanged }) {
               fullWidth
             />
             <FormControl fullWidth>
-              <InputLabel id="editar-objetivos-especificos">Objetivos específicos</InputLabel>
+              <InputLabel id="editar-objetivos-especificos">
+                Objetivos específicos
+              </InputLabel>
               <Select
                 multiple
                 labelId="editar-objetivos-especificos"
@@ -103,7 +128,9 @@ function EditActivityDialog({ budget, project, onChanged }) {
                 value={selectedObjectives}
                 onChange={(event) => {
                   const value = event.target.value;
-                  setSelectedObjectives(typeof value === "string" ? value.split(",") : value);
+                  setSelectedObjectives(
+                    typeof value === "string" ? value.split(",") : value
+                  );
                 }}
                 renderValue={(selected) =>
                   selected.length === 1
@@ -113,19 +140,54 @@ function EditActivityDialog({ budget, project, onChanged }) {
               >
                 {projectObjectives.map((objective) => (
                   <MenuItem key={objective} value={objective}>
-                    <Checkbox checked={selectedObjectives.includes(objective)} />
+                    <Checkbox
+                      checked={selectedObjectives.includes(objective)}
+                    />
                     <ListItemText primary={objective} />
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isSponsored}
+                  disabled={
+                    budget?.status !== "new" ||
+                    (!isSponsored && !sponsoredEnabled)
+                  }
+                  onChange={(event) => setIsSponsored(event.target.checked)}
+                />
+              }
+              label="Patrocinada"
+            />
+            {!sponsoredEnabled && !isSponsored && (
+              <Alert severity="warning" variant="outlined">
+                No se puede activar el patrocinio hasta configurar su cuenta
+                institucional.
+              </Alert>
+            )}
+            {budget?.status !== "new" && (
+              <Alert severity="info" variant="outlined">
+                El patrocinio no puede cambiarse después de iniciar el cierre
+                administrativo.
+              </Alert>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button color="error" onClick={() => setOpen(false)} disabled={saving}>
+          <Button
+            color="error"
+            onClick={() => setOpen(false)}
+            disabled={saving}
+          >
             Cancelar
           </Button>
-          <LoadingButton variant="contained" onClick={handleSave} loading={saving}>
+          <LoadingButton
+            variant="contained"
+            onClick={handleSave}
+            loading={saving}
+          >
             Guardar
           </LoadingButton>
         </DialogActions>
