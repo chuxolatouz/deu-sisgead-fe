@@ -7,7 +7,6 @@ import { ProductForm } from "pages-sections/admin";
 import VendorDashboardLayout from "components/layouts/vendor-dashboard";
 import { useApi } from "contexts/AxiosContext";
 
-
 // =============================================================================
 CreateProduct.getLayout = function getLayout(page) {
   return <VendorDashboardLayout>{page}</VendorDashboardLayout>;
@@ -22,22 +21,27 @@ export default function CreateProduct() {
     fecha_inicio: "",
     objetivo_general: "",
     objetivos_especificos: [],
+    materiales_necesarios: "",
+    recursos_humanos: "",
+    logistica: "",
     fecha_fin: "",
   };
   const validationSchema = yup.object().shape({
-  nombre: yup.string().required("obligatorio"),
-  categoria: yup.string().required("obligatorio"),
-  descripcion: yup.string().required("obligatorio"),
-  fecha_inicio: yup.string().required("obligatorio"),
-  fecha_fin: yup.string().required("obligatorio"),
-  objetivo_general: yup.string(),
-  objetivos_especificos: yup.array().of(yup.string()),
-  })
-  
+    nombre: yup.string().required("obligatorio"),
+    categoria: yup.string().required("obligatorio"),
+    descripcion: yup.string().required("obligatorio"),
+    fecha_inicio: yup.string().required("obligatorio"),
+    fecha_fin: yup.string().required("obligatorio"),
+    objetivo_general: yup.string(),
+    objetivos_especificos: yup.array().of(yup.string()),
+    materiales_necesarios: yup.string(),
+    recursos_humanos: yup.string(),
+    logistica: yup.string(),
+  });
+
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
-  const router= useRouter();
-  
+  const router = useRouter();
 
   const handleFormSubmit = (values) => {
     const payload = {
@@ -48,19 +52,22 @@ export default function CreateProduct() {
       fechaFin: values.fecha_fin,
       objetivoGeneral: values.objetivo_general,
       objetivosEspecificos: values.objetivos_especificos,
+      materialesNecesarios: values.materiales_necesarios,
+      recursosHumanos: values.recursos_humanos,
+      logistica: values.logistica,
     };
-    api.post('/crear_proyecto', payload)
+    api
+      .post("/crear_proyecto", payload)
       .then((response) => {
         router.push("/admin/products/");
       })
       .catch((error) => {
         if (error.response) {
-            enqueueSnackbar(error.response.data.message, { variant: 'error'})
+          enqueueSnackbar(error.response.data.message, { variant: "error" });
         } else {
-            enqueueSnackbar(error.message, { variant: 'error'})
+          enqueueSnackbar(error.message, { variant: "error" });
         }
-    })
-
+      });
   };
   return (
     <Box py={4}>

@@ -26,6 +26,7 @@ import ProductBudget from "pages-sections/admin/products/ProductBudget";
 import ProductReport from "pages-sections/admin/products/ProductReport";
 import ProductAccounts from "pages-sections/admin/products/ProductAccounts";
 import ProductResults from "pages-sections/admin/products/ProductResults";
+import ProductRequirements from "pages-sections/admin/products/ProductRequirements";
 import { useApi } from "contexts/AxiosContext";
 import { useDepartment } from "contexts/DepartmentContext";
 import { useSnackbar } from "notistack";
@@ -69,9 +70,13 @@ const ProductDetails = ({ product, onRefresh }) => {
   const fundingSummary = product?.fundingSummary;
   const fundingModel = product?.fundingModel;
   const fundingYear = Number(product?.fundingYear || new Date().getFullYear());
-  const storedUser = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
+  const storedUser =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "{}")
+      : {};
   const role = storedUser?.role || storedUser?.rol || "";
-  const hideFixedRules = role === "admin_departamento" || (role === "super_admin" && usandoContexto);
+  const hideFixedRules =
+    role === "admin_departamento" || (role === "super_admin" && usandoContexto);
   const completedSteps = product.status?.completado || [];
   const isConfigured = hideFixedRules
     ? [1, 2, 3, 4].every((step) => completedSteps.includes(step))
@@ -106,7 +111,9 @@ const ProductDetails = ({ product, onRefresh }) => {
   }, []);
 
   const findCategory = (catValue) => {
-    const category = categories.find((c) => categoryMatchesReference(c, catValue));
+    const category = categories.find((c) =>
+      categoryMatchesReference(c, catValue)
+    );
     if (!category) {
       return {
         nombre: normalizeCategoryReference(catValue),
@@ -277,28 +284,28 @@ const ProductDetails = ({ product, onRefresh }) => {
             </Span>
           </FlexBox>
           <FlexBox alignItems="left" gap={4}>
-            {product.categoria ? (
-              (() => {
-                const category = findCategory(product.categoria);
-                const statusSuffix = category.eliminado
-                  ? " (eliminada)"
-                  : category.activo === false
-                  ? " (deshabilitada)"
-                  : "";
-                const color = category.eliminado
-                  ? "default"
-                  : category.activo === false
-                  ? "warning"
-                  : "primary";
-                return (
-                  <Chip
-                    label={`${category.nombre}${statusSuffix}`}
-                    color={color}
-                    variant="outlined"
-                  />
-                );
-              })()
-            ) : null}
+            {product.categoria
+              ? (() => {
+                  const category = findCategory(product.categoria);
+                  const statusSuffix = category.eliminado
+                    ? " (eliminada)"
+                    : category.activo === false
+                    ? " (deshabilitada)"
+                    : "";
+                  const color = category.eliminado
+                    ? "default"
+                    : category.activo === false
+                    ? "warning"
+                    : "primary";
+                  return (
+                    <Chip
+                      label={`${category.nombre}${statusSuffix}`}
+                      color={color}
+                      variant="outlined"
+                    />
+                  );
+                })()
+              : null}
           </FlexBox>
           <Divider
             sx={{
@@ -448,7 +455,12 @@ const ProductDetails = ({ product, onRefresh }) => {
           }}
         >
           <TabContext value={tab}>
-            <TabList onChange={handleChange} centered>
+            <TabList
+              onChange={handleChange}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+            >
               <Tab value="0" label="Detalles" />
               <Tab value="1" label="Usuarios" />
               <Tab value="2" label="Movimientos" />
@@ -456,6 +468,7 @@ const ProductDetails = ({ product, onRefresh }) => {
               <Tab value="4" label="Logs" />
               <Tab value="5" label="Partidas y fondos" />
               <Tab value="6" label="Resultados" />
+              <Tab value="7" label="Requerimientos" />
             </TabList>
             <Box>
               <TabPanel value="0">
@@ -482,6 +495,9 @@ const ProductDetails = ({ product, onRefresh }) => {
               </TabPanel>
               <TabPanel value="6">
                 <ProductResults projectId={product._id} />
+              </TabPanel>
+              <TabPanel value="7">
+                <ProductRequirements project={product} />
               </TabPanel>
             </Box>
           </TabContext>

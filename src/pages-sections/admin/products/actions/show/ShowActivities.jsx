@@ -44,6 +44,7 @@ export default function ShowDocument({ budgets }) {
     budgets?.resultados || budgets?.resultDescription || budgets?.description;
   const resultAttachments =
     budgets?.resultAttachments || budgets?.archivos_aprobado || [];
+  const administrativeAttachments = budgets?.administrativeAttachments || [];
   const lineasAccion = budgets?.lineasAccion || budgets?.lineas_accion;
   const hasAdministrativeInfo =
     budgets?.status !== "new" &&
@@ -52,6 +53,7 @@ export default function ShowDocument({ budgets }) {
       hasValue(budgets?.banco) ||
       hasValue(accountCode) ||
       isSponsored ||
+      administrativeAttachments.length > 0 ||
       hasValue(budgets?.monto_aprobado));
   const statusLabel =
     budgets?.status === "finished"
@@ -166,6 +168,29 @@ export default function ShowDocument({ budgets }) {
                       <Span color="grey.600">{isSponsored ? "Cuenta de patrocinio:" : "Partida:"}</Span>
                       <Span fontWeight="bold">{accountCode}</Span>
                     </FlexBox>
+                  )}
+
+                  {administrativeAttachments.length > 0 && (
+                    <Box mt={2}>
+                      <Span display="block" color="grey.600" mb={1}>
+                        Adjuntos del cierre:
+                      </Span>
+                      <FlexBox gap={1} flexWrap="wrap">
+                        {administrativeAttachments.map((archivo, index) => (
+                          <Button
+                            key={
+                              archivo.public_id ||
+                              `${archivo.nombre || "respaldo"}-${index}`
+                            }
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleDownload(archivo)}
+                          >
+                            {archivo.nombre || `Respaldo ${index + 1}`}
+                          </Button>
+                        ))}
+                      </FlexBox>
+                    </Box>
                   )}
                 </Box>
               )}

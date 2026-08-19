@@ -16,21 +16,24 @@ EditProduct.getLayout = function getLayout(page) {
 // =============================================================================
 
 const INITIAL_VALUES = {
-    nombre: "",
-    categoria: "",
-    descripcion: "",
-    fecha_inicio: "",
-    fecha_fin: "",
-    objetivo_general: "",
-    objetivos_especificos: [],
-  };
-  const validationSchema = yup.object().shape({
+  nombre: "",
+  categoria: "",
+  descripcion: "",
+  fecha_inicio: "",
+  fecha_fin: "",
+  objetivo_general: "",
+  objetivos_especificos: [],
+  materiales_necesarios: "",
+  recursos_humanos: "",
+  logistica: "",
+};
+const validationSchema = yup.object().shape({
   nombre: yup.string().required("required"),
   categoria: yup.string().required("required"),
-    descripcion: yup.string().required("required"),
-    fecha_inicio: yup.string().required("required"),
-    fecha_fin: yup.string().required("required"),
-  });
+  descripcion: yup.string().required("required"),
+  fecha_inicio: yup.string().required("required"),
+  fecha_fin: yup.string().required("required"),
+});
 export default function EditProduct() {
   const { query, push } = useRouter();
   const { slug } = query;
@@ -38,29 +41,32 @@ export default function EditProduct() {
   const { enqueueSnackbar } = useSnackbar();
   const { api } = useApi();
 
-  useEffect(() => {    
-    if(slug) {
-      api.get(
-        `/proyecto/${slug}`,
-        ).then((response) => {
-            const parsedProduct = {
-                nombre: response.data.nombre,
-                categoria: response.data.categoria,
-                descripcion: response.data.descripcion,
-                fecha_inicio: parseISO(response.data.fecha_inicio),
-                fecha_fin: parseISO(response.data.fecha_fin),
-                objetivo_general: response.data.objetivo_general,
-                objetivos_especificos: response.data.objetivos_especificos || [],
-              };
-              setProduct(parsedProduct);
+  useEffect(() => {
+    if (slug) {
+      api
+        .get(`/proyecto/${slug}`)
+        .then((response) => {
+          const parsedProduct = {
+            nombre: response.data.nombre,
+            categoria: response.data.categoria,
+            descripcion: response.data.descripcion,
+            fecha_inicio: parseISO(response.data.fecha_inicio),
+            fecha_fin: parseISO(response.data.fecha_fin),
+            objetivo_general: response.data.objetivo_general,
+            objetivos_especificos: response.data.objetivos_especificos || [],
+            materiales_necesarios: response.data.materiales_necesarios || "",
+            recursos_humanos: response.data.recursos_humanos || "",
+            logistica: response.data.logistica || "",
+          };
+          setProduct(parsedProduct);
         })
         .catch((error) => {
-            if (error.response) {
-                enqueueSnackbar(error.response.data.message, { variant: 'error'})
-            } else {
-                enqueueSnackbar(error.message, { variant: 'error'})
-            }
-        })
+          if (error.response) {
+            enqueueSnackbar(error.response.data.message, { variant: "error" });
+          } else {
+            enqueueSnackbar(error.message, { variant: "error" });
+          }
+        });
     }
   }, [slug]);
 
@@ -73,38 +79,39 @@ export default function EditProduct() {
       fechaFin: values.fecha_fin,
       objetivoGeneral: values.objetivo_general,
       objetivosEspecificos: values.objetivos_especificos,
+      materialesNecesarios: values.materiales_necesarios,
+      recursosHumanos: values.recursos_humanos,
+      logistica: values.logistica,
     };
 
-    if(slug) {
-        api.put(
-          `/actualizar_proyecto/${slug}`, payload
-          ).then((response) => {
-            enqueueSnackbar(response.data.message, { variant: 'success'})
-            push("/admin/products/");
-          })
-          .catch((error) => {
-              if (error.response) {
-                  enqueueSnackbar(error.response.data.message, { variant: 'error'})
-              } else {
-                  enqueueSnackbar(error.message, { variant: 'error'})
-              }
-          })
-      }
-  }
+    if (slug) {
+      api
+        .put(`/actualizar_proyecto/${slug}`, payload)
+        .then((response) => {
+          enqueueSnackbar(response.data.message, { variant: "success" });
+          push("/admin/products/");
+        })
+        .catch((error) => {
+          if (error.response) {
+            enqueueSnackbar(error.response.data.message, { variant: "error" });
+          } else {
+            enqueueSnackbar(error.message, { variant: "error" });
+          }
+        });
+    }
+  };
 
   return (
     <Box py={4}>
       <H3 mb={2}>{product?.nombre}</H3>
-        <ProductForm
-          reinitialize
-          shrink
-          initialValues={product}
-          validationSchema={validationSchema}
-          handleFormSubmit={handleFormSubmit}
-          selectedCategory={product?.categoria}
-        />
-
-      
+      <ProductForm
+        reinitialize
+        shrink
+        initialValues={product}
+        validationSchema={validationSchema}
+        handleFormSubmit={handleFormSubmit}
+        selectedCategory={product?.categoria}
+      />
     </Box>
   );
 }

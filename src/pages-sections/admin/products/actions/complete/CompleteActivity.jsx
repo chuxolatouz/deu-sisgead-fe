@@ -268,7 +268,7 @@ function CerrarActividad({ budget, onComplete, year }) {
                 { variant: "error" }
               )
             }
-            title="Arrastra los respaldos del cierre aquí"
+            title="Adjunta respaldos del cierre (opcional)"
             imageSize="Imágenes o PDF, máximo 10 MB por archivo"
           />
           {supportFiles.map((file) => (

@@ -1,8 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button, Card, Grid, MenuItem, TextField, Box } from "@mui/material";
+import {
+  Button,
+  Card,
+  Divider,
+  Grid,
+  MenuItem,
+  TextField,
+  Box,
+  Typography,
+} from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import enGB from 'date-fns/locale/en-GB';
+import enGB from "date-fns/locale/en-GB";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { Formik, FieldArray } from "formik";
 import { useApi } from "contexts/AxiosContext";
@@ -51,8 +60,12 @@ const ProductForm = (props) => {
     let cancelled = false;
     const loadCategories = async () => {
       try {
-        const activeResponse = await api.get("/mostrar_categorias?activeOnly=true");
-        let mergedCategories = Array.isArray(activeResponse.data) ? activeResponse.data : [];
+        const activeResponse = await api.get(
+          "/mostrar_categorias?activeOnly=true"
+        );
+        let mergedCategories = Array.isArray(activeResponse.data)
+          ? activeResponse.data
+          : [];
 
         if (normalizedSelectedCategory) {
           const existsInActive = mergedCategories.some((category) =>
@@ -62,7 +75,9 @@ const ProductForm = (props) => {
             const allResponse = await api.get(
               "/mostrar_categorias?includeInactive=true&includeDeleted=true"
             );
-            const allCategories = Array.isArray(allResponse.data) ? allResponse.data : [];
+            const allCategories = Array.isArray(allResponse.data)
+              ? allResponse.data
+              : [];
             const currentCategory = allCategories.find((category) =>
               categoryMatchesReference(category, normalizedSelectedCategory)
             );
@@ -75,7 +90,9 @@ const ProductForm = (props) => {
         const uniqueCategories = [];
         const seenKeys = new Set();
         mergedCategories.forEach((category) => {
-          const key = normalizeCategoryReference(category?._id || category?.value);
+          const key = normalizeCategoryReference(
+            category?._id || category?.value
+          );
           if (!key || seenKeys.has(key)) return;
           seenKeys.add(key);
           uniqueCategories.push(category);
@@ -159,8 +176,13 @@ const ProductForm = (props) => {
                 >
                   {categories.map((category) => {
                     const categoryValue = category._id || category.value;
-                    const isCurrentCategory = categoryMatchesReference(category, values.categoria);
-                    const disabled = (category.eliminado || category.activo === false) && !isCurrentCategory;
+                    const isCurrentCategory = categoryMatchesReference(
+                      category,
+                      values.categoria
+                    );
+                    const disabled =
+                      (category.eliminado || category.activo === false) &&
+                      !isCurrentCategory;
                     const statusSuffix = category.eliminado
                       ? " (eliminada)"
                       : category.activo === false
@@ -179,7 +201,6 @@ const ProductForm = (props) => {
                   })}
                 </TextField>
               </Grid>
-
 
               <Grid item xs={12}>
                 <TextField
@@ -202,6 +223,57 @@ const ProductForm = (props) => {
                 />
               </Grid>
               <Grid item xs={12}>
+                <Divider sx={{ mb: 3 }} />
+                <Typography variant="h6" mb={0.5}>
+                  Requerimientos del proyecto
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Estos campos son opcionales y se mostrarán en la pestaña de
+                  requerimientos del proyecto.
+                </Typography>
+              </Grid>
+              {[
+                {
+                  name: "materiales_necesarios",
+                  label: "Materiales necesarios",
+                  placeholder: "Ej.: toldos, sillas, mesas, sonido...",
+                },
+                {
+                  name: "recursos_humanos",
+                  label: "Recursos humanos",
+                  placeholder:
+                    "Ej.: personal requerido y cantidad de personas...",
+                },
+                {
+                  name: "logistica",
+                  label: "Logística",
+                  placeholder: "Ej.: hidratación, transporte, refrigerios...",
+                },
+              ].map((requirement) => (
+                <Grid item md={4} xs={12} key={requirement.name}>
+                  <TextField
+                    rows={6}
+                    multiline
+                    fullWidth
+                    color="info"
+                    size="medium"
+                    name={requirement.name}
+                    label={requirement.label}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    placeholder={requirement.placeholder}
+                    value={values[requirement.name] || ""}
+                    error={
+                      !!touched[requirement.name] && !!errors[requirement.name]
+                    }
+                    helperText={
+                      touched[requirement.name] && errors[requirement.name]
+                    }
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+              ))}
+              <Grid item xs={12}>
                 <TextField
                   rows={6}
                   multiline
@@ -214,8 +286,12 @@ const ProductForm = (props) => {
                   onChange={handleChange}
                   placeholder="Objetivo General"
                   value={values.objetivo_general}
-                  error={!!touched.objetivo_general && !!errors.objetivo_general}
-                  helperText={touched.objetivo_general && errors.objetivo_general}
+                  error={
+                    !!touched.objetivo_general && !!errors.objetivo_general
+                  }
+                  helperText={
+                    touched.objetivo_general && errors.objetivo_general
+                  }
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -232,7 +308,12 @@ const ProductForm = (props) => {
                         </Button>
                       </Box>
                       {values.objetivos_especificos.map((_, index) => (
-                        <Box key={`${index}-objet`} display="flex" alignItems="center" mb={2}>
+                        <Box
+                          key={`${index}-objet`}
+                          display="flex"
+                          alignItems="center"
+                          mb={2}
+                        >
                           <TextField
                             fullWidth
                             label={`Objetivo Específico ${index + 1}`}
@@ -254,9 +335,11 @@ const ProductForm = (props) => {
                 </FieldArray>
               </Grid>
 
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enGB}>
+              <LocalizationProvider
+                dateAdapter={AdapterDateFns}
+                adapterLocale={enGB}
+              >
                 <Grid item md={6} xs={12}>
-
                   <DatePicker
                     label="Fecha de Inicio"
                     // maxDate={new Date()}
@@ -311,7 +394,6 @@ const ProductForm = (props) => {
                   />
                 </Grid>
               </LocalizationProvider>
-
 
               <Grid item sm={6} xs={12}>
                 <Button variant="contained" color="info" type="submit">
