@@ -10,10 +10,7 @@ import {
 } from "@mui/material";
 import { useApi } from "contexts/AxiosContext";
 import { formatMonto } from "lib";
-import {
-  getIncomeTypeChipColor,
-  getIncomeTypeLabel,
-} from "utils/accounting";
+import { getIncomeTypeChipColor, getIncomeTypeLabel } from "utils/accounting";
 
 const DEFAULT_YEAR = new Date().getFullYear();
 
@@ -35,6 +32,7 @@ function AccountSelector({
   includeZero = true,
   hideInfoAlert = false,
   optionBalanceLabel = "Disponible",
+  ancestorCode = null,
 }) {
   const { api } = useApi();
   const [inputValue, setInputValue] = useState("");
@@ -61,6 +59,7 @@ function AccountSelector({
       if (scopeId) params.append("scopeId", scopeId);
       if (assignedOnly) params.append("assignedOnly", "true");
       if (!includeZero) params.append("includeZero", "false");
+      if (ancestorCode) params.append("ancestorCode", ancestorCode);
 
       setLoading(true);
       setFetchError("");
@@ -96,6 +95,7 @@ function AccountSelector({
     scopeId,
     assignedOnly,
     includeZero,
+    ancestorCode,
   ]);
 
   useEffect(() => {
@@ -120,6 +120,7 @@ function AccountSelector({
     if (scopeId) params.append("scopeId", scopeId);
     if (assignedOnly) params.append("assignedOnly", "true");
     if (!includeZero) params.append("includeZero", "false");
+    if (ancestorCode) params.append("ancestorCode", ancestorCode);
 
     api
       .get(`/api/accounts/search?${params.toString()}`)
@@ -153,6 +154,7 @@ function AccountSelector({
     scopeId,
     assignedOnly,
     includeZero,
+    ancestorCode,
   ]);
 
   const helper = fetchError || helperText;

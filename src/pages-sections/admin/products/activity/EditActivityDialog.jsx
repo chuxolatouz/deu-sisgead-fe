@@ -35,6 +35,11 @@ const getSelectedObjectives = (budget) => {
   return legacyObjective ? [legacyObjective] : [];
 };
 
+const getSelectedRequirements = (budget) =>
+  (budget?.requerimientos || [])
+    .map((requirement) => requirement.requirementId)
+    .filter(Boolean);
+
 function EditActivityDialog({ budget, project, onChanged }) {
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
@@ -42,6 +47,7 @@ function EditActivityDialog({ budget, project, onChanged }) {
   const [description, setDescription] = useState("");
   const [projectObjectives, setProjectObjectives] = useState([]);
   const [selectedObjectives, setSelectedObjectives] = useState([]);
+  const [selectedRequirements, setSelectedRequirements] = useState([]);
   const [isSponsored, setIsSponsored] = useState(false);
   const [sponsoredEnabled, setSponsoredEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,6 +56,7 @@ function EditActivityDialog({ budget, project, onChanged }) {
     if (!open) return;
     setDescription(budget?.descripcion || "");
     setSelectedObjectives(getSelectedObjectives(budget));
+    setSelectedRequirements(getSelectedRequirements(budget));
     setIsSponsored(Boolean(budget?.isSponsored || budget?.patrocinada));
     setProjectObjectives(
       Array.isArray(project?.objetivos_especificos)
@@ -77,6 +84,7 @@ function EditActivityDialog({ budget, project, onChanged }) {
       .put(`/documentos/${getDocumentId(budget)}`, {
         descripcion: description.trim(),
         specificObjectives: selectedObjectives,
+        requirementIds: selectedRequirements,
         patrocinada: isSponsored,
       })
       .then((response) => {
@@ -148,6 +156,47 @@ function EditActivityDialog({ budget, project, onChanged }) {
                 ))}
               </Select>
             </FormControl>
+            {(project?.requerimientos || []).length > 0 && (
+              <FormControl fullWidth>
+                <InputLabel id="editar-requerimientos">
+                  Requerimientos
+                </InputLabel>
+                <Select
+                  multiple
+                  labelId="editar-requerimientos"
+                  label="Requerimientos"
+                  value={selectedRequirements}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setSelectedRequirements(
+                      typeof value === "string" ? value.split(",") : value
+                    );
+                  }}
+                  renderValue={(selected) =>
+                    `${selected.length} requerimiento(s) seleccionado(s)`
+                  }
+                >
+                  {(project?.requerimientos || []).map((requirement) => (
+                    <MenuItem
+                      key={requirement.requirementId}
+                      value={requirement.requirementId}
+                    >
+                      <Checkbox
+                        checked={selectedRequirements.includes(
+                          requirement.requirementId
+                        )}
+                      />
+                      <ListItemText
+                        primary={requirement.nombre}
+                        secondary={`${requirement.accountCode} · Nivel ${
+                          requirement.account?.level || "-"
+                        }`}
+                      />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
             <FormControlLabel
               control={
                 <Checkbox

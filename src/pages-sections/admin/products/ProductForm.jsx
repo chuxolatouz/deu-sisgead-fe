@@ -1,10 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import {
+  Alert,
   Button,
   Card,
+  Checkbox,
+  Chip,
   Divider,
+  FormControl,
   Grid,
+  InputLabel,
+  ListItemText,
   MenuItem,
+  Select,
   TextField,
   Box,
   Typography,
@@ -41,6 +48,7 @@ const categoryMatchesReference = (category, reference) => {
 
 const ProductForm = (props) => {
   const [categories, setCategories] = useState([]);
+  const [requirementCatalog, setRequirementCatalog] = useState([]);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
   const {
@@ -54,6 +62,18 @@ const ProductForm = (props) => {
   const normalizedSelectedCategory = useMemo(
     () => normalizeCategoryReference(selectedCategory),
     [selectedCategory]
+  );
+  const selectedRequirementIds = useMemo(
+    () =>
+      (initialValues?.requerimientos || [])
+        .map((value) =>
+          typeof value === "object"
+            ? value.requirementId || value._id?.$oid || value._id
+            : value
+        )
+        .filter(Boolean)
+        .map(String),
+    [initialValues?.requerimientos]
   );
 
   useEffect(() => {
@@ -115,6 +135,44 @@ const ProductForm = (props) => {
       cancelled = true;
     };
   }, [api, enqueueSnackbar, normalizedSelectedCategory]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadRequirements = async () => {
+      try {
+        const response = await api.get("/requerimientos?activeOnly=true");
+        let rows = Array.isArray(response.data) ? response.data : [];
+        const missingSelected = selectedRequirementIds.some(
+          (id) => !rows.some((row) => String(row._id) === id)
+        );
+        if (missingSelected) {
+          const allResponse = await api.get(
+            "/requerimientos?includeInactive=true&includeDeleted=true"
+          );
+          const selectedRows = (allResponse.data || []).filter((row) =>
+            selectedRequirementIds.includes(String(row._id))
+          );
+          rows = [...selectedRows, ...rows];
+        }
+        const unique = Array.from(
+          new Map(rows.map((row) => [String(row._id), row])).values()
+        );
+        if (!cancelled) setRequirementCatalog(unique);
+      } catch (error) {
+        if (!cancelled) {
+          enqueueSnackbar(
+            error?.response?.data?.message ||
+              "Error al cargar el catálogo de requerimientos",
+            { variant: "error" }
+          );
+        }
+      }
+    };
+    loadRequirements();
+    return () => {
+      cancelled = true;
+    };
+  }, [api, enqueueSnackbar, selectedRequirementIds]);
 
   return (
     <Card
@@ -228,51 +286,112 @@ const ProductForm = (props) => {
                   Requerimientos del proyecto
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Estos campos son opcionales y se mostrarán en la pestaña de
-                  requerimientos del proyecto.
+                  Selecciona opcionalmente los requerimientos del catálogo que
+                  aplican a este proyecto.
                 </Typography>
               </Grid>
-              {[
-                {
-                  name: "materiales_necesarios",
-                  label: "Materiales necesarios",
-                  placeholder: "Ej.: toldos, sillas, mesas, sonido...",
-                },
-                {
-                  name: "recursos_humanos",
-                  label: "Recursos humanos",
-                  placeholder:
-                    "Ej.: personal requerido y cantidad de personas...",
-                },
-                {
-                  name: "logistica",
-                  label: "Logística",
-                  placeholder: "Ej.: hidratación, transporte, refrigerios...",
-                },
-              ].map((requirement) => (
-                <Grid item md={4} xs={12} key={requirement.name}>
-                  <TextField
-                    rows={6}
-                    multiline
-                    fullWidth
-                    color="info"
-                    size="medium"
-                    name={requirement.name}
-                    label={requirement.label}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={requirement.placeholder}
-                    value={values[requirement.name] || ""}
-                    error={
-                      !!touched[requirement.name] && !!errors[requirement.name]
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel id="project-requirements-label">
+                    Requerimientos (opcional)
+                  </InputLabel>
+                  <Select
+                    multiple
+                    labelId="project-requirements-label"
+                    label="Requerimientos (opcional)"
+                    name="requerimientos"
+                    value={values.requerimientos || []}
+                    onChange={(event) =>
+                      setFieldValue("requerimientos", event.target.value)
                     }
-                    helperText={
-                      touched[requirement.name] && errors[requirement.name]
-                    }
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-              ))}
+                    renderValue={(selected) => (
+                      <Box display="flex" gap={0.5} flexWrap="wrap">
+                        {selected.map((id) => {
+                          const requirement = requirementCatalog.find(
+                            (row) => String(row._id) === String(id)
+                          );
+                          return (
+                            <Chip
+                              key={id}
+                              size="small"
+                              label={requirement?.nombre || id}
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                  >
+                    {requirementCatalog.map((requirement) => {
+                      const requirementId = String(requirement._id);
+                      const selected = (values.requerimientos || []).includes(
+                        requirementId
+                      );
+                      const unavailable =
+                        requirement.eliminado || requirement.activo === false;
+                      return (
+                        <MenuItem
+                          key={requirementId}
+                          value={requirementId}
+                          disabled={unavailable && !selected}
+                        >
+                          <Checkbox checked={selected} />
+                          <ListItemText
+                            primary={`${requirement.nombre}${
+                              unavailable ? " (no disponible)" : ""
+                            }`}
+                            secondary={`${requirement.accountCode} · ${
+                              requirement.account?.isHeader
+                                ? "Cuenta titular"
+                                : "Cuenta detalle"
+                            } · Nivel ${requirement.account?.level || "-"}`}
+                          />
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Grid>
+              {shrink &&
+                ["materiales_necesarios", "recursos_humanos", "logistica"].some(
+                  (requirement) => values[requirement]
+                ) && (
+                  <Grid item xs={12}>
+                    <Alert severity="info">
+                      Este proyecto conserva requerimientos descriptivos del
+                      formato anterior. Puedes editarlos a continuación.
+                    </Alert>
+                  </Grid>
+                )}
+              {shrink &&
+                ["materiales_necesarios", "recursos_humanos", "logistica"].some(
+                  (requirement) => values[requirement]
+                ) &&
+                [
+                  {
+                    name: "materiales_necesarios",
+                    label: "Materiales necesarios (anterior)",
+                  },
+                  {
+                    name: "recursos_humanos",
+                    label: "Recursos humanos (anterior)",
+                  },
+                  { name: "logistica", label: "Logística (anterior)" },
+                ].map((requirement) => (
+                  <Grid item md={4} xs={12} key={requirement.name}>
+                    <TextField
+                      rows={4}
+                      multiline
+                      fullWidth
+                      color="info"
+                      name={requirement.name}
+                      label={requirement.label}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      value={values[requirement.name] || ""}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                ))}
               <Grid item xs={12}>
                 <TextField
                   rows={6}

@@ -102,6 +102,10 @@ export const getNavigations = () => {
           name: "Categorías de Proyecto",
           path: "/admin/settings/project-categories",
         },
+        {
+          name: "Requerimientos",
+          path: "/admin/settings/requirements",
+        },
       ],
     });
   }

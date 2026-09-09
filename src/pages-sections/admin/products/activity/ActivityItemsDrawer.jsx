@@ -6,9 +6,14 @@ import {
   Chip,
   Divider,
   Drawer,
+  FormControl,
   IconButton,
+  InputLabel,
+  ListItemText,
+  MenuItem,
   Paper,
   Stack,
+  Select,
   TextField,
   Tooltip,
   Typography,
@@ -35,6 +40,7 @@ const emptyForm = {
   descripcion: "",
   monto: "",
   accountCode: null,
+  requirementId: "",
 };
 
 const getDocId = (budget) => budget?._id?.$oid || budget?._id || "";
@@ -60,6 +66,12 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
   const docId = getDocId(budget);
   const isSponsored = Boolean(budget?.isSponsored || budget?.patrocinada);
   const pendingItems = useMemo(() => getPendingItems(items), [items]);
+  const activityRequirements = Array.isArray(budget?.requerimientos)
+    ? budget.requerimientos
+    : [];
+  const selectedRequirement = activityRequirements.find(
+    (requirement) => requirement.requirementId === form.requirementId
+  );
   const fundingYear = Number(
     project?.fundingYear || budget?.fundingYear || new Date().getFullYear()
   );
@@ -104,6 +116,7 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
       descripcion: form.descripcion.trim(),
       monto: form.monto || "0",
       accountCode: form.accountCode || "",
+      requirementId: form.requirementId || "",
     };
     const request = editingId
       ? api.put(`/documentos/${docId}/items/${editingId}`, payload)
@@ -131,6 +144,7 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
       descripcion: item.descripcion || "",
       monto: item.monto ? String((Number(item.monto) || 0) / 100) : "",
       accountCode: item.accountCode || null,
+      requirementId: item.requirementId || "",
     });
   };
 
@@ -262,6 +276,54 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
               <Typography variant="subtitle2">
                 {editingId ? "Editar item" : "Agregar item"}
               </Typography>
+              {activityRequirements.length > 0 && !isSponsored && (
+                <FormControl fullWidth>
+                  <InputLabel id="item-requirement-label">
+                    Requerimiento (opcional)
+                  </InputLabel>
+                  <Select
+                    labelId="item-requirement-label"
+                    label="Requerimiento (opcional)"
+                    value={form.requirementId}
+                    onChange={(event) => {
+                      const requirementId = event.target.value;
+                      const requirement = activityRequirements.find(
+                        (item) => item.requirementId === requirementId
+                      );
+                      const isHeader = requirement?.account?.isHeader;
+                      setForm((current) => ({
+                        ...current,
+                        requirementId,
+                        nombre: current.nombre || requirement?.nombre || "",
+                        descripcion:
+                          current.descripcion || requirement?.descripcion || "",
+                        accountCode: isHeader
+                          ? null
+                          : requirement?.accountCode || null,
+                      }));
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Sin requerimiento asociado</em>
+                    </MenuItem>
+                    {activityRequirements.map((requirement) => (
+                      <MenuItem
+                        key={requirement.requirementId}
+                        value={requirement.requirementId}
+                      >
+                        <ListItemText
+                          primary={requirement.nombre}
+                          secondary={`${requirement.accountCode} · ${
+                            requirement.account?.isHeader
+                              ? "Titular"
+                              : "Detalle"
+                          } · Nivel ${requirement.account?.level || "-"}`}
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
               <TextField
                 label="Nombre"
                 value={form.nombre}
@@ -298,7 +360,38 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
                     : ""
                 }
               />
-              {!isSponsored && (
+              {!isSponsored && selectedRequirement?.account?.isHeader && (
+                <AccountSelector
+                  label={`Partida detalle bajo ${selectedRequirement.accountCode}`}
+                  value={form.accountCode}
+                  group="EGRESO"
+                  year={fundingYear}
+                  allowHeaders={false}
+                  scopeType="project"
+                  scopeId={project?._id || budget?.projectId}
+                  assignedOnly
+                  includeZero={false}
+                  ancestorCode={selectedRequirement.accountCode}
+                  optionBalanceLabel="Disponible"
+                  onChange={(accountCode) => {
+                    setForm((prev) => ({ ...prev, accountCode }));
+                  }}
+                />
+              )}
+              {!isSponsored &&
+                selectedRequirement &&
+                !selectedRequirement.account?.isHeader && (
+                  <TextField
+                    label="Partida del requerimiento"
+                    value={`${selectedRequirement.accountCode} - ${
+                      selectedRequirement.account?.description || ""
+                    }`}
+                    fullWidth
+                    disabled
+                    helperText="Esta cuenta se toma automáticamente del catálogo."
+                  />
+                )}
+              {!isSponsored && !selectedRequirement && (
                 <AccountSelector
                   label="Partida del item"
                   value={form.accountCode}
@@ -470,6 +563,15 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
                         {item.accountCode && (
                           <Typography variant="caption" color="text.secondary">
                             Partida: {item.accountCode}
+                          </Typography>
+                        )}
+                        {item.requirementName && (
+                          <Typography
+                            variant="caption"
+                            color="primary"
+                            display="block"
+                          >
+                            Requerimiento: {item.requirementName}
                           </Typography>
                         )}
                       </Box>

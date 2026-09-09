@@ -23,6 +23,7 @@ const INITIAL_VALUES = {
   fecha_fin: "",
   objetivo_general: "",
   objetivos_especificos: [],
+  requerimientos: [],
   materiales_necesarios: "",
   recursos_humanos: "",
   logistica: "",
@@ -54,6 +55,9 @@ export default function EditProduct() {
             fecha_fin: parseISO(response.data.fecha_fin),
             objetivo_general: response.data.objetivo_general,
             objetivos_especificos: response.data.objetivos_especificos || [],
+            requerimientos: (response.data.requerimientos || []).map(
+              (requirement) => requirement.requirementId
+            ),
             materiales_necesarios: response.data.materiales_necesarios || "",
             recursos_humanos: response.data.recursos_humanos || "",
             logistica: response.data.logistica || "",
@@ -79,6 +83,7 @@ export default function EditProduct() {
       fechaFin: values.fecha_fin,
       objetivoGeneral: values.objetivo_general,
       objetivosEspecificos: values.objetivos_especificos,
+      requirementIds: values.requerimientos,
       materialesNecesarios: values.materiales_necesarios,
       recursosHumanos: values.recursos_humanos,
       logistica: values.logistica,

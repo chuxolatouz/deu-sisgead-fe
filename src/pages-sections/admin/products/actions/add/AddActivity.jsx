@@ -28,6 +28,7 @@ function AddBudget({ project, onCreated }) {
   const [text, setText] = useState("");
   const [objectives, setObjectives] = useState([]);
   const [selectedObjectives, setSelectedObjectives] = useState([]);
+  const [selectedRequirements, setSelectedRequirements] = useState([]);
   const [loadingObjectives, setLoadingObjectives] = useState(false);
   const [amount, setAmount] = useState(0);
   const [isSponsored, setIsSponsored] = useState(false);
@@ -38,6 +39,9 @@ function AddBudget({ project, onCreated }) {
   const { api } = useApi();
 
   const { enqueueSnackbar } = useSnackbar();
+  const projectRequirements = Array.isArray(project?.requerimientos)
+    ? project.requerimientos
+    : [];
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
@@ -72,6 +76,7 @@ function AddBudget({ project, onCreated }) {
     setIsOpen(false);
     setText("");
     setSelectedObjectives([]);
+    setSelectedRequirements([]);
     setAmount(0);
     setIsSponsored(false);
     setFiles([]);
@@ -105,6 +110,7 @@ function AddBudget({ project, onCreated }) {
     formData.append("projectId", project._id);
     formData.append("monto", isSponsored ? "0" : amount);
     formData.append("specificObjectives", JSON.stringify(selectedObjectives));
+    formData.append("requirementIds", JSON.stringify(selectedRequirements));
     formData.append("patrocinada", String(isSponsored));
     formData.append("items", JSON.stringify([]));
 
@@ -210,6 +216,55 @@ function AddBudget({ project, onCreated }) {
                 </Select>
               </FormControl>
             )
+          )}
+          {projectRequirements.length > 0 && (
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={{ marginTop: "20px", marginBottom: "20px" }}
+            >
+              <InputLabel id="activity-requirements">
+                Requerimientos (opcional)
+              </InputLabel>
+              <Select
+                multiple
+                labelId="activity-requirements"
+                value={selectedRequirements}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSelectedRequirements(
+                    typeof value === "string" ? value.split(",") : value
+                  );
+                }}
+                label="Requerimientos (opcional)"
+                renderValue={(selected) =>
+                  selected.length === 1
+                    ? projectRequirements.find(
+                        (item) => item.requirementId === selected[0]
+                      )?.nombre || "1 requerimiento"
+                    : `${selected.length} requerimientos seleccionados`
+                }
+              >
+                {projectRequirements.map((requirement) => (
+                  <MenuItem
+                    key={requirement.requirementId}
+                    value={requirement.requirementId}
+                  >
+                    <Checkbox
+                      checked={selectedRequirements.includes(
+                        requirement.requirementId
+                      )}
+                    />
+                    <ListItemText
+                      primary={requirement.nombre}
+                      secondary={`${requirement.accountCode} · Nivel ${
+                        requirement.account?.level || "-"
+                      }`}
+                    />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           )}
           <FormControl
             fullWidth

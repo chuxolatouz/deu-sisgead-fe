@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableHead,
@@ -10,14 +10,14 @@ import {
   Paper,
   Stack,
   Chip,
-} from '@mui/material';
-import TablePagination from 'components/data-table/TablePagination';
-import { useApi } from 'contexts/AxiosContext';
-import { useSnackbar } from 'notistack';
-import ActivityStatus from './activity/ActivityStatus';
-import ActivityActions from './activity/ActivityActions';
-import ActivityItemsDrawer from './activity/ActivityItemsDrawer';
-import AddActivity from './actions/add/AddActivity';
+} from "@mui/material";
+import TablePagination from "components/data-table/TablePagination";
+import { useApi } from "contexts/AxiosContext";
+import { useSnackbar } from "notistack";
+import ActivityStatus from "./activity/ActivityStatus";
+import ActivityActions from "./activity/ActivityActions";
+import ActivityItemsDrawer from "./activity/ActivityItemsDrawer";
+import AddActivity from "./actions/add/AddActivity";
 
 function Documentos({ project, onActivitiesChange }) {
   const [count, setCount] = useState(0);
@@ -33,19 +33,22 @@ function Documentos({ project, onActivitiesChange }) {
 
   const fetchActivities = useCallback(() => {
     api
-      .get(`/proyecto/${project._id}/documentos?page=${pagination - 1}&limit=10`)
+      .get(
+        `/proyecto/${project._id}/documentos?page=${pagination - 1}&limit=10`
+      )
       .then((response) => {
         const nextRows = response.data.request_list || [];
         setDocumentos(nextRows);
         setCount(response.data.count || 1);
         onActivitiesChange?.(nextRows);
-      }).catch((error) => {
-        if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error' })
-        } else {
-          enqueueSnackbar(error.message, { variant: 'error' })
-        }
       })
+      .catch((error) => {
+        if (error.response) {
+          enqueueSnackbar(error.response.data.message, { variant: "error" });
+        } else {
+          enqueueSnackbar(error.message, { variant: "error" });
+        }
+      });
   }, [api, project._id, pagination, enqueueSnackbar, onActivitiesChange]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -72,24 +75,67 @@ function Documentos({ project, onActivitiesChange }) {
               {documentos.map((action) => (
                 <TableRow
                   key={`${action._id.$oid}-row`}
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 }, height: '50px' }}
+                  sx={{
+                    "&:last-child td, &:last-child th": { border: 0 },
+                    height: "50px",
+                  }}
                 >
-                  <TableCell key={`${action._id.$oid}-descripcion`} component="th" scope="row">
-                    <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                  <TableCell
+                    key={`${action._id.$oid}-descripcion`}
+                    component="th"
+                    scope="row"
+                  >
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      gap={1}
+                      flexWrap="wrap"
+                    >
                       <span>{action.descripcion}</span>
                       {Boolean(action?.isSponsored || action?.patrocinada) && (
-                        <Chip size="small" color="info" variant="outlined" label="Patrocinada" />
+                        <Chip
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                          label="Patrocinada"
+                        />
                       )}
+                      {(action?.requerimientos || []).map((requirement) => (
+                        <Chip
+                          key={requirement.requirementId}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          label={requirement.nombre}
+                        />
+                      ))}
                     </Box>
                   </TableCell>
                   <TableCell key={`${action._id.$oid}-items-summary`}>
                     <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                      <Chip size="small" label={`${action.itemsSummary?.total || 0} total`} />
-                      <Chip size="small" color="success" variant="outlined" label={`${action.itemsSummary?.closed || 0} cerrados`} />
-                      <Chip size="small" color="warning" variant="outlined" label={`${action.itemsSummary?.pending || 0} pendientes`} />
+                      <Chip
+                        size="small"
+                        label={`${action.itemsSummary?.total || 0} total`}
+                      />
+                      <Chip
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                        label={`${action.itemsSummary?.closed || 0} cerrados`}
+                      />
+                      <Chip
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        label={`${
+                          action.itemsSummary?.pending || 0
+                        } pendientes`}
+                      />
                     </Stack>
                   </TableCell>
-                  <TableCell key={`${action._id.$oid}-archivos-length`}>{action.archivos?.length || 0}</TableCell>
+                  <TableCell key={`${action._id.$oid}-archivos-length`}>
+                    {action.archivos?.length || 0}
+                  </TableCell>
                   <TableCell key={`${action._id.$oid}-status`}>
                     <ActivityStatus
                       budget={action}
@@ -99,7 +145,11 @@ function Documentos({ project, onActivitiesChange }) {
                   </TableCell>
                   <TableCell key={`${action._id.$oid}-archivos-dialog`}>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <ActivityItemsDrawer budget={action} project={project} onChanged={fetchActivities} />
+                      <ActivityItemsDrawer
+                        budget={action}
+                        project={project}
+                        onChanged={fetchActivities}
+                      />
                       <ActivityActions
                         budget={action}
                         project={project}
