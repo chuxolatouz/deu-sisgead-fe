@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Table,
   TableContainer,
@@ -11,14 +11,15 @@ import {
   DialogTitle,
   DialogActions,
   Button,
-  Tooltip
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Paper from '@mui/material/Paper';
-import Router from 'next/router';
-import { useSnackbar } from 'notistack';
-import AddUser from './actions/add/AddUser';
-import { useApi } from 'contexts/AxiosContext';
+  Tooltip,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Paper from "@mui/material/Paper";
+import Router from "next/router";
+import { useSnackbar } from "notistack";
+import AddUser from "./actions/add/AddUser";
+import { useApi } from "contexts/AxiosContext";
+import { normalizeMongoId } from "lib";
 
 function ProjectUsers({ users, id }) {
   const [listUsers, setListUsers] = useState([]);
@@ -26,6 +27,7 @@ function ProjectUsers({ users, id }) {
   const [userIdToDelete, setUserIdToDelete] = useState(null);
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
+  const projectId = normalizeMongoId(id);
 
   const handleDelete = (userId) => {
     setUserIdToDelete(userId);
@@ -33,24 +35,27 @@ function ProjectUsers({ users, id }) {
   };
 
   const handleConfirmDelete = () => {
-  // Elimina el usuario con el ID `userIdToDelete` y cierra el cuadro de diálogo.
+    // Elimina el usuario con el ID `userIdToDelete` y cierra el cuadro de diálogo.
     const data = {
-      projectId: id,
+      projectId,
       userId: userIdToDelete,
     };
-    api.patch('/eliminar_usuario_proyecto', data).then(() => {
-      Router.reload();
-    }).catch((error) => {
-      if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error'})
-      } else {
-          enqueueSnackbar(error.message, { variant: 'error'})
-      }
-  })
+    api
+      .patch("/eliminar_usuario_proyecto", data)
+      .then(() => {
+        Router.reload();
+      })
+      .catch((error) => {
+        if (error.response) {
+          enqueueSnackbar(error.response.data.message, { variant: "error" });
+        } else {
+          enqueueSnackbar(error.message, { variant: "error" });
+        }
+      });
   };
 
   const handleCancelDelete = () => {
-  // Cierra el cuadro de diálogo de confirmación.
+    // Cierra el cuadro de diálogo de confirmación.
     setOpen(false);
   };
   const castUsers = (data) => {
@@ -58,7 +63,7 @@ function ProjectUsers({ users, id }) {
       nombre: user.usuario.nombre,
       rol: user.role.label,
       fecha_ingreso: user.fecha_ingreso,
-      id: user.usuario._id.$oid,
+      id: normalizeMongoId(user.usuario),
     }));
     return newData;
   };
@@ -68,7 +73,7 @@ function ProjectUsers({ users, id }) {
     if (users) {
       setListUsers(castUsers(users));
     }
-  }, [id]);
+  }, [users]);
 
   return (
     <div>
@@ -87,13 +92,21 @@ function ProjectUsers({ users, id }) {
             {listUsers.map((action) => (
               <TableRow
                 key={action.id}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 }, height: '50px' }}
+                sx={{
+                  "&:last-child td, &:last-child th": { border: 0 },
+                  height: "50px",
+                }}
               >
-                <TableCell component="th" scope="row" align="left">{action.nombre}</TableCell>
+                <TableCell component="th" scope="row" align="left">
+                  {action.nombre}
+                </TableCell>
                 <TableCell align="left">{action.rol}</TableCell>
                 <TableCell align="left">{action.fecha_ingreso}</TableCell>
                 <TableCell>
-                  <IconButton color="error" onClick={() => handleDelete(action.id)}>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleDelete(action.id)}
+                  >
                     <Tooltip title="Eliminar usuario de Proyecto">
                       <DeleteIcon />
                     </Tooltip>
@@ -105,10 +118,16 @@ function ProjectUsers({ users, id }) {
         </Table>
       </TableContainer>
       <Dialog open={open} onClose={handleCancelDelete}>
-        <DialogTitle>¿Estás seguro de que quieres eliminar este usuario?</DialogTitle>
+        <DialogTitle>
+          ¿Estás seguro de que quieres eliminar este usuario?
+        </DialogTitle>
         <DialogActions>
-          <Button color="error" onClick={handleCancelDelete}>Cancelar</Button>
-          <Button color="secondary" onClick={handleConfirmDelete}>Eliminar</Button>
+          <Button color="error" onClick={handleCancelDelete}>
+            Cancelar
+          </Button>
+          <Button color="secondary" onClick={handleConfirmDelete}>
+            Eliminar
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

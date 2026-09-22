@@ -19,6 +19,7 @@ import AccountSelector from "components/accounting/AccountSelector";
 import DropZone from "components/DropZone";
 import { useApi } from "contexts/AxiosContext";
 import { useSnackbar } from "notistack";
+import { normalizeMongoId } from "lib";
 
 function CerrarActividad({ budget, onComplete, year }) {
   const isSponsored = Boolean(budget?.isSponsored || budget?.patrocinada);
@@ -41,8 +42,10 @@ function CerrarActividad({ budget, onComplete, year }) {
 
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
-  const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
-  const resolvedDocumentId = budget?._id?.$oid || budget?._id;
+  const resolvedProjectId = normalizeMongoId(
+    budget?.projectId || budget?.project_id
+  );
+  const resolvedDocumentId = normalizeMongoId(budget);
   const resolvedFundingYear = Number(
     year || budget?.fundingYear || new Date().getFullYear()
   );

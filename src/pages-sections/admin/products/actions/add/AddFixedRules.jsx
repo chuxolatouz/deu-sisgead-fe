@@ -20,7 +20,7 @@ import {
 
 import TodoList from "components/icons/duotone/TodoList";
 import AccountSelector from "components/accounting/AccountSelector";
-import { formatMonto } from "lib";
+import { formatMonto, normalizeMongoId } from "lib";
 
 function AddFixedRules({ id, year }) {
   const [rules, setRules] = useState([]);
@@ -47,7 +47,7 @@ function AddFixedRules({ id, year }) {
   }, [api, enqueueSnackbar]);
 
   const selectedRule = useMemo(
-    () => rules.find((rule) => rule._id.$oid === selectedRuleId),
+    () => rules.find((rule) => normalizeMongoId(rule) === selectedRuleId),
     [rules, selectedRuleId]
   );
 
@@ -113,7 +113,10 @@ function AddFixedRules({ id, year }) {
                 label="Regla fija"
               >
                 {rules.map((rule) => (
-                  <MenuItem key={rule._id.$oid} value={rule._id.$oid}>
+                  <MenuItem
+                    key={normalizeMongoId(rule)}
+                    value={normalizeMongoId(rule)}
+                  >
                     {rule.nombre}
                   </MenuItem>
                 ))}

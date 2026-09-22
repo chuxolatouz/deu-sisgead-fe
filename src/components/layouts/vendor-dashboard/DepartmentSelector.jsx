@@ -43,7 +43,7 @@ const DepartmentSelector = () => {
   const fetchDepartamentos = async () => {
     setLoadingDepartamentos(true);
     try {
-      const response = await api.get('/departamentos?limit=100');
+      const response = await api.get('/departamentos');
       const departamentosList = Array.isArray(response.data)
         ? response.data
         : (response.data.departamentos || response.data.request_list || []);

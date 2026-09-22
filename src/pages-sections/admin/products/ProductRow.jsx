@@ -3,7 +3,7 @@ import { Edit, RemoveRedEye } from "@mui/icons-material";
 import { Box, Chip, Tooltip } from "@mui/material";
 import { FlexBox } from "components/flex-box";
 import { Paragraph } from "components/Typography";
-import { currency, formatSafeDate } from "lib";
+import { currency, formatSafeDate, normalizeMongoId } from "lib";
 import {
   StyledTableRow,
   StyledTableCell,
@@ -17,7 +17,11 @@ import { useApi } from "contexts/AxiosContext";
 
 // ========================================================================
 
-const ProductRow = ({ product, fetchProducts, showDepartmentColumn = false }) => {
+const ProductRow = ({
+  product,
+  fetchProducts,
+  showDepartmentColumn = false,
+}) => {
   const {
     nombre,
     balance,
@@ -35,10 +39,12 @@ const ProductRow = ({ product, fetchProducts, showDepartmentColumn = false }) =>
 
   const router = useRouter();
   const { user } = useApi();
-  const departmentLabel = departmentName || departamento?.nombre || departmentCode || "DEU";
+  const departmentLabel =
+    departmentName || departamento?.nombre || departmentCode || "DEU";
   const isGlobalScope = departmentLabel === "DEU";
   const ownerId = owner?.$oid || owner?._id?.$oid || owner?._id || owner || "";
   const actorId = user?.id || user?._id?.$oid || user?._id || "";
+  const projectId = normalizeMongoId(_id);
   const canEditProject = Boolean(
     canEdit ||
       user?.role === "super_admin" ||
@@ -119,7 +125,7 @@ const ProductRow = ({ product, fetchProducts, showDepartmentColumn = false }) =>
       <StyledTableCell align="center">
         {canEditProject && !status?.finished && (
           <StyledIconButton
-            onClick={() => router.push(`/admin/products/edit/${_id.$oid}`)}
+            onClick={() => router.push(`/admin/products/edit/${projectId}`)}
           >
             <Tooltip title="Editar info de Proyecto">
               <Edit />
@@ -128,13 +134,13 @@ const ProductRow = ({ product, fetchProducts, showDepartmentColumn = false }) =>
         )}
 
         <StyledIconButton
-          onClick={() => router.push(`/admin/products/${_id.$oid}`)}
+          onClick={() => router.push(`/admin/products/${projectId}`)}
         >
           <Tooltip title="Ver detalles de Proyecto">
             <RemoveRedEye />
           </Tooltip>
         </StyledIconButton>
-        {user?.role === "admin" && (
+        {canEditProject && (
           <DeleteProduct product={product} fetchProducts={fetchProducts} />
         )}
       </StyledTableCell>

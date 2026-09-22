@@ -29,13 +29,32 @@ function parseSafeDate(date) {
 }
 
 /**
+ * NORMALIZE A MONGODB ID FROM A STRING, OBJECTID JSON OR DOCUMENT
+ * @param value - incoming ID or document
+ * @returns string
+ */
+function normalizeMongoId(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value !== "object") return String(value).trim();
+
+  if (value.$oid) return String(value.$oid).trim();
+  if (value._id !== undefined) return normalizeMongoId(value._id);
+  return "";
+}
+
+/**
  * SAFELY FORMAT A DATE
  * @param  date - incoming date data
  * @param  formatStr - date-fns format string
  * @param  fallback - string to return if date is invalid
  * @returns string
  */
-function formatSafeDate(date, formatStr = "dd/MM/yyyy", fallback = "N/A", options = {}) {
+function formatSafeDate(
+  date,
+  formatStr = "dd/MM/yyyy",
+  fallback = "N/A",
+  options = {}
+) {
   const parsedDate = parseSafeDate(date);
   if (!parsedDate) return fallback;
   return format(parsedDate, formatStr, options);
@@ -117,9 +136,9 @@ function currency(price) {
 function formatMonto(amount) {
   // Manejar strings con coma (formato venezolano del backend)
   let num = amount;
-  if (typeof amount === 'string') {
+  if (typeof amount === "string") {
     // Reemplazar coma por punto para parseo correcto
-    num = parseFloat(amount.replace(',', '.'));
+    num = parseFloat(amount.replace(",", "."));
   }
   num = Number(num) || 0;
 
@@ -137,7 +156,7 @@ export {
   currency,
   getDateDifference,
   formatMonto,
+  normalizeMongoId,
   parseSafeDate,
-  formatSafeDate
+  formatSafeDate,
 };
-

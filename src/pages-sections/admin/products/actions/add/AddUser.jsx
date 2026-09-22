@@ -44,6 +44,35 @@ const normalizeRoles = (items) => {
   return normalized.length > 0 ? normalized : DEFAULT_PROJECT_ROLES;
 };
 
+const loadAllUsers = async (api) => {
+  const limit = 100;
+  const firstResponse = await api.get("/mostrar_usuarios", {
+    params: { page: 0, limit },
+  });
+  const firstPage = Array.isArray(firstResponse.data?.request_list)
+    ? firstResponse.data.request_list
+    : [];
+  const count = Number(firstResponse.data?.count) || firstPage.length;
+  const pageCount = Math.ceil(count / limit);
+
+  if (pageCount <= 1) return firstPage;
+
+  const remainingResponses = await Promise.all(
+    Array.from({ length: pageCount - 1 }, (_, index) =>
+      api.get("/mostrar_usuarios", {
+        params: { page: index + 1, limit },
+      })
+    )
+  );
+
+  return remainingResponses.reduce((users, response) => {
+    const page = Array.isArray(response.data?.request_list)
+      ? response.data.request_list
+      : [];
+    return users.concat(page);
+  }, firstPage);
+};
+
 function AsignarMiembro({ id }) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -121,18 +150,14 @@ function AsignarMiembro({ id }) {
       setLoading(true);
       setLoadError("");
       try {
-        const [rolesResponse, usersResponse] = await Promise.all([
+        const [rolesResponse, loadedUsers] = await Promise.all([
           api.get("/roles"),
-          api.get("/mostrar_usuarios", { params: { page: 0, limit: 500 } }),
+          loadAllUsers(api),
         ]);
         if (!active) return;
 
         setRoles(normalizeRoles(rolesResponse.data));
-        setUsers(
-          Array.isArray(usersResponse.data?.request_list)
-            ? usersResponse.data.request_list
-            : []
-        );
+        setUsers(loadedUsers);
       } catch (error) {
         if (!active) return;
         const message =

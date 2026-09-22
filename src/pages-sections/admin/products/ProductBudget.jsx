@@ -18,6 +18,7 @@ import ActivityStatus from "./activity/ActivityStatus";
 import ActivityActions from "./activity/ActivityActions";
 import ActivityItemsDrawer from "./activity/ActivityItemsDrawer";
 import AddActivity from "./actions/add/AddActivity";
+import { normalizeMongoId } from "lib";
 
 function Documentos({ project, onActivitiesChange }) {
   const [count, setCount] = useState(0);
@@ -74,14 +75,14 @@ function Documentos({ project, onActivitiesChange }) {
             <TableBody>
               {documentos.map((action) => (
                 <TableRow
-                  key={`${action._id.$oid}-row`}
+                  key={`${normalizeMongoId(action)}-row`}
                   sx={{
                     "&:last-child td, &:last-child th": { border: 0 },
                     height: "50px",
                   }}
                 >
                   <TableCell
-                    key={`${action._id.$oid}-descripcion`}
+                    key={`${normalizeMongoId(action)}-descripcion`}
                     component="th"
                     scope="row"
                   >
@@ -111,7 +112,7 @@ function Documentos({ project, onActivitiesChange }) {
                       ))}
                     </Box>
                   </TableCell>
-                  <TableCell key={`${action._id.$oid}-items-summary`}>
+                  <TableCell key={`${normalizeMongoId(action)}-items-summary`}>
                     <Stack direction="row" spacing={0.5} flexWrap="wrap">
                       <Chip
                         size="small"
@@ -133,17 +134,21 @@ function Documentos({ project, onActivitiesChange }) {
                       />
                     </Stack>
                   </TableCell>
-                  <TableCell key={`${action._id.$oid}-archivos-length`}>
+                  <TableCell
+                    key={`${normalizeMongoId(action)}-archivos-length`}
+                  >
                     {action.archivos?.length || 0}
                   </TableCell>
-                  <TableCell key={`${action._id.$oid}-status`}>
+                  <TableCell key={`${normalizeMongoId(action)}-status`}>
                     <ActivityStatus
                       budget={action}
                       onComplete={fetchActivities}
                       year={fundingYear}
                     />
                   </TableCell>
-                  <TableCell key={`${action._id.$oid}-archivos-dialog`}>
+                  <TableCell
+                    key={`${normalizeMongoId(action)}-archivos-dialog`}
+                  >
                     <Stack direction="row" spacing={1} alignItems="center">
                       <ActivityItemsDrawer
                         budget={action}

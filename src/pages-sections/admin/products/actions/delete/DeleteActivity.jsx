@@ -2,62 +2,74 @@ import { useState } from "react";
 import { useSnackbar } from "notistack";
 import { useApi } from "contexts/AxiosContext";
 import {
-    Dialog,
-    DialogTitle,
-    DialogActions,
-    Button,
-    Tooltip
-} from "@mui/material"
-import Router from 'next/router';
-import DeleteIcon from '@mui/icons-material/Delete';
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  Button,
+  Tooltip,
+} from "@mui/material";
+import Router from "next/router";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { StyledIconButton } from "pages-sections/admin";
+import { normalizeMongoId } from "lib";
 
 const DeleteBudget = ({ budget }) => {
-    const [open, setOpen] = useState(false);
-    const resolvedProjectId = budget?.projectId || budget?.project_id?.$oid;
-    const { api } = useApi();
-    const { enqueueSnackbar } = useSnackbar();
+  const [open, setOpen] = useState(false);
+  const resolvedProjectId = normalizeMongoId(
+    budget?.projectId || budget?.project_id
+  );
+  const budgetId = normalizeMongoId(budget);
+  const { api } = useApi();
+  const { enqueueSnackbar } = useSnackbar();
 
-    const handleDeleteModal = () => {
-        setOpen(true);
-    }
-    const handleCancelDelete = () => {
-        setOpen(false);
-    }
-    const handleDelete = () => {
-        const values = {
-            projectId: resolvedProjectId,
-            budgetId: budget._id.$oid
+  const handleDeleteModal = () => {
+    setOpen(true);
+  };
+  const handleCancelDelete = () => {
+    setOpen(false);
+  };
+  const handleDelete = () => {
+    const values = {
+      projectId: resolvedProjectId,
+      budgetId,
+    };
+    api
+      .post("/documento_eliminar", values)
+      .then((response) => {
+        enqueueSnackbar(response.data.message, { variant: "success" });
+        Router.reload();
+      })
+      .catch((error) => {
+        if (error.response) {
+          enqueueSnackbar(error.response.data.message, { variant: "error" });
+        } else {
+          enqueueSnackbar(error.message, { variant: "error" });
         }
-        api.post('/documento_eliminar', values).then((response) => {
+      });
+  };
 
-            enqueueSnackbar(response.data.message, { variant: "success" })
-            Router.reload();
-        }).catch((error) => {
-            if (error.response) {
-                enqueueSnackbar(error.response.data.message, { variant: 'error' })
-            } else {
-                enqueueSnackbar(error.message, { variant: 'error' })
-            }
-        })
-    }
-
-    return (
-        <>
-            <Tooltip title="Eliminar Actividad">
-                <StyledIconButton onClick={handleDeleteModal}>
-                    <DeleteIcon color="error" />
-                </StyledIconButton>
-            </Tooltip>
-            <Dialog open={open} onClose={handleCancelDelete}>
-                <DialogTitle>¿Estas seguro de que quieres eliminar esta actividad?</DialogTitle>
-                <DialogActions>
-                    <Button color="error" onClick={handleCancelDelete}>Cancelar</Button>
-                    <Button color="secondary" onClick={handleDelete}>Eliminar</Button>
-                </DialogActions>
-            </Dialog>
-        </>
-    )
-}
+  return (
+    <>
+      <Tooltip title="Eliminar Actividad">
+        <StyledIconButton onClick={handleDeleteModal}>
+          <DeleteIcon color="error" />
+        </StyledIconButton>
+      </Tooltip>
+      <Dialog open={open} onClose={handleCancelDelete}>
+        <DialogTitle>
+          ¿Estas seguro de que quieres eliminar esta actividad?
+        </DialogTitle>
+        <DialogActions>
+          <Button color="error" onClick={handleCancelDelete}>
+            Cancelar
+          </Button>
+          <Button color="secondary" onClick={handleDelete}>
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
 
 export default DeleteBudget;

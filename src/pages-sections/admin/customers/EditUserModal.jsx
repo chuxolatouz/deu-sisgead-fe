@@ -51,7 +51,7 @@ const EditUserModal = ({ open, onClose, user: targetUser, onSuccess }) => {
       setLoadingDepartments(true);
       try {
         if (canSelectDepartment) {
-          const response = await api.get("/departamentos?limit=200");
+          const response = await api.get("/departamentos");
           const list = Array.isArray(response.data)
             ? response.data
             : (response.data.request_list || response.data.departamentos || []);
