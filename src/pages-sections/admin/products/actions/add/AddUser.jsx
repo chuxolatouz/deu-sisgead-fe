@@ -1,137 +1,241 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import {
-    Button,
-    Box,
-    Select,
-    MenuItem,
-    InputLabel, 
-    FormControl, 
-    Dialog, 
-    DialogContent, 
-    DialogTitle, 
-    DialogActions
-} from '@mui/material';
-import { useApi } from 'contexts/AxiosContext';
-import { useSnackbar } from 'notistack';
-import Router from 'next/router';
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
+import Router from "next/router";
+import { useSnackbar } from "notistack";
+import { useApi } from "contexts/AxiosContext";
+
+const DEFAULT_PROJECT_ROLES = [
+  { value: "lider", label: "Líder" },
+  { value: "miembro", label: "Miembro" },
+];
+
+const getDocumentId = (value) => {
+  if (!value) return "";
+  if (typeof value === "object") {
+    return String(value.$oid || value._id?.$oid || value._id || "").trim();
+  }
+  return String(value).trim();
+};
+
+const normalizeRoles = (items) => {
+  if (!Array.isArray(items) || items.length === 0) return DEFAULT_PROJECT_ROLES;
+
+  const normalized = items
+    .map((role) => ({
+      ...role,
+      value: String(role?.value || role?.nombre || "").trim(),
+      label: String(role?.label || role?.nombre || role?.value || "").trim(),
+    }))
+    .filter((role) => role.value && role.label);
+
+  return normalized.length > 0 ? normalized : DEFAULT_PROJECT_ROLES;
+};
 
 function AsignarMiembro({ id }) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState([]);
-  const [selectedUser, setSelectedUser] = useState({});
-  const [selectedRole, setSelectedRole] = useState('');
-//   const navigate = useNavigate();
+  const [roles, setRoles] = useState(DEFAULT_PROJECT_ROLES);
+  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const { api } = useApi();
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleRoleChange = (event) => {
-    setSelectedRole(event.target.value);
-  };
-  const handleOpen = () => setOpen(true);
+  const projectId = useMemo(() => getDocumentId(id), [id]);
+
   const handleClose = () => {
+    if (submitting) return;
     setOpen(false);
-    setUsers([]);
+    setSelectedUser("");
+    setSelectedRole("");
+    setLoadError("");
   };
-  const handleAgregarMiembro = () => {
-    const collectedUser = users.find((user) => user._id.$oid === selectedUser);
-    const collectedRole = roles.find((rol) => rol.value === selectedRole);
+
+  const handleAgregarMiembro = async () => {
+    const collectedUser = users.find(
+      (user) => getDocumentId(user) === selectedUser
+    );
+    const collectedRole = roles.find((role) => role.value === selectedRole);
+
+    if (!projectId) {
+      enqueueSnackbar("No se pudo identificar el proyecto (projectId)", {
+        variant: "error",
+      });
+      return;
+    }
+    if (!collectedUser) {
+      enqueueSnackbar("Selecciona un usuario válido", { variant: "warning" });
+      return;
+    }
+    if (!collectedRole) {
+      enqueueSnackbar("Selecciona un rol válido", { variant: "warning" });
+      return;
+    }
+
     const data = {
+      projectId,
+      project_id: projectId,
+      proyecto_id: projectId,
       user: collectedUser,
+      usuario: collectedUser,
       role: collectedRole,
-      projectId: id,
     };
-    // eslint-disable-next-line no-unused-vars
-    api.patch('/asignar_usuario_proyecto', data).then(() => {
+
+    try {
+      setSubmitting(true);
+      await api.patch("/asignar_usuario_proyecto", data);
+      enqueueSnackbar("Usuario asignado al proyecto", { variant: "success" });
       Router.reload();
-    }).catch((error) => {
-      if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error'})
-      } else {
-          enqueueSnackbar(error.message, { variant: 'error'})
-      }
-  })
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          error?.message ||
+          "No se pudo asignar el usuario",
+        { variant: "error" }
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
-    api.get('/roles').then((response) => {
-      setRoles(response.data);
-    }).catch((error) => {
-      if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error'})
-      } else {
-          enqueueSnackbar(error.message, { variant: 'error'})
+    if (!open) return undefined;
+
+    let active = true;
+    const loadOptions = async () => {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [rolesResponse, usersResponse] = await Promise.all([
+          api.get("/roles"),
+          api.get("/mostrar_usuarios", { params: { page: 0, limit: 500 } }),
+        ]);
+        if (!active) return;
+
+        setRoles(normalizeRoles(rolesResponse.data));
+        setUsers(
+          Array.isArray(usersResponse.data?.request_list)
+            ? usersResponse.data.request_list
+            : []
+        );
+      } catch (error) {
+        if (!active) return;
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          "No se pudieron cargar los usuarios";
+        setLoadError(message);
+        enqueueSnackbar(message, { variant: "error" });
+      } finally {
+        if (active) setLoading(false);
       }
-  })
-    api.get('/mostrar_usuarios').then((response) => {
-      setUsers(response.data.request_list);
-    }).catch((error) => {
-      if (error.response) {
-          enqueueSnackbar(error.response.data.message, { variant: 'error'})
-      } else {
-          enqueueSnackbar(error.message, { variant: 'error'})
-      }
-  })
-  }, []);
+    };
+
+    loadOptions();
+    return () => {
+      active = false;
+    };
+  }, [api, enqueueSnackbar, open]);
 
   return (
     <Box>
-      <Box>
-        <Button variant="outlined" color="success" onClick={handleOpen}>
-          Asignar Miembro
-        </Button>
-      </Box>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Es momento de Agregar un usuario</DialogTitle>
+      <Button variant="outlined" color="success" onClick={() => setOpen(true)}>
+        Asignar Miembro
+      </Button>
+
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle>Agregar un usuario al proyecto</DialogTitle>
         <DialogContent>
-          <Box align="center" sx={{ paddingTop: '30px' }}>
-            <Box sx={{ paddingTop: '30px' }}>
-              <FormControl variant="outlined" sx={{ m: 1, minWidth: 220 }}>
-                <InputLabel id="user-select-outlined-label">Usuario</InputLabel>
-                <Select
-                  id="user-select-standar"
-                  labelId="user-select-outlined-label"
-                  value={selectedUser}
-                  onChange={(event) => setSelectedUser(event.target.value)}
-                  label="usuario"
-                >
-                  {users.map((user) => (
-                    <MenuItem key={user._id.$oid} value={user._id.$oid}>
-                      {user.nombre}
+          {loadError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {loadError}
+            </Alert>
+          )}
+
+          <Box sx={{ pt: 3, display: "grid", gap: 3 }}>
+            <FormControl fullWidth disabled={loading || submitting}>
+              <InputLabel id="project-user-select-label">Usuario</InputLabel>
+              <Select
+                id="project-user-select"
+                labelId="project-user-select-label"
+                value={selectedUser}
+                onChange={(event) => setSelectedUser(event.target.value)}
+                label="Usuario"
+              >
+                {users.map((user) => {
+                  const userId = getDocumentId(user);
+                  return (
+                    <MenuItem key={userId} value={userId}>
+                      {user.nombre} {user.email ? `(${user.email})` : ""}
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-            <Box sx={{ paddingTop: '30px' }} align="center">
-              <FormControl variant="outlined" sx={{ m: 1, minWidth: 220 }}>
-                <InputLabel id="role-select-outlined-label">Rol</InputLabel>
-                <Select
-                  id="role-select-standar"
-                  labelId="role-select-outlined-label"
-                  value={selectedRole}
-                  onChange={handleRoleChange}
-                  label="rol"
-                >
-                  {roles.map((rol) => (
-                    <MenuItem key={rol.value} value={rol.value}>
-                      {rol.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
+                  );
+                })}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth disabled={loading || submitting}>
+              <InputLabel id="project-role-select-label">
+                Rol en el proyecto
+              </InputLabel>
+              <Select
+                id="project-role-select"
+                labelId="project-role-select-label"
+                value={selectedRole}
+                onChange={(event) => setSelectedRole(event.target.value)}
+                label="Rol en el proyecto"
+              >
+                {roles.map((role) => (
+                  <MenuItem key={role.value} value={role.value}>
+                    {role.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ paddingBottom: '50px' }}>
-          <Box sx={{ position: 'absolute', bottom: '16px', right: '16px' }}>
-            <Button color="error" variant="outlined" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button color="success" variant="outlined" onClick={handleAgregarMiembro}>
-              Agregar Usuario
-            </Button>
-          </Box>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            color="error"
+            variant="outlined"
+            onClick={handleClose}
+            disabled={submitting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={handleAgregarMiembro}
+            disabled={
+              loading ||
+              submitting ||
+              !projectId ||
+              !selectedUser ||
+              !selectedRole
+            }
+          >
+            {submitting ? (
+              <CircularProgress color="inherit" size={20} />
+            ) : (
+              "Agregar usuario"
+            )}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
