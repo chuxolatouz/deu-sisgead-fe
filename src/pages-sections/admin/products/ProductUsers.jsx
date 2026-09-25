@@ -21,7 +21,7 @@ import AddUser from "./actions/add/AddUser";
 import { useApi } from "contexts/AxiosContext";
 import { normalizeMongoId } from "lib";
 
-function ProjectUsers({ users, id }) {
+function ProjectUsers({ users, id, project }) {
   const [listUsers, setListUsers] = useState([]);
   const [open, setOpen] = useState(false);
   const [userIdToDelete, setUserIdToDelete] = useState(null);
@@ -77,7 +77,7 @@ function ProjectUsers({ users, id }) {
 
   return (
     <div>
-      <AddUser id={id} />
+      <AddUser id={id} project={project} />
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
           <TableHead>

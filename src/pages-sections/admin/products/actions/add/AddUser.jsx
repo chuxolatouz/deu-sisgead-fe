@@ -44,9 +44,10 @@ const normalizeRoles = (items) => {
   return normalized.length > 0 ? normalized : DEFAULT_PROJECT_ROLES;
 };
 
-const loadAllUsers = async (api) => {
+const loadDepartmentUsers = async (api, departmentId) => {
   const limit = 100;
-  const firstResponse = await api.get("/mostrar_usuarios", {
+  const endpoint = `/departamentos/${departmentId}/usuarios`;
+  const firstResponse = await api.get(endpoint, {
     params: { page: 0, limit },
   });
   const firstPage = Array.isArray(firstResponse.data?.request_list)
@@ -59,7 +60,7 @@ const loadAllUsers = async (api) => {
 
   const remainingResponses = await Promise.all(
     Array.from({ length: pageCount - 1 }, (_, index) =>
-      api.get("/mostrar_usuarios", {
+      api.get(endpoint, {
         params: { page: index + 1, limit },
       })
     )
@@ -73,23 +74,37 @@ const loadAllUsers = async (api) => {
   }, firstPage);
 };
 
-function AsignarMiembro({ id }) {
+function AsignarMiembro({ id, project }) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState(DEFAULT_PROJECT_ROLES);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingSetup, setLoadingSetup] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const { api } = useApi();
+  const { api, user: actor } = useApi();
   const { enqueueSnackbar } = useSnackbar();
 
   const projectId = useMemo(() => getDocumentId(id), [id]);
+  const projectDepartmentId = getDocumentId(
+    project?.departmentId || project?.departamento_id
+  );
+  const actorRole = actor?.role || actor?.rol || "";
+  const isSuperAdmin = actorRole === "super_admin";
+  const canChooseDepartment = isSuperAdmin && !projectDepartmentId;
+  const effectiveDepartmentId = projectDepartmentId || selectedDepartmentId;
+  const canAssignUsers = Boolean(projectDepartmentId || isSuperAdmin);
+  const loading = loadingSetup || loadingUsers;
 
   const handleClose = () => {
     if (submitting) return;
     setOpen(false);
+    setUsers([]);
+    setSelectedDepartmentId(projectDepartmentId);
     setSelectedUser("");
     setSelectedRole("");
     setLoadError("");
@@ -115,6 +130,10 @@ function AsignarMiembro({ id }) {
       enqueueSnackbar("Selecciona un rol válido", { variant: "warning" });
       return;
     }
+    if (!effectiveDepartmentId) {
+      enqueueSnackbar("Selecciona un departamento", { variant: "warning" });
+      return;
+    }
 
     const data = {
       projectId,
@@ -123,6 +142,7 @@ function AsignarMiembro({ id }) {
       user: collectedUser,
       usuario: collectedUser,
       role: collectedRole,
+      departmentId: effectiveDepartmentId,
     };
 
     try {
@@ -147,17 +167,35 @@ function AsignarMiembro({ id }) {
 
     let active = true;
     const loadOptions = async () => {
-      setLoading(true);
+      setLoadingSetup(true);
       setLoadError("");
+      setSelectedDepartmentId(projectDepartmentId);
+      setUsers([]);
+      setSelectedUser("");
+
+      if (!canAssignUsers) {
+        setLoadError(
+          "Solo un superadministrador puede seleccionar departamento para un proyecto que no tiene uno asociado."
+        );
+        setLoadingSetup(false);
+        return;
+      }
+
       try {
-        const [rolesResponse, loadedUsers] = await Promise.all([
+        const [rolesResponse, departmentsResponse] = await Promise.all([
           api.get("/roles"),
-          loadAllUsers(api),
+          canChooseDepartment
+            ? api.get("/departamentos?activo=true")
+            : Promise.resolve({ data: [] }),
         ]);
         if (!active) return;
 
         setRoles(normalizeRoles(rolesResponse.data));
-        setUsers(loadedUsers);
+        setDepartments(
+          Array.isArray(departmentsResponse.data)
+            ? departmentsResponse.data
+            : []
+        );
       } catch (error) {
         if (!active) return;
         const message =
@@ -167,7 +205,7 @@ function AsignarMiembro({ id }) {
         setLoadError(message);
         enqueueSnackbar(message, { variant: "error" });
       } finally {
-        if (active) setLoading(false);
+        if (active) setLoadingSetup(false);
       }
     };
 
@@ -175,7 +213,47 @@ function AsignarMiembro({ id }) {
     return () => {
       active = false;
     };
-  }, [api, enqueueSnackbar, open]);
+  }, [
+    api,
+    canAssignUsers,
+    canChooseDepartment,
+    enqueueSnackbar,
+    open,
+    projectDepartmentId,
+  ]);
+
+  useEffect(() => {
+    if (!open || !effectiveDepartmentId || !canAssignUsers) {
+      setUsers([]);
+      return undefined;
+    }
+
+    let active = true;
+    setLoadingUsers(true);
+    setLoadError("");
+    loadDepartmentUsers(api, effectiveDepartmentId)
+      .then((loadedUsers) => {
+        if (!active) return;
+        setUsers(loadedUsers);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setUsers([]);
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          "No se pudieron cargar los usuarios del departamento";
+        setLoadError(message);
+        enqueueSnackbar(message, { variant: "error" });
+      })
+      .finally(() => {
+        if (active) setLoadingUsers(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [api, canAssignUsers, effectiveDepartmentId, enqueueSnackbar, open]);
 
   return (
     <Box>
@@ -193,7 +271,43 @@ function AsignarMiembro({ id }) {
           )}
 
           <Box sx={{ pt: 3, display: "grid", gap: 3 }}>
-            <FormControl fullWidth disabled={loading || submitting}>
+            {canChooseDepartment && (
+              <FormControl fullWidth disabled={loadingSetup || submitting}>
+                <InputLabel id="project-department-select-label">
+                  Departamento
+                </InputLabel>
+                <Select
+                  id="project-department-select"
+                  labelId="project-department-select-label"
+                  value={selectedDepartmentId}
+                  onChange={(event) => {
+                    setSelectedDepartmentId(event.target.value);
+                    setSelectedUser("");
+                  }}
+                  label="Departamento"
+                >
+                  {departments.map((department) => {
+                    const departmentId = getDocumentId(department);
+                    return (
+                      <MenuItem key={departmentId} value={departmentId}>
+                        {department?.nombre || "Sin nombre"}
+                        {department?.codigo ? ` (${department.codigo})` : ""}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            )}
+
+            <FormControl
+              fullWidth
+              disabled={
+                loading ||
+                submitting ||
+                !effectiveDepartmentId ||
+                !canAssignUsers
+              }
+            >
               <InputLabel id="project-user-select-label">Usuario</InputLabel>
               <Select
                 id="project-user-select"
@@ -212,6 +326,12 @@ function AsignarMiembro({ id }) {
                 })}
               </Select>
             </FormControl>
+
+            {effectiveDepartmentId && !loadingUsers && users.length === 0 && (
+              <Alert severity="info">
+                No hay usuarios disponibles en el departamento seleccionado.
+              </Alert>
+            )}
 
             <FormControl fullWidth disabled={loading || submitting}>
               <InputLabel id="project-role-select-label">
@@ -251,6 +371,8 @@ function AsignarMiembro({ id }) {
               loading ||
               submitting ||
               !projectId ||
+              !effectiveDepartmentId ||
+              !canAssignUsers ||
               !selectedUser ||
               !selectedRole
             }

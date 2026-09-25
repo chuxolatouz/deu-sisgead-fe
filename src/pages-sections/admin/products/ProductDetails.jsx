@@ -476,7 +476,11 @@ const ProductDetails = ({ product, onRefresh }) => {
                 <ProductReport id={product._id} year={fundingYear} />
               </TabPanel>
               <TabPanel value="1">
-                <ProductUsers id={product._id} users={product.miembros} />
+                <ProductUsers
+                  id={product._id}
+                  users={product.miembros}
+                  project={product}
+                />
               </TabPanel>
               <TabPanel value="2">
                 <ProductMovements id={product._id} year={fundingYear} />

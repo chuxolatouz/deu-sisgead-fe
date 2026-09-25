@@ -40,6 +40,9 @@ function ProjectFundingDrawer({
   const { enqueueSnackbar } = useSnackbar();
   const [submitting, setSubmitting] = useState(false);
   const [sourceScopeType, setSourceScopeType] = useState("department");
+  const [sourceDepartmentId, setSourceDepartmentId] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [rows, setRows] = useState([buildRow("")]);
   const projectId = project?._id?.$oid || project?._id || "";
   const departmentId = project?.departmentId || project?.departamento_id || "";
@@ -54,10 +57,48 @@ function ProjectFundingDrawer({
       ? "department"
       : allowedSources[0] || "department";
     setSourceScopeType(defaultSource);
+    setSourceDepartmentId(departmentId);
     setRows(migration ? [] : [buildRow("")]);
-  }, [open, migration, totalRequired, allowedSources]);
+  }, [open, migration, totalRequired, allowedSources, departmentId]);
 
-  const sourceScopeId = sourceScopeType === "global" ? "global" : departmentId;
+  useEffect(() => {
+    if (!open || migration || !isSuperAdmin || departmentId) return undefined;
+
+    let active = true;
+    setLoadingDepartments(true);
+    api
+      .get("/departamentos?activo=true")
+      .then((response) => {
+        if (!active) return;
+        setDepartments(Array.isArray(response.data) ? response.data : []);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setDepartments([]);
+        enqueueSnackbar(
+          error?.response?.data?.message ||
+            error?.message ||
+            "No se pudieron cargar los departamentos",
+          { variant: "error" }
+        );
+      })
+      .finally(() => {
+        if (active) setLoadingDepartments(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [api, departmentId, enqueueSnackbar, isSuperAdmin, migration, open]);
+
+  const sourceScopeId =
+    sourceScopeType === "global"
+      ? "global"
+      : departmentId || sourceDepartmentId;
+  const selectedSourceDepartment = departments.find(
+    (department) =>
+      (department?._id?.$oid || department?._id || "") === sourceDepartmentId
+  );
 
   const totalAssigned = useMemo(
     () => rows.reduce((acc, item) => acc + Number(item.amount || 0), 0),
@@ -66,7 +107,8 @@ function ProjectFundingDrawer({
 
   const canSubmit =
     migration ||
-    (rows.length > 0 &&
+    (Boolean(sourceScopeId) &&
+      rows.length > 0 &&
       rows.every((row) => row.fromAccountCode && Number(row.amount) > 0));
 
   const updateRow = (index, changes) => {
@@ -169,7 +211,10 @@ function ProjectFundingDrawer({
               select
               label="Origen del fondo"
               value={sourceScopeType}
-              onChange={(event) => setSourceScopeType(event.target.value)}
+              onChange={(event) => {
+                setSourceScopeType(event.target.value);
+                setRows([buildRow("")]);
+              }}
               disabled={!isSuperAdmin || allowedSources.length <= 1}
             >
               {allowedSources.map((item) => (
@@ -183,13 +228,47 @@ function ProjectFundingDrawer({
           </FormControl>
         )}
 
+        {!migration &&
+          sourceScopeType === "department" &&
+          !departmentId &&
+          isSuperAdmin && (
+            <TextField
+              select
+              fullWidth
+              sx={{ mb: 2 }}
+              label="Departamento origen"
+              value={sourceDepartmentId}
+              onChange={(event) => {
+                setSourceDepartmentId(event.target.value);
+                setRows([buildRow("")]);
+              }}
+              disabled={loadingDepartments}
+              helperText="El proyecto no tiene departamento; selecciona dónde está registrada la cuenta con fondos."
+            >
+              {departments.map((department) => {
+                const value = department?._id?.$oid || department?._id || "";
+                return (
+                  <MenuItem key={value} value={value}>
+                    {department?.nombre || "Sin nombre"}
+                    {department?.codigo ? ` (${department.codigo})` : ""}
+                  </MenuItem>
+                );
+              })}
+            </TextField>
+          )}
+
         {!migration && (
           <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
             {sourceScopeType === "global"
               ? "El origen será el scope global."
-              : `El origen será el departamento propietario del proyecto (${
-                  departmentId || "sin departamento"
-                }).`}
+              : departmentId
+              ? `El origen será el departamento propietario del proyecto (${departmentId}).`
+              : sourceScopeId
+              ? `El origen será ${
+                  selectedSourceDepartment?.nombre ||
+                  "el departamento seleccionado"
+                }.`
+              : "Selecciona el departamento donde está la cuenta con fondos."}
           </Alert>
         )}
 
@@ -231,6 +310,7 @@ function ProjectFundingDrawer({
                       scopeId={sourceScopeId}
                       assignedOnly
                       includeZero={false}
+                      disabled={!sourceScopeId}
                       optionBalanceLabel="Disponible origen"
                       onChange={(accountCode, account) =>
                         updateRow(index, {
