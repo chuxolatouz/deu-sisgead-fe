@@ -6,7 +6,9 @@ import {
   Chip,
   FormControl,
   InputLabel,
+  MenuItem,
   OutlinedInput,
+  Select,
   TextField,
   Dialog,
   DialogActions,
@@ -36,7 +38,7 @@ function CerrarActividad({ budget, onComplete, year }) {
   const [montoTransferencia, setMontoTransferencia] = useState("");
   const [banco, setBanco] = useState("");
   const [cuentaContableCode, setCuentaContableCode] = useState(null);
-  const [cuentaContableManual, setCuentaContableManual] = useState("");
+  const [selectedRequirementId, setSelectedRequirementId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [supportFiles, setSupportFiles] = useState([]);
 
@@ -49,13 +51,18 @@ function CerrarActividad({ budget, onComplete, year }) {
   const resolvedFundingYear = Number(
     year || budget?.fundingYear || new Date().getFullYear()
   );
+  const activityRequirements = Array.isArray(budget?.requerimientos)
+    ? budget.requerimientos
+    : [];
+  const selectedRequirement = activityRequirements.find(
+    (requirement) => requirement.requirementId === selectedRequirementId
+  );
 
   useEffect(() => {
     setAmount(initialAmount);
     if (isSponsored) {
       setMontoTransferencia("0");
       setCuentaContableCode(null);
-      setCuentaContableManual("");
     }
   }, [initialAmount, isSponsored]);
 
@@ -72,7 +79,7 @@ function CerrarActividad({ budget, onComplete, year }) {
     setMontoTransferencia(isSponsored ? "0" : "");
     setBanco("");
     setCuentaContableCode(null);
-    setCuentaContableManual("");
+    setSelectedRequirementId("");
     setSupportFiles([]);
   };
 
@@ -84,7 +91,11 @@ function CerrarActividad({ budget, onComplete, year }) {
       });
       return;
     }
-    const cuentaContable = cuentaContableCode || cuentaContableManual.trim();
+    const requirementAccount =
+      selectedRequirement && !selectedRequirement.account?.isHeader
+        ? selectedRequirement.accountCode
+        : "";
+    const cuentaContable = requirementAccount || cuentaContableCode;
     if (!isSponsored && numericAmount === 0 && cuentaContable) {
       enqueueSnackbar(
         "Un cierre con monto 0 no puede tener una cuenta asociada",
@@ -94,7 +105,7 @@ function CerrarActividad({ budget, onComplete, year }) {
     }
     if (!isSponsored && numericAmount > 0 && !cuentaContable) {
       enqueueSnackbar(
-        "Debes seleccionar una partida del proyecto para imputar el gasto",
+        "Debes seleccionar una cuenta contable de gasto para registrar el cierre",
         { variant: "error" }
       );
       return;
@@ -111,6 +122,9 @@ function CerrarActividad({ budget, onComplete, year }) {
     formData.append("referencia", referencia);
     formData.append("transferAmount", transferAmount);
     formData.append("banco", banco);
+    if (selectedRequirementId) {
+      formData.append("requirementId", selectedRequirementId);
+    }
     if (!isSponsored) {
       if (cuentaContable) formData.append("accountCode", cuentaContable);
     }
@@ -230,37 +244,64 @@ function CerrarActividad({ budget, onComplete, year }) {
             </Alert>
           ) : (
             <Box sx={{ mt: 2, mb: 2 }}>
-              <AccountSelector
-                label="Partida del proyecto"
-                value={cuentaContableCode}
-                group="EGRESO"
-                year={resolvedFundingYear}
-                allowHeaders={false}
-                helperText="Solo se muestran partidas del proyecto con saldo disponible."
-                scopeType="project"
-                scopeId={resolvedProjectId}
-                assignedOnly
-                includeZero={false}
-                optionBalanceLabel="Disponible"
-                onChange={(accountCode) => {
-                  setCuentaContableCode(accountCode);
-                }}
-              />
-              <TextField
-                sx={{ mt: 2 }}
-                fullWidth
-                label="Cuenta contable manual"
-                value={cuentaContableManual}
-                onChange={(event) =>
-                  setCuentaContableManual(event.target.value)
-                }
-                disabled={Boolean(cuentaContableCode)}
-                helperText={
-                  cuentaContableCode
-                    ? "Hay una partida seleccionada; limpia la selección para usar texto libre."
-                    : "Compatibilidad temporal para cuentas no catalogadas."
-                }
-              />
+              {activityRequirements.length > 0 && (
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel id="closure-requirement-label">
+                    Requerimiento (opcional)
+                  </InputLabel>
+                  <Select
+                    labelId="closure-requirement-label"
+                    label="Requerimiento (opcional)"
+                    value={selectedRequirementId}
+                    onChange={(event) => {
+                      setSelectedRequirementId(event.target.value);
+                      setCuentaContableCode(null);
+                    }}
+                  >
+                    <MenuItem value="">Sin requerimiento</MenuItem>
+                    {activityRequirements.map((requirement) => (
+                      <MenuItem
+                        key={requirement.requirementId}
+                        value={requirement.requirementId}
+                      >
+                        {requirement.nombre}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              {selectedRequirement && !selectedRequirement.account?.isHeader ? (
+                <TextField
+                  fullWidth
+                  disabled
+                  label="Cuenta del requerimiento"
+                  value={`${selectedRequirement.accountCode} - ${
+                    selectedRequirement.account?.description || ""
+                  }`}
+                  helperText="La cuenta se tomará automáticamente del requerimiento."
+                />
+              ) : (
+                <AccountSelector
+                  label={
+                    selectedRequirement?.account?.isHeader
+                      ? `Cuenta detalle bajo ${selectedRequirement.accountCode}`
+                      : "Cuenta contable del gasto"
+                  }
+                  value={cuentaContableCode}
+                  group="EGRESO"
+                  year={resolvedFundingYear}
+                  allowHeaders={false}
+                  helperText="La cuenta se aplicará al registrar el cierre administrativo."
+                  ancestorCode={
+                    selectedRequirement?.account?.isHeader
+                      ? selectedRequirement.accountCode
+                      : undefined
+                  }
+                  onChange={(accountCode) => {
+                    setCuentaContableCode(accountCode);
+                  }}
+                />
+              )}
             </Box>
           )}
           <DropZone

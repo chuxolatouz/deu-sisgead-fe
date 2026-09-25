@@ -61,6 +61,7 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
     transferAmount: "",
   });
   const [supportFiles, setSupportFiles] = useState([]);
+  const [closureAccounts, setClosureAccounts] = useState({});
   const [loadingAction, setLoadingAction] = useState("");
 
   const docId = getDocId(budget);
@@ -104,13 +105,6 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
       );
       return;
     }
-    if (!isSponsored && itemAmount > 0 && !form.accountCode) {
-      enqueueSnackbar("Selecciona una cuenta para el item con gasto", {
-        variant: "error",
-      });
-      return;
-    }
-
     const payload = {
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
@@ -164,7 +158,7 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
       .finally(() => setLoadingAction(""));
   };
 
-  const appendClosureData = (formData) => {
+  const appendClosureData = (formData, itemId = null) => {
     formData.append("year", String(fundingYear));
     formData.append("referencia", closure.referencia);
     formData.append("banco", closure.banco);
@@ -172,6 +166,10 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
       "transferAmount",
       isSponsored ? "0" : closure.transferAmount
     );
+    if (itemId && closureAccounts[itemId]) {
+      formData.append("accountCode", closureAccounts[itemId]);
+    }
+    formData.append("accountMappings", JSON.stringify(closureAccounts));
     supportFiles.forEach((file) => formData.append("supportFiles", file));
     return formData;
   };
@@ -181,7 +179,7 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
     api
       .post(
         `/documentos/${docId}/items/${itemId}/cierre-administrativo`,
-        appendClosureData(new FormData())
+        appendClosureData(new FormData(), itemId)
       )
       .then((response) => {
         enqueueSnackbar(response.data.mensaje, { variant: "success" });
@@ -226,6 +224,19 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
       })
       .finally(() => setLoadingAction(""));
   };
+
+  const requiresClosureAccount = (item) => {
+    if (isSponsored || Number(item?.monto || 0) <= 0) return false;
+    if (item?.accountCode || item?.cuenta_contable) return false;
+    const requirement = activityRequirements.find(
+      (candidate) => candidate.requirementId === item?.requirementId
+    );
+    return !requirement || Boolean(requirement.account?.isHeader);
+  };
+
+  const canClosePending = pendingItems.every(
+    (item) => !requiresClosureAccount(item) || closureAccounts[item.id]
+  );
 
   return (
     <>
@@ -360,24 +371,6 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
                     : ""
                 }
               />
-              {!isSponsored && selectedRequirement?.account?.isHeader && (
-                <AccountSelector
-                  label={`Partida detalle bajo ${selectedRequirement.accountCode}`}
-                  value={form.accountCode}
-                  group="EGRESO"
-                  year={fundingYear}
-                  allowHeaders={false}
-                  scopeType="project"
-                  scopeId={project?._id || budget?.projectId}
-                  assignedOnly
-                  includeZero={false}
-                  ancestorCode={selectedRequirement.accountCode}
-                  optionBalanceLabel="Disponible"
-                  onChange={(accountCode) => {
-                    setForm((prev) => ({ ...prev, accountCode }));
-                  }}
-                />
-              )}
               {!isSponsored &&
                 selectedRequirement &&
                 !selectedRequirement.account?.isHeader && (
@@ -388,26 +381,17 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
                     }`}
                     fullWidth
                     disabled
-                    helperText="Esta cuenta se toma automáticamente del catálogo."
+                    helperText="Esta cuenta se aplicará automáticamente durante el cierre."
                   />
                 )}
-              {!isSponsored && !selectedRequirement && (
-                <AccountSelector
-                  label="Partida del item"
-                  value={form.accountCode}
-                  group="EGRESO"
-                  year={fundingYear}
-                  allowHeaders={false}
-                  scopeType="project"
-                  scopeId={project?._id || budget?.projectId}
-                  assignedOnly
-                  includeZero={false}
-                  optionBalanceLabel="Disponible"
-                  onChange={(accountCode) => {
-                    setForm((prev) => ({ ...prev, accountCode }));
-                  }}
-                />
-              )}
+              {!isSponsored &&
+                (!selectedRequirement ||
+                  selectedRequirement.account?.isHeader) && (
+                  <Alert severity="info" variant="outlined">
+                    Administración seleccionará la cuenta detalle cuando
+                    registre el cierre de este item.
+                  </Alert>
+                )}
               <Box display="flex" justifyContent="flex-end" gap={1}>
                 {editingId && (
                   <Button
@@ -497,7 +481,7 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
                 variant="outlined"
                 color="secondary"
                 loading={loadingAction === "close-pending"}
-                disabled={!pendingItems.length}
+                disabled={!pendingItems.length || !canClosePending}
                 onClick={handleClosePending}
               >
                 Cerrar items pendientes
@@ -545,6 +529,11 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
             {items.length ? (
               items.map((item) => {
                 const closed = item.status === "closed";
+                const itemRequirement = activityRequirements.find(
+                  (requirement) =>
+                    requirement.requirementId === item.requirementId
+                );
+                const needsAccount = requiresClosureAccount(item);
                 return (
                   <Paper key={item.id} variant="outlined" sx={{ p: 2 }}>
                     <Box display="flex" justifyContent="space-between" gap={2}>
@@ -583,40 +572,67 @@ function ActivityItemsDrawer({ budget, project, onChanged }) {
                       />
                     </Box>
                     {!item.isSynthetic && !closed && (
-                      <Box
-                        display="flex"
-                        justifyContent="flex-end"
-                        gap={1}
-                        mt={2}
-                        flexWrap="wrap"
-                      >
-                        <Button
-                          size="small"
-                          startIcon={<EditOutlined />}
-                          onClick={() => handleEdit(item)}
+                      <Stack spacing={1.5} mt={2}>
+                        {needsAccount && (
+                          <AccountSelector
+                            label={
+                              itemRequirement?.account?.isHeader
+                                ? `Cuenta detalle bajo ${itemRequirement.accountCode}`
+                                : "Cuenta contable para el cierre"
+                            }
+                            value={closureAccounts[item.id] || null}
+                            group="EGRESO"
+                            year={fundingYear}
+                            allowHeaders={false}
+                            ancestorCode={
+                              itemRequirement?.account?.isHeader
+                                ? itemRequirement.accountCode
+                                : undefined
+                            }
+                            onChange={(accountCode) =>
+                              setClosureAccounts((current) => ({
+                                ...current,
+                                [item.id]: accountCode || "",
+                              }))
+                            }
+                            helperText="Administración imputará esta cuenta al liquidar el item."
+                          />
+                        )}
+                        <Box
+                          display="flex"
+                          justifyContent="flex-end"
+                          gap={1}
+                          flexWrap="wrap"
                         >
-                          Editar
-                        </Button>
-                        <LoadingButton
-                          size="small"
-                          color="error"
-                          startIcon={<DeleteOutline />}
-                          loading={loadingAction === `delete-${item.id}`}
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          Eliminar
-                        </LoadingButton>
-                        <LoadingButton
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                          startIcon={<CheckCircleOutline />}
-                          loading={loadingAction === `close-${item.id}`}
-                          onClick={() => handleCloseItem(item.id)}
-                        >
-                          Cerrar item
-                        </LoadingButton>
-                      </Box>
+                          <Button
+                            size="small"
+                            startIcon={<EditOutlined />}
+                            onClick={() => handleEdit(item)}
+                          >
+                            Editar
+                          </Button>
+                          <LoadingButton
+                            size="small"
+                            color="error"
+                            startIcon={<DeleteOutline />}
+                            loading={loadingAction === `delete-${item.id}`}
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            Eliminar
+                          </LoadingButton>
+                          <LoadingButton
+                            size="small"
+                            color="secondary"
+                            variant="outlined"
+                            startIcon={<CheckCircleOutline />}
+                            loading={loadingAction === `close-${item.id}`}
+                            onClick={() => handleCloseItem(item.id)}
+                            disabled={needsAccount && !closureAccounts[item.id]}
+                          >
+                            Cerrar item
+                          </LoadingButton>
+                        </Box>
+                      </Stack>
                     )}
                   </Paper>
                 );

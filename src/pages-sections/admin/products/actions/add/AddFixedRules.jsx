@@ -126,8 +126,8 @@ function AddFixedRules({ id, year }) {
             {selectedRule && (
               <>
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  Cada ítem monetario de la regla debe imputarse a una partida
-                  del proyecto.
+                  Cada ítem monetario se liquidará contra la bolsa única y debe
+                  clasificarse en una cuenta contable.
                 </Alert>
                 {selectedRule.reglas.map((item, index) => (
                   <Box key={`${item.nombre_regla}-${index}`} sx={{ mb: 3 }}>
@@ -147,11 +147,6 @@ function AddFixedRules({ id, year }) {
                       group="EGRESO"
                       year={resolvedYear}
                       allowHeaders={false}
-                      scopeType="project"
-                      scopeId={id}
-                      assignedOnly
-                      includeZero={false}
-                      optionBalanceLabel="Disponible"
                       onChange={(accountCode) => {
                         setAccountMappings((prev) => ({
                           ...prev,

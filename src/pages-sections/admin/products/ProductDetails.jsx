@@ -163,7 +163,7 @@ const ProductDetails = ({ product, onRefresh }) => {
                 ) : null
               }
             >
-              Saldo legacy por migrar a partidas.
+              Saldo anterior pendiente por consolidar en la bolsa única.
             </Alert>
           )}
           <Stack spacing={1}>
@@ -179,7 +179,7 @@ const ProductDetails = ({ product, onRefresh }) => {
             </H3>
             <FlexBox alignItems="left" gap={4}>
               <Span gap={4} color="grey.600">
-                Saldo inicial asignado:
+                Total recibido:
               </Span>
             </FlexBox>
             <H5 mt={0} mb={0}>
@@ -189,9 +189,9 @@ const ProductDetails = ({ product, onRefresh }) => {
               )}
             </H5>
             <Typography variant="body2" color="text.secondary">
-              {`Partidas con saldo: ${
-                fundingSummary?.totals?.fundedAccountsCount || 0
-              }`}
+              {`Liquidado: ${formatMonto(
+                fundingSummary?.totals?.totalLiquidated || 0
+              )}`}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {`Último movimiento: ${
@@ -209,7 +209,7 @@ const ProductDetails = ({ product, onRefresh }) => {
                   ? "Legacy por migrar"
                   : fundingModel?.status === "pending_migration"
                   ? "Migración pendiente"
-                  : "Activo"
+                  : "Bolsa única"
               }
               color={
                 fundingSummary?.model?.migrationRequired ? "warning" : "success"
@@ -218,7 +218,8 @@ const ProductDetails = ({ product, onRefresh }) => {
               sx={{ width: "fit-content", mt: 1 }}
             />
             {tab !== "5" &&
-              (fundingSummary?.permissions?.canFund ? (
+              (fundingSummary?.permissions?.canFund &&
+              !fundingSummary?.model?.migrationRequired ? (
                 <Button
                   variant="contained"
                   sx={{ mt: 1 }}
@@ -226,7 +227,7 @@ const ProductDetails = ({ product, onRefresh }) => {
                 >
                   Asignar fondos
                 </Button>
-              ) : (
+              ) : !fundingSummary?.permissions?.canFund ? (
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -235,7 +236,7 @@ const ProductDetails = ({ product, onRefresh }) => {
                   {fundingSummary?.permissions?.reason ||
                     "Solo lectura de fondos."}
                 </Typography>
-              ))}
+              ) : null)}
           </Stack>
 
           <Divider
@@ -466,7 +467,7 @@ const ProductDetails = ({ product, onRefresh }) => {
               <Tab value="2" label="Movimientos" />
               <Tab value="3" label="Actividades" />
               <Tab value="4" label="Logs" />
-              <Tab value="5" label="Partidas y fondos" />
+              <Tab value="5" label="Fondos" />
               <Tab value="6" label="Resultados" />
               <Tab value="7" label="Requerimientos" />
             </TabList>

@@ -23,8 +23,6 @@ import { formatMonto } from "lib";
 const buildRow = (baseAmount = "") => ({
   fromAccountCode: "",
   fromAccount: null,
-  toAccountCode: "",
-  toAccount: null,
   amount: baseAmount,
   description: "",
 });
@@ -56,7 +54,7 @@ function ProjectFundingDrawer({
       ? "department"
       : allowedSources[0] || "department";
     setSourceScopeType(defaultSource);
-    setRows([buildRow(migration ? String(totalRequired || "") : "")]);
+    setRows(migration ? [] : [buildRow("")]);
   }, [open, migration, totalRequired, allowedSources]);
 
   const sourceScopeId = sourceScopeType === "global" ? "global" : departmentId;
@@ -66,15 +64,10 @@ function ProjectFundingDrawer({
     [rows]
   );
 
-  const migrationMatches =
-    !migration || Math.abs(totalAssigned - totalRequired) < 0.001;
   const canSubmit =
-    rows.length > 0 &&
-    rows.every(
-      (row) =>
-        row.fromAccountCode && row.toAccountCode && Number(row.amount) > 0
-    ) &&
-    migrationMatches;
+    migration ||
+    (rows.length > 0 &&
+      rows.every((row) => row.fromAccountCode && Number(row.amount) > 0));
 
   const updateRow = (index, changes) => {
     setRows((prev) =>
@@ -95,14 +88,13 @@ function ProjectFundingDrawer({
         year: resolvedYear,
         sourceScopeType,
         sourceScopeId,
-        allocations: rows.map((row) => ({
-          fromAccountCode: row.fromAccountCode,
-          toAccountCode: row.toAccountCode,
-          amount: Number(row.amount),
-          description:
-            row.description?.trim() ||
-            (migration ? "Migración saldo legacy" : "Asignación de fondos"),
-        })),
+        allocations: migration
+          ? []
+          : rows.map((row) => ({
+              fromAccountCode: row.fromAccountCode,
+              amount: Number(row.amount),
+              description: row.description?.trim() || "Asignación de fondos",
+            })),
       };
       if (migration) {
         payload.note = "Migración manual desde UI";
@@ -147,8 +139,8 @@ function ProjectFundingDrawer({
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {migration
-                ? "Distribuye el saldo legacy del proyecto en partidas reales."
-                : "Transfiere fondos hacia partidas del proyecto."}
+                ? "Consolida el saldo actual del proyecto en una sola bolsa."
+                : "Descuenta fondos de las cuentas de origen y los unifica en la bolsa del proyecto."}
             </Typography>
           </Box>
           <IconButton onClick={onClose}>
@@ -158,8 +150,9 @@ function ProjectFundingDrawer({
 
         {migration && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            El total asignado debe coincidir exactamente con el saldo legacy
-            pendiente: <strong>{formatMonto(totalRequired)}</strong>
+            Se conservará el historial anterior y se abrirá la bolsa única con
+            el saldo disponible actual:{" "}
+            <strong>{formatMonto(totalRequired)}</strong>
           </Alert>
         )}
 
@@ -170,160 +163,143 @@ function ProjectFundingDrawer({
           </Alert>
         )}
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <TextField
-            select
-            label="Origen del fondo"
-            value={sourceScopeType}
-            onChange={(event) => setSourceScopeType(event.target.value)}
-            disabled={!isSuperAdmin || allowedSources.length <= 1}
-          >
-            {allowedSources.map((item) => (
-              <MenuItem key={item} value={item}>
-                {item === "global"
-                  ? "Global directo"
-                  : "Departamento del proyecto"}
-              </MenuItem>
-            ))}
-          </TextField>
-        </FormControl>
+        {!migration && (
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <TextField
+              select
+              label="Origen del fondo"
+              value={sourceScopeType}
+              onChange={(event) => setSourceScopeType(event.target.value)}
+              disabled={!isSuperAdmin || allowedSources.length <= 1}
+            >
+              {allowedSources.map((item) => (
+                <MenuItem key={item} value={item}>
+                  {item === "global"
+                    ? "Global directo"
+                    : "Departamento del proyecto"}
+                </MenuItem>
+              ))}
+            </TextField>
+          </FormControl>
+        )}
 
-        <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-          {sourceScopeType === "global"
-            ? "El origen será el scope global."
-            : `El origen será el departamento propietario del proyecto (${
-                departmentId || "sin departamento"
-              }).`}
-        </Alert>
+        {!migration && (
+          <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+            {sourceScopeType === "global"
+              ? "El origen será el scope global."
+              : `El origen será el departamento propietario del proyecto (${
+                  departmentId || "sin departamento"
+                }).`}
+          </Alert>
+        )}
 
-        <Stack spacing={2}>
-          {rows.map((row, index) => {
-            const sourceBalance = Number(row.fromAccount?.balance || 0);
-            const targetBalance = Number(row.toAccount?.balance || 0);
-            const projectedBalance = targetBalance + Number(row.amount || 0);
-            return (
-              <Paper
-                key={`funding-row-${index}`}
-                variant="outlined"
-                sx={{ p: 2 }}
-              >
-                <Stack spacing={2}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography variant="subtitle2">{`Línea ${
-                      index + 1
-                    }`}</Typography>
-                    {rows.length > 1 && (
-                      <IconButton onClick={() => removeRow(index)} size="small">
-                        <DeleteOutline fontSize="small" />
-                      </IconButton>
-                    )}
-                  </Stack>
-
-                  <AccountSelector
-                    label="Cuenta origen"
-                    value={row.fromAccountCode || null}
-                    year={resolvedYear}
-                    allowHeaders={false}
-                    scopeType={sourceScopeType}
-                    scopeId={sourceScopeId}
-                    assignedOnly
-                    includeZero={false}
-                    optionBalanceLabel="Disponible origen"
-                    onChange={(accountCode, account) =>
-                      updateRow(index, {
-                        fromAccountCode: accountCode || "",
-                        fromAccount: account,
-                      })
-                    }
-                  />
-
-                  <AccountSelector
-                    label="Partida destino del proyecto"
-                    value={row.toAccountCode || null}
-                    year={resolvedYear}
-                    allowHeaders={false}
-                    scopeType="project"
-                    scopeId={projectId}
-                    hideInfoAlert
-                    optionBalanceLabel="Saldo actual"
-                    onChange={(accountCode, account) =>
-                      updateRow(index, {
-                        toAccountCode: accountCode || "",
-                        toAccount: account,
-                      })
-                    }
-                  />
-
-                  <TextField
-                    label="Monto"
-                    type="number"
-                    value={row.amount}
-                    onChange={(event) =>
-                      updateRow(index, { amount: event.target.value })
-                    }
-                    inputProps={{ min: 0, step: "0.01" }}
-                  />
-
-                  <TextField
-                    label="Descripción"
-                    value={row.description}
-                    onChange={(event) =>
-                      updateRow(index, { description: event.target.value })
-                    }
-                    placeholder={
-                      migration
-                        ? "Migración saldo legacy"
-                        : "Asignación de fondos"
-                    }
-                  />
-
-                  <Alert severity="info" variant="outlined">
-                    <Stack spacing={0.5}>
-                      <Typography variant="body2">{`Saldo disponible en origen: ${formatMonto(
-                        sourceBalance
-                      )}`}</Typography>
-                      <Typography variant="body2">{`Saldo actual en partida destino: ${formatMonto(
-                        targetBalance
-                      )}`}</Typography>
-                      <Typography variant="body2">{`Saldo proyectado en partida destino: ${formatMonto(
-                        projectedBalance
-                      )}`}</Typography>
+        {!migration && (
+          <Stack spacing={2}>
+            {rows.map((row, index) => {
+              const sourceBalance = Number(row.fromAccount?.balance || 0);
+              return (
+                <Paper
+                  key={`funding-row-${index}`}
+                  variant="outlined"
+                  sx={{ p: 2 }}
+                >
+                  <Stack spacing={2}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Typography variant="subtitle2">{`Línea ${
+                        index + 1
+                      }`}</Typography>
+                      {rows.length > 1 && (
+                        <IconButton
+                          onClick={() => removeRow(index)}
+                          size="small"
+                        >
+                          <DeleteOutline fontSize="small" />
+                        </IconButton>
+                      )}
                     </Stack>
-                  </Alert>
-                </Stack>
-              </Paper>
-            );
-          })}
-        </Stack>
 
-        <Button
-          startIcon={<Add />}
-          onClick={addRow}
-          sx={{ mt: 2 }}
-          disabled={!fundingSummary?.permissions?.canFund}
-        >
-          Agregar otra línea
-        </Button>
+                    <AccountSelector
+                      label="Cuenta origen"
+                      value={row.fromAccountCode || null}
+                      year={resolvedYear}
+                      allowHeaders={false}
+                      scopeType={sourceScopeType}
+                      scopeId={sourceScopeId}
+                      assignedOnly
+                      includeZero={false}
+                      optionBalanceLabel="Disponible origen"
+                      onChange={(accountCode, account) =>
+                        updateRow(index, {
+                          fromAccountCode: accountCode || "",
+                          fromAccount: account,
+                        })
+                      }
+                    />
+
+                    <TextField
+                      label="Monto"
+                      type="number"
+                      value={row.amount}
+                      onChange={(event) =>
+                        updateRow(index, { amount: event.target.value })
+                      }
+                      inputProps={{ min: 0, step: "0.01" }}
+                    />
+
+                    <TextField
+                      label="Descripción"
+                      value={row.description}
+                      onChange={(event) =>
+                        updateRow(index, { description: event.target.value })
+                      }
+                      placeholder={
+                        migration
+                          ? "Migración saldo legacy"
+                          : "Asignación de fondos"
+                      }
+                    />
+
+                    <Alert severity="info" variant="outlined">
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2">{`Saldo disponible en origen: ${formatMonto(
+                          sourceBalance
+                        )}`}</Typography>
+                        <Typography variant="body2">
+                          El monto se incorporará al disponible único del
+                          proyecto.
+                        </Typography>
+                      </Stack>
+                    </Alert>
+                  </Stack>
+                </Paper>
+              );
+            })}
+          </Stack>
+        )}
+
+        {!migration && (
+          <Button
+            startIcon={<Add />}
+            onClick={addRow}
+            sx={{ mt: 2 }}
+            disabled={!fundingSummary?.permissions?.canFund}
+          >
+            Agregar otra línea
+          </Button>
+        )}
 
         <Divider sx={{ my: 3 }} />
 
-        <Alert
-          severity={migration && !migrationMatches ? "error" : "success"}
-          variant="outlined"
-          sx={{ mb: 2 }}
-        >
-          <Typography variant="body2">{`Total de esta operación: ${formatMonto(
-            totalAssigned
-          )}`}</Typography>
-          {migration && (
-            <Typography variant="body2">{`Debe cuadrar con el legacy pendiente: ${formatMonto(
-              totalRequired
-            )}`}</Typography>
-          )}
+        <Alert severity="success" variant="outlined" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            {migration
+              ? `Saldo que será consolidado: ${formatMonto(totalRequired)}`
+              : `Total de esta operación: ${formatMonto(totalAssigned)}`}
+          </Typography>
         </Alert>
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">

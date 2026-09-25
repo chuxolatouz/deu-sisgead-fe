@@ -45,7 +45,9 @@ function ProductMovements({ id, year = new Date().getFullYear() }) {
     if (!id) return;
     api
       .get(
-        `/api/projects/${id}/funding-timeline?page=${pagination - 1}&limit=10&year=${year}`
+        `/api/projects/${id}/funding-timeline?page=${
+          pagination - 1
+        }&limit=10&year=${year}`
       )
       .then((response) => {
         setRows(response.data.request_list || []);
@@ -116,7 +118,9 @@ function ProductMovements({ id, year = new Date().getFullYear() }) {
                   <TableCell>
                     {item.source === "legacy_action"
                       ? "Histórico legacy"
-                      : "Ledger"}
+                      : item.source === "project_pool"
+                      ? "Bolsa del proyecto"
+                      : "Ledger anterior"}
                   </TableCell>
                 </TableRow>
               ))

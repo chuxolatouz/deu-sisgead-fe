@@ -20,10 +20,7 @@ import {
 import { useSnackbar } from "notistack";
 import { useApi } from "contexts/AxiosContext";
 import { formatMonto, formatSafeDate } from "lib";
-import {
-  getIncomeTypeChipColor,
-  getIncomeTypeLabel,
-} from "utils/accounting";
+import { getIncomeTypeChipColor, getIncomeTypeLabel } from "utils/accounting";
 import ProjectFundingDrawer from "./actions/add/ProjectFundingDrawer";
 import ProjectFundingMigrationDrawer from "./actions/add/ProjectFundingMigrationDrawer";
 
@@ -33,7 +30,8 @@ const TYPE_LABELS = {
 };
 
 const MODEL_LABELS = {
-  active: "Activo",
+  pooled: "Bolsa única",
+  active: "Activo segmentado",
   legacy: "Legacy por migrar",
   pending_migration: "Migración pendiente",
 };
@@ -99,6 +97,12 @@ export default function ProductAccounts({
 
   const refreshAccounts = () => {
     if (!normalizedProjectId) return;
+    if (summary?.model && !summary.model.migrationRequired) {
+      setTree([]);
+      setMeta(null);
+      setError("");
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -134,7 +138,14 @@ export default function ProductAccounts({
 
   useEffect(() => {
     refreshAccounts();
-  }, [api, enqueueSnackbar, normalizedProjectId, showZeroAssigned, year]);
+  }, [
+    api,
+    enqueueSnackbar,
+    normalizedProjectId,
+    showZeroAssigned,
+    summary?.model?.migrationRequired,
+    year,
+  ]);
 
   const handleSuccess = () => {
     refreshFunding();
@@ -145,8 +156,9 @@ export default function ProductAccounts({
     <Box>
       <Stack spacing={2} mb={2}>
         <Alert severity="info" variant="outlined">
-          Este módulo es la fuente operativa del saldo del proyecto. El
-          disponible total se deriva de estas partidas.
+          El proyecto maneja una sola bolsa disponible. Las cuentas de origen
+          quedan en el historial de fondeo y las cuentas de gasto se registran
+          al realizar cada cierre administrativo.
         </Alert>
 
         {summary?.model?.migrationRequired && (
@@ -164,8 +176,8 @@ export default function ProductAccounts({
               ) : null
             }
           >
-            Saldo legacy por migrar a partidas. Hasta completar la migración no
-            se permiten nuevas asignaciones directas.
+            Este proyecto todavía usa saldos segmentados. Consolídalos una sola
+            vez para habilitar la bolsa única.
           </Alert>
         )}
 
@@ -180,8 +192,7 @@ export default function ProductAccounts({
                 <Box>
                   <Typography variant="h6">Resumen financiero</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Disponible actual derivado, saldo inicial asignado y estado
-                    del modelo.
+                    Fondos recibidos, liquidados y disponibles en la bolsa.
                   </Typography>
                 </Box>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
@@ -196,16 +207,17 @@ export default function ProductAccounts({
                     }
                     variant="outlined"
                   />
-                  {summary.permissions?.canFund ? (
+                  {summary.permissions?.canFund &&
+                  !summary.model?.migrationRequired ? (
                     <Button
                       variant="contained"
                       onClick={() => setOpenFunding(true)}
                     >
                       Asignar fondos
                     </Button>
-                  ) : (
+                  ) : !summary.permissions?.canFund ? (
                     <Chip label="Solo lectura" variant="outlined" />
-                  )}
+                  ) : null}
                 </Stack>
               </Stack>
               <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
@@ -216,14 +228,20 @@ export default function ProductAccounts({
                   </strong>
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Saldo inicial asignado:{" "}
+                  Total recibido:{" "}
                   <strong>
                     {formatMonto(summary.totals?.initialAssigned || 0)}
                   </strong>
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Partidas con saldo:{" "}
-                  <strong>{summary.totals?.fundedAccountsCount || 0}</strong>
+                  Total liquidado:{" "}
+                  <strong>
+                    {formatMonto(summary.totals?.totalLiquidated || 0)}
+                  </strong>
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Cuentas de origen:{" "}
+                  <strong>{summary.totals?.fundingSourcesCount || 0}</strong>
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Último movimiento:{" "}
@@ -246,36 +264,40 @@ export default function ProductAccounts({
           </Paper>
         )}
 
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          alignItems={{ xs: "flex-start", md: "center" }}
-        >
-          <TextField
-            label="Año"
-            type="number"
-            size="small"
-            value={year}
-            onChange={(event) =>
-              setYear(Number(event.target.value || new Date().getFullYear()))
-            }
-            sx={{ width: 120 }}
-            inputProps={{ min: 2000, max: 2100 }}
-          />
+        {summary?.model?.migrationRequired && (
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            alignItems={{ xs: "flex-start", md: "center" }}
+          >
+            <TextField
+              label="Año"
+              type="number"
+              size="small"
+              value={year}
+              onChange={(event) =>
+                setYear(Number(event.target.value || new Date().getFullYear()))
+              }
+              sx={{ width: 120 }}
+              inputProps={{ min: 2000, max: 2100 }}
+            />
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={showZeroAssigned}
-                onChange={(event) => setShowZeroAssigned(event.target.checked)}
-                color="primary"
-              />
-            }
-            label="Mostrar partidas en 0 (asignadas)"
-          />
-        </Stack>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showZeroAssigned}
+                  onChange={(event) =>
+                    setShowZeroAssigned(event.target.checked)
+                  }
+                  color="primary"
+                />
+              }
+              label="Mostrar partidas en 0 (asignadas)"
+            />
+          </Stack>
+        )}
 
-        {meta && (
+        {summary?.model?.migrationRequired && meta && (
           <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
             <Typography variant="body2" color="text.secondary">
               Cuentas asignadas: <strong>{meta.totalAssigned || 0}</strong>
@@ -291,7 +313,18 @@ export default function ProductAccounts({
         )}
       </Stack>
 
-      {loading ? (
+      {!summary?.model?.migrationRequired ? (
+        <Paper variant="outlined" sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Bolsa única activa
+          </Typography>
+          <Typography color="text.secondary">
+            La distribución contable ya no se realiza al financiar. Consulta el
+            tab de movimientos para ver los aportes y las liquidaciones por
+            cuenta.
+          </Typography>
+        </Paper>
+      ) : loading ? (
         <Paper sx={{ p: 2 }}>
           <Typography color="text.secondary">
             Cargando partidas del proyecto...
